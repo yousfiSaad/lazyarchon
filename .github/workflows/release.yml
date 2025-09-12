@@ -9,6 +9,8 @@ jobs:
   create-release:
     name: Create Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
       
     steps:
     - uses: actions/checkout@v4
@@ -71,6 +73,8 @@ jobs:
     name: Build and Upload Assets
     needs: create-release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     
     steps:
     - uses: actions/checkout@v4
