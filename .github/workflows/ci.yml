@@ -78,13 +78,13 @@ jobs:
         make release
     
     - name: Upload release assets
-      uses: actions/upload-release-assets@v1
+      run: |
+        # Upload all release packages using GitHub CLI
+        for package in bin/packages/*; do
+          gh release upload ${{ github.event.release.tag_name }} "$package"
+        done
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./bin/packages/
-        asset_content_type: application/octet-stream
 
   build-matrix:
     name: Build Matrix

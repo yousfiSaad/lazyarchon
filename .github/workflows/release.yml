@@ -9,8 +9,6 @@ jobs:
   create-release:
     name: Create Release
     runs-on: ubuntu-latest
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
       
     steps:
     - uses: actions/checkout@v4
@@ -35,40 +33,39 @@ jobs:
         
     - name: Create Release
       id: create_release
-      uses: actions/create-release@v1
+      run: |
+        # Create the release with GitHub CLI
+        gh release create ${{ github.ref_name }} \
+          --title "LazyArchon ${{ github.ref_name }}" \
+          --notes "## Changes in ${{ github.ref_name }}
+          
+        ${{ steps.changelog.outputs.CHANGELOG }}
+        
+        ## Installation
+        
+        ### Binary Downloads
+        Download the appropriate binary for your platform from the assets below.
+        
+        ### Quick Install (Unix/Linux/macOS)
+        \`\`\`bash
+        # Download and install latest release
+        curl -sSL https://raw.githubusercontent.com/yousfisaad/lazyarchon/main/scripts/install.sh | bash
+        \`\`\`
+        
+        ### Manual Installation
+        1. Download the appropriate binary from the assets below
+        2. Extract the archive (if applicable)
+        3. Move the binary to a directory in your PATH
+        4. Make it executable: \`chmod +x lazyarchon\` (Unix/Linux/macOS)
+        
+        ### Verification
+        \`\`\`bash
+        lazyarchon --version
+        \`\`\`" \
+          --draft=false \
+          --prerelease=false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref_name }}
-        release_name: LazyArchon ${{ github.ref_name }}
-        body: |
-          ## Changes in ${{ github.ref_name }}
-          
-          ${{ steps.changelog.outputs.CHANGELOG }}
-          
-          ## Installation
-          
-          ### Binary Downloads
-          Download the appropriate binary for your platform from the assets below.
-          
-          ### Quick Install (Unix/Linux/macOS)
-          ```bash
-          # Download and install latest release
-          curl -sSL https://raw.githubusercontent.com/yousfisaad/lazyarchon/main/scripts/install.sh | bash
-          ```
-          
-          ### Manual Installation
-          1. Download the appropriate binary from the assets below
-          2. Extract the archive (if applicable)
-          3. Move the binary to a directory in your PATH
-          4. Make it executable: `chmod +x lazyarchon` (Unix/Linux/macOS)
-          
-          ### Verification
-          ```bash
-          lazyarchon --version
-          ```
-        draft: false
-        prerelease: false
 
   build-and-upload:
     name: Build and Upload Assets
