@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/glamour"
+	"github.com/charmbracelet/lipgloss"
 )
 
 // Min returns the minimum of two integers
@@ -272,4 +273,73 @@ func max(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// highlightSearchTerms highlights search query matches in text using lipgloss styling
+func highlightSearchTerms(text, query string) string {
+	if query == "" {
+		return text
+	}
+
+	// Trim and normalize query
+	query = strings.TrimSpace(query)
+	if query == "" {
+		return text
+	}
+
+	// Style for highlighted text
+	highlightStyle := lipgloss.NewStyle().
+		Background(lipgloss.Color("11")).  // Bright yellow background
+		Foreground(lipgloss.Color("0")).   // Black text for contrast
+		Bold(true)
+
+	// Split query into individual words for multi-word highlighting
+	queryWords := strings.Fields(strings.ToLower(query))
+	if len(queryWords) == 0 {
+		return text
+	}
+
+	result := text
+
+	// Highlight each word in the query
+	for _, word := range queryWords {
+		if word == "" {
+			continue
+		}
+
+		// Find all occurrences of this word (case-insensitive)
+		lowerText := strings.ToLower(result)
+		lowerWord := strings.ToLower(word)
+
+		var highlighted strings.Builder
+		lastEnd := 0
+
+		for {
+			// Find next occurrence
+			index := strings.Index(lowerText[lastEnd:], lowerWord)
+			if index == -1 {
+				// No more matches, append remaining text
+				highlighted.WriteString(result[lastEnd:])
+				break
+			}
+
+			// Adjust index to absolute position
+			absoluteIndex := lastEnd + index
+
+			// Add text before the match
+			highlighted.WriteString(result[lastEnd:absoluteIndex])
+
+			// Add highlighted match (preserve original case)
+			matchText := result[absoluteIndex:absoluteIndex+len(word)]
+			highlighted.WriteString(highlightStyle.Render(matchText))
+
+			// Move past this match
+			lastEnd = absoluteIndex + len(word)
+		}
+
+		result = highlighted.String()
+		lowerText = strings.ToLower(result) // Update for next word search
+	}
+
+	return result
 }

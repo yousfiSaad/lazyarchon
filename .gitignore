@@ -20,7 +20,7 @@ go.work
 # Build artifacts
 /bin/
 /dist/
-lazyarchon
+/lazyarchon
 *.tar.gz
 *.zip
 

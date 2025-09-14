@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	tea "github.com/charmbracelet/bubbletea"
 	"time"
 )
@@ -122,6 +123,8 @@ func (m Model) handleMultiKeySequence(key string) (Model, tea.Cmd, bool) {
 			if m.IsHelpMode() {
 				m.helpModalViewport.GotoTop()
 				return m, nil, true
+			} else if m.IsFeatureModeActive() {
+				return m.handleFeatureModeJumpToFirst(), nil, true
 			} else {
 				return m.handleJumpToFirst(), nil, true
 			}
@@ -166,6 +169,9 @@ func (m Model) handleStatusChangeConfirm() (Model, tea.Cmd) {
 
 		// Close modal
 		m.SetStatusChangeMode(false)
+
+		// Show loading message with context
+		m.SetLoadingWithMessage(true, fmt.Sprintf("Updating task status to %s...", newStatus))
 
 		// Update task status via API
 		return m, UpdateTaskStatusCmd(m.client, task.ID, newStatus)
@@ -217,6 +223,27 @@ func (m Model) handleFeatureModeInput(key string) (Model, tea.Cmd) {
 		m.restoreFeatureState()
 		m.SetFeatureMode(false)
 		return m, nil
+	case "G":
+		// Jump to last feature
+		return m.handleFeatureModeJumpToLast(), nil
+	case "J":
+		// Fast scroll down (5 features)
+		return m.handleFeatureModeFastScroll(1), nil
+	case "K":
+		// Fast scroll up (5 features)
+		return m.handleFeatureModeFastScroll(-1), nil
+	case "ctrl+d", "pgdown":
+		// Half-page scroll down
+		return m.handleFeatureModeHalfPage(1), nil
+	case "ctrl+u", "pgup":
+		// Half-page scroll up
+		return m.handleFeatureModeHalfPage(-1), nil
+	case "home":
+		// Jump to first feature
+		return m.handleFeatureModeJumpToFirst(), nil
+	case "end":
+		// Jump to last feature
+		return m.handleFeatureModeJumpToLast(), nil
 	case "ctrl+c":
 		return m, tea.Quit
 	default:
@@ -237,6 +264,67 @@ func (m Model) handleFeatureModeNavigation(direction int) Model {
 	} else if newIndex >= len(availableFeatures) {
 		newIndex = len(availableFeatures) - 1
 	}
+	m.Modals.featureMode.selectedIndex = newIndex
+	return m
+}
+
+// handleFeatureModeJumpToFirst handles 'gg' key - jump to first feature in modal
+func (m Model) handleFeatureModeJumpToFirst() Model {
+	availableFeatures := m.GetUniqueFeatures()
+	if len(availableFeatures) > 0 {
+		m.Modals.featureMode.selectedIndex = 0
+	}
+	return m
+}
+
+// handleFeatureModeJumpToLast handles 'G' key - jump to last feature in modal
+func (m Model) handleFeatureModeJumpToLast() Model {
+	availableFeatures := m.GetUniqueFeatures()
+	if len(availableFeatures) > 0 {
+		m.Modals.featureMode.selectedIndex = len(availableFeatures) - 1
+	}
+	return m
+}
+
+// handleFeatureModeFastScroll handles 'J'/'K' keys - fast scroll in feature modal
+func (m Model) handleFeatureModeFastScroll(direction int) Model {
+	availableFeatures := m.GetUniqueFeatures()
+	if len(availableFeatures) == 0 {
+		return m
+	}
+
+	// Fast scroll by 5 items (similar to main interface fast scroll)
+	step := 5 * direction
+	newIndex := m.Modals.featureMode.selectedIndex + step
+	
+	if newIndex < 0 {
+		newIndex = 0
+	} else if newIndex >= len(availableFeatures) {
+		newIndex = len(availableFeatures) - 1
+	}
+	
+	m.Modals.featureMode.selectedIndex = newIndex
+	return m
+}
+
+// handleFeatureModeHalfPage handles 'ctrl+u'/'ctrl+d' keys - half-page scroll in feature modal
+func (m Model) handleFeatureModeHalfPage(direction int) Model {
+	availableFeatures := m.GetUniqueFeatures()
+	if len(availableFeatures) == 0 {
+		return m
+	}
+
+	// Calculate half-page size based on modal height (approximately 7-8 visible features)
+	halfPage := 4 // Conservative estimate for half-page in feature modal
+	step := halfPage * direction
+	newIndex := m.Modals.featureMode.selectedIndex + step
+	
+	if newIndex < 0 {
+		newIndex = 0
+	} else if newIndex >= len(availableFeatures) {
+		newIndex = len(availableFeatures) - 1
+	}
+	
 	m.Modals.featureMode.selectedIndex = newIndex
 	return m
 }
@@ -345,3 +433,4 @@ func (m Model) handleTaskEditConfirm(feature string) (Model, tea.Cmd) {
 	m.SetTaskEditMode(false)
 	return m, nil
 }
+

@@ -1,14 +1,26 @@
 package ui
 
 import (
+	"time"
 	tea "github.com/charmbracelet/bubbletea"
 )
+
+// tickMsg is sent periodically to animate the loading spinner
+type tickMsg time.Time
+
+// tick sends a tickMsg after a short delay for spinner animation
+func tick() tea.Cmd {
+	return tea.Tick(time.Millisecond*100, func(t time.Time) tea.Msg {
+		return tickMsg(t)
+	})
+}
 
 // Init initializes the application
 func (m Model) Init() tea.Cmd {
 	return tea.Batch(
 		LoadTasksWithProject(m.client, m.Data.selectedProjectID),
 		LoadProjects(m.client),
+		tick(), // Start spinner animation
 	)
 }
 
@@ -26,6 +38,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		rightPanelHeight := m.GetContentHeight() - 4  // Account for borders/padding
 		m.taskDetailsViewport.Width = rightPanelWidth
 		m.taskDetailsViewport.Height = rightPanelHeight
+
+		// Update help modal viewport if help is currently active
+		if m.IsHelpMode() {
+			modalWidth := Min(m.Window.width-4, 70)   // Maximum 70 chars wide, with margins
+			modalHeight := Min(m.Window.height-4, 25) // Maximum 25 lines high, with margins
+			contentHeight := modalHeight - 4          // Account for border and padding
+			contentWidth := modalWidth - 4            // Account for border and padding
+			
+			m.helpModalViewport.Width = contentWidth
+			m.helpModalViewport.Height = contentHeight
+			// Refresh help content with new width constraints
+			m.updateHelpModalViewport()
+		}
+
+		// Refresh task details content to reflow text at new width
+		m.updateTaskDetailsViewport()
 
 		return m, nil
 
@@ -51,6 +79,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case errorMsg:
 		m.SetError(string(msg))
 		return m, nil
+
+	case tickMsg:
+		// Advance spinner animation if loading
+		if m.Data.loading {
+			m.AdvanceSpinner()
+		}
+		return m, tick() // Continue animation
 	}
 
 	return m, nil

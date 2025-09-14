@@ -1,3 +1,6 @@
+# Release workflow with GoReleaser
+# Builds cross-platform binaries, creates GitHub release, and updates Homebrew tap
+
 name: Release
 
 on:
@@ -5,129 +8,62 @@ on:
     tags:
       - 'v*'
 
-jobs:
-  create-release:
-    name: Create Release
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        
-    - name: Generate changelog
-      id: changelog
-      run: |
-        # Generate changelog from git log since last tag
-        LAST_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
-        if [ -z "$LAST_TAG" ]; then
-          CHANGELOG=$(git log --pretty=format:"* %s (%h)" --no-merges)
-        else
-          CHANGELOG=$(git log $LAST_TAG..HEAD --pretty=format:"* %s (%h)" --no-merges)
-        fi
-        
-        # Save to file for GitHub Actions
-        echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
-        echo "$CHANGELOG" >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
-        
-    - name: Create Release
-      id: create_release
-      run: |
-        # Create the release with GitHub CLI
-        gh release create ${{ github.ref_name }} \
-          --title "LazyArchon ${{ github.ref_name }}" \
-          --notes "## Changes in ${{ github.ref_name }}
-          
-        ${{ steps.changelog.outputs.CHANGELOG }}
-        
-        ## Installation
-        
-        ### Binary Downloads
-        Download the appropriate binary for your platform from the assets below.
-        
-        ### Quick Install (Unix/Linux/macOS)
-        \`\`\`bash
-        # Download and install latest release
-        curl -sSL https://raw.githubusercontent.com/yousfisaad/lazyarchon/main/scripts/install.sh | bash
-        \`\`\`
-        
-        ### Manual Installation
-        1. Download the appropriate binary from the assets below
-        2. Extract the archive (if applicable)
-        3. Move the binary to a directory in your PATH
-        4. Make it executable: \`chmod +x lazyarchon\` (Unix/Linux/macOS)
-        
-        ### Verification
-        \`\`\`bash
-        lazyarchon --version
-        \`\`\`" \
-          --draft=false \
-          --prerelease=false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+env:
+  # For Homebrew tap automation
+  HOMEBREW_TAP_REPO: yousfisaad/homebrew-lazyarchon
 
-  build-and-upload:
-    name: Build and Upload Assets
-    needs: create-release
+jobs:
+  goreleaser:
+    name: GoReleaser Build and Release
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    
+      # Required for Homebrew tap automation
+      packages: write
+
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.24'
-        
-    - name: Cache Go modules
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cache/go-build
-          ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
-    
-    - name: Download dependencies
-      run: go mod download
-    
-    - name: Build release packages
-      run: |
-        export VERSION=${{ github.ref_name }}
-        make release
-        
-    - name: Upload release assets
-      run: |
-        # Install GitHub CLI if not available
-        if ! command -v gh &> /dev/null; then
-          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-          sudo apt update
-          sudo apt install gh
-        fi
-        
-        # Upload all packages
-        for package in bin/packages/*; do
-          gh release upload ${{ github.ref_name }} "$package"
-        done
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
-    - name: Generate checksums
-      run: |
-        cd bin/packages
-        sha256sum * > checksums.txt
-        
-    - name: Upload checksums
-      run: |
-        gh release upload ${{ github.ref_name }} bin/packages/checksums.txt
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run tests before release
+        run: go test ./...
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          # Use latest GoReleaser version
+          version: '~> v2'
+          args: release --clean
+        env:
+          # Required for GitHub releases
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+          # Required for Homebrew tap automation
+          # Add this secret to repository settings: Personal Access Token with repo access
+          HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+
+  # Optional: Notify on successful release
+  notify:
+    name: Notify Release Success
+    needs: goreleaser
+    runs-on: ubuntu-latest
+    if: success()
+
+    steps:
+      - name: Notify completion
+        run: |
+          echo "🎉 Release ${{ github.ref_name }} completed successfully!"
+          echo "📦 Binaries available on GitHub Releases"
+          echo "🍺 Homebrew formula will be updated automatically"
+          echo "📋 Release URL: https://github.com/yousfisaad/lazyarchon/releases/tag/${{ github.ref_name }}"

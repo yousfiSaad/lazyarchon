@@ -2,9 +2,55 @@ package ui
 
 import (
 	"github.com/charmbracelet/lipgloss"
+	"github.com/yousfisaad/lazyarchon/internal/config"
 )
 
-// Color constants
+// Theme holds configurable colors
+type Theme struct {
+	SelectedBG  string
+	BorderColor string
+	StatusColor string
+	HeaderColor string
+	ErrorColor  string
+}
+
+// CurrentTheme holds the active theme (will be initialized from config)
+var CurrentTheme Theme
+
+// InitializeTheme sets up the theme from configuration
+func InitializeTheme(cfg *config.Config) {
+	CurrentTheme = Theme{
+		SelectedBG:  cfg.UI.Theme.SelectedBG,
+		BorderColor: cfg.UI.Theme.BorderColor,
+		StatusColor: cfg.UI.Theme.StatusColor,
+		HeaderColor: cfg.UI.Theme.HeaderColor,
+		ErrorColor:  cfg.UI.Theme.ErrorColor,
+	}
+	
+	// Update styles with new theme
+	updateStylesFromTheme()
+}
+
+// updateStylesFromTheme applies the current theme to all styles
+func updateStylesFromTheme() {
+	// Update header style
+	HeaderStyle = lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color(CurrentTheme.HeaderColor)).
+		Padding(0, 2)
+
+	// Update base panel style
+	BasePanelStyle = lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color(CurrentTheme.BorderColor))
+
+	// Update selected item style
+	SelectedItemStyle = lipgloss.NewStyle().
+		Background(lipgloss.Color(CurrentTheme.SelectedBG)).
+		Bold(true)
+}
+
+// Color constants (fallback defaults)
 const (
 	ColorSelected       = "237" // Background color for selected items
 	ColorBorder         = "62"  // Border color for inactive panels
@@ -91,7 +137,11 @@ func CreatePanelStyle(width, height int) lipgloss.Style {
 func CreateTaskItemStyle(selected bool, statusColor string) lipgloss.Style {
 	style := lipgloss.NewStyle().Foreground(lipgloss.Color(statusColor))
 	if selected {
-		style = style.Background(lipgloss.Color(ColorSelected)).Bold(true)
+		selectedBG := CurrentTheme.SelectedBG
+		if selectedBG == "" {
+			selectedBG = ColorSelected // fallback
+		}
+		style = style.Background(lipgloss.Color(selectedBG)).Bold(true)
 	}
 	return style
 }
@@ -106,7 +156,11 @@ func CreateProjectItemStyle(selected bool, isAllTasks bool) lipgloss.Style {
 	}
 
 	if selected {
-		baseStyle = baseStyle.Background(lipgloss.Color(ColorSelected)).Bold(true)
+		selectedBG := CurrentTheme.SelectedBG
+		if selectedBG == "" {
+			selectedBG = ColorSelected // fallback
+		}
+		baseStyle = baseStyle.Background(lipgloss.Color(selectedBG)).Bold(true)
 	}
 
 	return baseStyle
