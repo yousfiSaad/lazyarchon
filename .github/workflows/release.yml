@@ -6,7 +6,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 env:
   # For Homebrew tap automation
@@ -30,7 +30,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: "1.24"
           cache: true
 
       - name: Download dependencies
@@ -40,17 +40,13 @@ jobs:
         run: go test ./...
 
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v6
+        uses: goreleaser/goreleaser-action@v2
         with:
           # Use latest GoReleaser version
-          version: '~> v2'
+          version: latest
           args: release --clean
         env:
-          # Required for GitHub releases
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-          # Required for Homebrew tap automation
-          # Add this secret to repository settings: Personal Access Token with repo access
           HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
 
   # Optional: Notify on successful release
