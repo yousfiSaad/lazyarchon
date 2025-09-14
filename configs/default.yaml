@@ -1,0 +1,36 @@
+# LazyArchon Default Configuration
+
+# Server configuration
+server:
+  url: "http://localhost:8181"
+  timeout: 30s
+  api_key: ""
+
+# UI configuration
+ui:
+  theme:
+    # Color scheme
+    selected_bg: "237"
+    border_color: "62"
+    status_color: "205"
+    header_color: "39"
+    error_color: "196"
+    
+  # Display settings
+  display:
+    show_completed_tasks: true
+    default_sort_mode: "status+priority"  # status+priority, priority, time, alphabetical
+    auto_refresh_interval: 0  # 0 = disabled, value in seconds
+    
+  # Keybindings (future enhancement)
+  keybindings:
+    quit: ["q", "ctrl+c"]
+    refresh: ["r", "F5"]
+    projects: ["p"]
+    all_tasks: ["a"]
+
+# Development settings
+development:
+  debug: false
+  log_level: "info"  # debug, info, warn, error
+  enable_profiling: false
