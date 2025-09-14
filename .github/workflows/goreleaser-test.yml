@@ -1,0 +1,87 @@
+# Test GoReleaser configuration without publishing
+# Runs on PRs to validate .goreleaser.yml and build process
+
+name: GoReleaser Test
+
+on:
+  pull_request:
+    paths:
+      - '.goreleaser.yml'
+      - '.github/workflows/release.yml'
+      - '.github/workflows/goreleaser-test.yml'
+      - 'go.mod'
+      - 'go.sum'
+      - 'cmd/**'
+      - 'internal/**'
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Test type'
+        required: true
+        default: 'check'
+        type: choice
+        options:
+        - check
+        - build-snapshot
+
+jobs:
+  goreleaser-check:
+    name: GoReleaser Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Check GoReleaser configuration
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: '~> v2'
+          args: check
+
+  goreleaser-build-test:
+    name: GoReleaser Build Test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.test_type == 'build-snapshot'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run tests
+        run: go test ./...
+
+      - name: Build snapshot with GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: '~> v2'
+          args: build --snapshot --clean
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: snapshot-builds
+          path: dist/
+          retention-days: 7

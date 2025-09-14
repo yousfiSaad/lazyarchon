@@ -2,15 +2,20 @@ package ui
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/yousfisaad/lazyarchon/internal/archon"
-	"sort"
+	"github.com/yousfisaad/lazyarchon/internal/config"
 )
 
 // NewModel creates a new application model
-func NewModel() Model {
-	// Connect to local Archon server
-	client := archon.NewClient("http://localhost:8181", "")
+func NewModel(cfg *config.Config) Model {
+	// Initialize theme from configuration
+	InitializeTheme(cfg)
+	
+	// Connect to Archon server using configuration
+	client := archon.NewClient(cfg.GetServerURL(), cfg.GetAPIKey())
 
 	// Create viewport for task details with reasonable defaults
 	// Will be resized when window size is available
@@ -24,6 +29,7 @@ func NewModel() Model {
 
 	return Model{
 		client: client,
+		config: cfg,
 		Window: WindowState{
 			activeView: LeftPanel, // Default to task list panel active
 		},
@@ -31,8 +37,9 @@ func NewModel() Model {
 			selectedIndex: 0,
 		},
 		Data: DataState{
-			loading:  true,
-			sortMode: SortStatusPriority, // Default to status+priority sorting
+			loading:        true,
+			loadingMessage: "Connecting to Archon server...",
+			sortMode:       parseSortModeFromConfig(cfg.GetDefaultSortMode()),
 		},
 		Modals: ModalState{
 			featureMode: FeatureModeState{
@@ -45,7 +52,7 @@ func NewModel() Model {
 }
 
 // GetSortedTasks returns the tasks sorted according to the current sort mode
-// This method applies both project and feature filtering before sorting
+// This method applies project, search, and feature filtering before sorting
 func (m Model) GetSortedTasks() []archon.Task {
 	filteredTasks := m.Data.tasks
 
@@ -58,6 +65,31 @@ func (m Model) GetSortedTasks() []archon.Task {
 			}
 		}
 		filteredTasks = projectFilteredTasks
+	}
+
+	// Note: Search highlighting is now handled in rendering instead of filtering
+	// This allows users to see all tasks with matches highlighted
+
+	// Apply custom status filters (if active)
+	if m.Data.statusFilterActive && m.Data.statusFilters != nil {
+		var statusFilteredTasks []archon.Task
+		for _, task := range filteredTasks {
+			if enabled, exists := m.Data.statusFilters[task.Status]; exists && enabled {
+				statusFilteredTasks = append(statusFilteredTasks, task)
+			}
+		}
+		filteredTasks = statusFilteredTasks
+	} else {
+		// Apply completed tasks filter based on configuration (only if no custom status filtering)
+		if !m.config.ShouldShowCompletedTasks() {
+			var nonCompletedTasks []archon.Task
+			for _, task := range filteredTasks {
+				if task.Status != "done" {
+					nonCompletedTasks = append(nonCompletedTasks, task)
+				}
+			}
+			filteredTasks = nonCompletedTasks
+		}
 	}
 
 	// Apply feature filter (if any features are explicitly disabled)
@@ -288,4 +320,99 @@ func (m Model) GetFeatureTaskCount(feature string) int {
 	}
 
 	return count
+}
+
+// updateSearchMatches finds tasks that match the current search query and updates match tracking
+func (m *Model) updateSearchMatches() {
+	// Clear previous matches
+	m.Data.matchingTaskIndices = nil
+	m.Data.currentMatchIndex = 0
+	m.Data.totalMatches = 0
+
+	if !m.Data.searchActive || m.Data.searchQuery == "" {
+		return
+	}
+
+	sortedTasks := m.GetSortedTasks()
+	searchQuery := strings.ToLower(strings.TrimSpace(m.Data.searchQuery))
+
+	// Find all tasks that match the search query (title only)
+	for i, task := range sortedTasks {
+		titleMatch := strings.Contains(strings.ToLower(task.Title), searchQuery)
+
+		if titleMatch {
+			m.Data.matchingTaskIndices = append(m.Data.matchingTaskIndices, i)
+		}
+	}
+
+	m.Data.totalMatches = len(m.Data.matchingTaskIndices)
+
+	// Update current match index based on current task selection
+	if m.Data.totalMatches > 0 {
+		// Find current selection in match list
+		for i, matchIndex := range m.Data.matchingTaskIndices {
+			if matchIndex == m.Navigation.selectedIndex {
+				m.Data.currentMatchIndex = i
+				return
+			}
+		}
+		// If current selection is not a match, reset to first match
+		m.Data.currentMatchIndex = 0
+	}
+}
+
+// nextSearchMatch navigates to the next search match (n command)
+func (m *Model) nextSearchMatch() {
+	if m.Data.totalMatches == 0 {
+		return
+	}
+
+	// Move to next match
+	m.Data.currentMatchIndex = (m.Data.currentMatchIndex + 1) % m.Data.totalMatches
+
+	// Update task selection to the new match
+	newIndex := m.Data.matchingTaskIndices[m.Data.currentMatchIndex]
+	m.Navigation.selectedIndex = newIndex
+
+	// Reset task details scroll for new task
+	m.taskDetailsViewport.GotoTop()
+	m.updateTaskDetailsViewport()
+}
+
+// previousSearchMatch navigates to the previous search match (N command)
+func (m *Model) previousSearchMatch() {
+	if m.Data.totalMatches == 0 {
+		return
+	}
+
+	// Move to previous match (wrap around)
+	if m.Data.currentMatchIndex == 0 {
+		m.Data.currentMatchIndex = m.Data.totalMatches - 1
+	} else {
+		m.Data.currentMatchIndex--
+	}
+
+	// Update task selection to the new match
+	newIndex := m.Data.matchingTaskIndices[m.Data.currentMatchIndex]
+	m.Navigation.selectedIndex = newIndex
+
+	// Reset task details scroll for new task
+	m.taskDetailsViewport.GotoTop()
+	m.updateTaskDetailsViewport()
+}
+
+// parseSortModeFromConfig converts config sort mode string to sort mode constant
+func parseSortModeFromConfig(sortModeStr string) int {
+	switch sortModeStr {
+	case "status+priority":
+		return SortStatusPriority
+	case "priority":
+		return SortPriorityOnly
+	case "time":
+		return SortTimeCreated
+	case "alphabetical":
+		return SortAlphabetical
+	default:
+		return SortStatusPriority // Default fallback
+	}
 }

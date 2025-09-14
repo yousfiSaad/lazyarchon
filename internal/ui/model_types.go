@@ -3,6 +3,7 @@ package ui
 import (
 	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/yousfisaad/lazyarchon/internal/archon"
+	"github.com/yousfisaad/lazyarchon/internal/config"
 	"time"
 )
 
@@ -71,6 +72,14 @@ type TaskEditModalState struct {
 	currentField   string // Which field is being edited (extensible for future)
 }
 
+// StatusFilterModalState manages status filter modal state
+type StatusFilterModalState struct {
+	active           bool            // Whether modal is open
+	selectedIndex    int             // Currently highlighted status
+	selectedStatuses map[string]bool // Which statuses are enabled
+	backupStatuses   map[string]bool // Backup for cancel functionality
+}
+
 // ModalState groups all modal-related state
 type ModalState struct {
 	help         HelpModalState
@@ -79,6 +88,7 @@ type ModalState struct {
 	confirmation ConfirmationModalState
 	featureMode  FeatureModeState
 	taskEdit     TaskEditModalState
+	statusFilter StatusFilterModalState
 }
 
 // NavigationState manages movement and scrolling
@@ -93,14 +103,35 @@ type DataState struct {
 	projects          []archon.Project
 	selectedProjectID *string // nil = "All tasks", otherwise project UUID
 	loading           bool
+	loadingMessage    string // Context-specific loading message
 	error             string
 	sortMode          int
+	spinnerIndex      int    // Current spinner animation frame
+	lastRetryError    string // Last error for retry functionality
+	connected         bool   // Connection status to Archon server
+
+	// Search functionality
+	searchQuery       string   // Current search query
+	searchHistory     []string // Recent search queries
+	searchActive      bool     // Whether search is currently active
+	searchMode        bool     // Whether user is actively typing in status bar search
+	searchInput       string   // Current real-time search input (while typing)
+
+	// Match tracking for n/N navigation
+	matchingTaskIndices []int // Indices of tasks that match the search (in sorted order)
+	currentMatchIndex   int   // Current position in the match list (0-based)
+	totalMatches        int   // Total number of matching tasks
+
+	// Status filtering
+	statusFilters     map[string]bool // Status visibility (todo, doing, review, done)
+	statusFilterActive bool           // Whether custom status filtering is active
 }
 
 // Model represents the state of the application using composition
 type Model struct {
 	// Core infrastructure
 	client *archon.Client
+	config *config.Config
 
 	// Feature-focused state groups
 	Window     WindowState

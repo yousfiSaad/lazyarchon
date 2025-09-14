@@ -14,6 +14,10 @@ func (m *Model) SetSelectedProject(projectID *string) {
 	m.Data.selectedProjectID = projectID
 	m.Navigation.selectedIndex = 0  // Reset task selection
 	m.taskDetailsViewport.GotoTop() // Reset scroll
+
+	// Reset feature filters when changing projects
+	// This ensures users see all features in the new project context
+	m.Modals.featureMode.selectedFeatures = nil
 }
 
 // CycleSortMode cycles to the next sort mode
@@ -33,26 +37,91 @@ func (m *Model) CycleSortModePrevious() {
 // SetError sets the error state
 func (m *Model) SetError(err string) {
 	m.Data.loading = false
+	m.Data.loadingMessage = ""
 	m.Data.error = err
+	m.Data.lastRetryError = err // Store for retry functionality
 }
 
 // ClearError clears the error state
 func (m *Model) ClearError() {
 	m.Data.error = ""
+	m.Data.lastRetryError = ""
 }
 
-// SetLoading sets the loading state
+// SetLoading sets the loading state with optional context message
 func (m *Model) SetLoading(loading bool) {
 	m.Data.loading = loading
 	if loading {
 		m.ClearError()
+	} else {
+		m.Data.loadingMessage = ""
 	}
+}
+
+// SetLoadingWithMessage sets loading state with specific context message
+func (m *Model) SetLoadingWithMessage(loading bool, message string) {
+	m.Data.loading = loading
+	m.Data.loadingMessage = message
+	if loading {
+		m.ClearError()
+	} else {
+		m.Data.loadingMessage = ""
+	}
+}
+
+// GetLoadingSpinner returns the current spinner character
+func (m *Model) GetLoadingSpinner() string {
+	spinnerChars := []string{"|", "/", "-", "\\"}
+	return spinnerChars[m.Data.spinnerIndex%len(spinnerChars)]
+}
+
+// AdvanceSpinner advances the spinner animation to the next frame
+func (m *Model) AdvanceSpinner() {
+	m.Data.spinnerIndex++
+}
+
+// FormatUserFriendlyError converts technical errors to user-friendly messages
+func (m *Model) FormatUserFriendlyError(err string) string {
+	if strings.Contains(err, "connection refused") || strings.Contains(err, "no such host") {
+		m.Data.connected = false
+		return "Unable to connect to Archon server. Check if it's running on localhost:8181"
+	}
+	if strings.Contains(err, "timeout") {
+		m.Data.connected = false
+		return "Connection timeout. The server may be slow or unreachable"
+	}
+	if strings.Contains(err, "status 401") || strings.Contains(err, "status 403") {
+		return "Authentication failed. Check your API key configuration"
+	}
+	if strings.Contains(err, "status 404") {
+		return "Resource not found. The task or project may have been deleted"
+	}
+	if strings.Contains(err, "status 500") {
+		return "Server error. Please try again or contact support"
+	}
+
+	// Return the original error if no specific pattern matches
+	return err
+}
+
+// SetConnectionStatus sets the connection status
+func (m *Model) SetConnectionStatus(connected bool) {
+	m.Data.connected = connected
+}
+
+// GetConnectionStatusText returns a text indicator for connection status
+func (m *Model) GetConnectionStatusText() string {
+	if m.Data.connected {
+		return "●" // Connected
+	}
+	return "○" // Disconnected
 }
 
 // UpdateTasks updates the task list and adjusts selection bounds
 func (m *Model) UpdateTasks(tasks []archon.Task) {
 	m.Data.loading = false
 	m.Data.tasks = tasks
+	m.Data.connected = true // Mark as connected on successful data load
 	m.ClearError()
 
 	// Apply sorting and adjust selectedIndex if needed
@@ -70,6 +139,7 @@ func (m *Model) UpdateTasks(tasks []archon.Task) {
 // UpdateProjects updates the project list and validates current selection
 func (m *Model) UpdateProjects(projects []archon.Project) {
 	m.Data.projects = projects
+	m.Data.connected = true // Mark as connected on successful data load
 
 	// Reset project selection if selected project no longer exists
 	if m.Data.selectedProjectID != nil {
@@ -300,9 +370,13 @@ func (m *Model) updateTaskDetailsViewport() {
 	allContent = append(allContent, DetailHeaderStyle.Render("Task Details"))
 	allContent = append(allContent, "")
 
-	// Title with proper styling
+	// Title with proper styling and search highlighting
 	allContent = append(allContent, DetailHeaderStyle.Render("Title:"))
-	titleLines := strings.Split(wordWrap(task.Title, width-6), "\n")
+	title := task.Title
+	if m.Data.searchActive && m.Data.searchQuery != "" {
+		title = highlightSearchTerms(task.Title, m.Data.searchQuery)
+	}
+	titleLines := strings.Split(wordWrap(title, width-6), "\n")
 	allContent = append(allContent, titleLines...)
 	allContent = append(allContent, "")
 
@@ -319,7 +393,7 @@ func (m *Model) updateTaskDetailsViewport() {
 	}
 	allContent = append(allContent, "")
 
-	// Description with markdown rendering
+	// Description with markdown rendering (no search highlighting since search is title-only)
 	if task.Description != "" {
 		allContent = append(allContent, DetailHeaderStyle.Render("Description:"))
 		descriptionContent := renderMarkdown(task.Description, width-6)

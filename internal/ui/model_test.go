@@ -2,12 +2,32 @@ package ui
 
 import (
 	"testing"
+	"time"
 
 	"github.com/yousfisaad/lazyarchon/internal/archon"
+	"github.com/yousfisaad/lazyarchon/internal/config"
 )
 
+// createTestConfig creates a config for testing
+func createTestConfig() *config.Config {
+	return &config.Config{
+		Server: config.ServerConfig{
+			URL:     "http://localhost:8181",
+			Timeout: 30 * time.Second,
+			APIKey:  "",
+		},
+		UI: config.UIConfig{
+			Display: config.DisplayConfig{
+				ShowCompletedTasks:  true,
+				DefaultSortMode:     "status+priority",
+				AutoRefreshInterval: 0,
+			},
+		},
+	}
+}
+
 func TestNewModel(t *testing.T) {
-	model := NewModel()
+	model := NewModel(createTestConfig())
 
 	// Test default values
 	if model.Navigation.selectedIndex != 0 {
@@ -28,7 +48,7 @@ func TestNewModel(t *testing.T) {
 }
 
 func TestGetSortedTasks(t *testing.T) {
-	model := NewModel()
+	model := NewModel(createTestConfig())
 
 	// Test with empty tasks
 	sorted := model.GetSortedTasks()
@@ -55,7 +75,7 @@ func TestGetSortedTasks(t *testing.T) {
 }
 
 func TestSetSelectedProject(t *testing.T) {
-	model := NewModel()
+	model := NewModel(createTestConfig())
 
 	// Test setting project ID
 	projectID := "test-project-123"
@@ -77,7 +97,7 @@ func TestSetSelectedProject(t *testing.T) {
 }
 
 func TestCycleSortMode(t *testing.T) {
-	model := NewModel()
+	model := NewModel(createTestConfig())
 
 	// Test cycling through sort modes
 	initialMode := model.Data.sortMode
