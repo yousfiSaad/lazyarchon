@@ -76,25 +76,34 @@ jobs:
     
     - name: Download dependencies
       run: go mod download
-    
+
+    - name: Install GoReleaser
+      uses: goreleaser/goreleaser-action@v6
+      with:
+        install-only: true
+
     - name: Build for current platform
-      run: make build
+      run: goreleaser build --single-target --snapshot --clean
       
     - name: Test binary (Unix)
       if: runner.os != 'Windows'
       run: |
-        ./bin/lazyarchon --version
-        ./bin/lazyarchon --help
-        
+        # Find the built binary in dist directory
+        BINARY_PATH=$(find dist -name "lazyarchon" -type f | head -1)
+        $BINARY_PATH --version
+        $BINARY_PATH --help
+
     - name: Test binary (Windows)
       if: runner.os == 'Windows'
       run: |
-        .\bin\lazyarchon.exe --version
-        .\bin\lazyarchon.exe --help
+        # Find the built binary in dist directory
+        $BINARY_PATH = Get-ChildItem -Path "dist" -Name "lazyarchon.exe" -Recurse | Select-Object -First 1
+        & "dist\$BINARY_PATH" --version
+        & "dist\$BINARY_PATH" --help
     
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
         name: lazyarchon-${{ runner.os }}
-        path: bin/lazyarchon*
+        path: dist/*/lazyarchon*
         retention-days: 30
