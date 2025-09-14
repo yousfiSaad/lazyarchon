@@ -31,6 +31,11 @@ func (m Model) HandleKeyPress(key string) (Model, tea.Cmd) {
 		return m.handleTaskEditModeInput(key)
 	}
 
+	// Handle inline search input (when search mode is active)
+	if m.Data.searchMode {
+		return m.handleInlineSearchInput(key)
+	}
+
 	// Handle multi-key sequences (like 'gg')
 	if newM, cmd, handled := m.handleMultiKeySequence(key); handled {
 		return newM, cmd
@@ -50,6 +55,8 @@ func (m Model) HandleKeyPress(key string) (Model, tea.Cmd) {
 				m.Modals.projectMode.active = false
 			} else if m.IsTaskEditModeActive() {
 				m.SetTaskEditMode(false)
+			} else if m.Data.searchMode {
+				m.CancelInlineSearch()
 			}
 			return m, nil
 		} else {
@@ -73,7 +80,7 @@ func (m Model) HandleKeyPress(key string) (Model, tea.Cmd) {
 		// Show all tasks - works from any mode
 		m.SetSelectedProject(nil)
 		m.Modals.projectMode.active = false
-		m.SetLoading(true)
+		m.SetLoadingWithMessage(true, "Loading all tasks...")
 		return m, LoadTasksWithProject(m.client, m.Data.selectedProjectID)
 
 	case "h":
@@ -103,7 +110,7 @@ func (m Model) HandleKeyPress(key string) (Model, tea.Cmd) {
 				m.SetSelectedProject(nil)
 			}
 			m.Modals.projectMode.active = false
-			m.SetLoading(true)
+			m.SetLoadingWithMessage(true, "Loading project tasks...")
 			return m, LoadTasksWithProject(m.client, m.Data.selectedProjectID)
 		} else if !m.Modals.projectMode.active {
 			// In task view mode, l switches to right panel
@@ -122,7 +129,7 @@ func (m Model) HandleKeyPress(key string) (Model, tea.Cmd) {
 				m.SetSelectedProject(nil)
 			}
 			m.Modals.projectMode.active = false
-			m.SetLoading(true)
+			m.SetLoadingWithMessage(true, "Loading project tasks...")
 			return m, LoadTasksWithProject(m.client, m.Data.selectedProjectID)
 		}
 		return m, nil
@@ -221,12 +228,85 @@ func (m Model) HandleKeyPress(key string) (Model, tea.Cmd) {
 		}
 		return m, nil
 
-	// Refresh
+	// Inline search activation
+	case "/", "ctrl+f":
+		if !m.Modals.projectMode.active && !m.Data.searchMode {
+			m.ActivateInlineSearch()
+		}
+		return m, nil
+
+	// Clear search
+	case "ctrl+x", "ctrl+l":
+		if !m.Modals.projectMode.active && m.Data.searchActive {
+			m.ClearSearch()
+		}
+		return m, nil
+
+	// Refresh/Retry
 	case "r", "F5":
-		m.SetLoading(true)
+		if m.Data.error != "" {
+			// Retry last failed operation
+			m.ClearError()
+			m.SetLoadingWithMessage(true, "Retrying...")
+		} else {
+			// Regular refresh
+			m.SetLoadingWithMessage(true, "Refreshing data...")
+		}
 		return m, RefreshData(m.client, m.Data.selectedProjectID)
 
+	// Search navigation (n/N keys for next/previous match)
+	case "n":
+		if !m.Modals.projectMode.active && m.Data.searchActive && m.Data.totalMatches > 0 {
+			m.nextSearchMatch()
+		}
+		return m, nil
+
+	case "N":
+		if !m.Modals.projectMode.active && m.Data.searchActive && m.Data.totalMatches > 0 {
+			m.previousSearchMatch()
+		}
+		return m, nil
+
 	default:
+		return m, nil
+	}
+}
+
+// handleInlineSearchInput processes input when inline search mode is active
+func (m Model) handleInlineSearchInput(key string) (Model, tea.Cmd) {
+	switch key {
+	case "esc":
+		// Cancel search and revert to previous state
+		m.CancelInlineSearch()
+		return m, nil
+
+	case "enter":
+		// Commit current search input
+		m.CommitInlineSearch()
+		return m, nil
+
+	case "backspace":
+		// Remove last character
+		if len(m.Data.searchInput) > 0 {
+			m.Data.searchInput = m.Data.searchInput[:len(m.Data.searchInput)-1]
+			// Update search in real-time
+			m.UpdateRealTimeSearch()
+		}
+		return m, nil
+
+	case "ctrl+u":
+		// Clear entire input
+		m.Data.searchInput = ""
+		m.UpdateRealTimeSearch()
+		return m, nil
+
+	default:
+		// Handle printable characters
+		if len(key) == 1 && key[0] >= 32 && key[0] <= 126 {
+			m.Data.searchInput += key
+			// Update search in real-time
+			m.UpdateRealTimeSearch()
+		}
 		return m, nil
 	}
 }

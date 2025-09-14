@@ -1,5 +1,9 @@
 package ui
 
+import (
+	"strings"
+)
+
 // Panel and View Management Methods
 
 // IsLeftPanelActive returns true if the left panel (task list) is currently active
@@ -158,10 +162,12 @@ func (m Model) IsFeatureModeActive() bool {
 func (m *Model) SetFeatureMode(show bool) {
 	m.Modals.featureMode.active = show
 	if show {
-		// Save backup of current state before opening modal
+		// Initialize modal only if this is the first time or no features are set
+		if m.Modals.featureMode.selectedFeatures == nil || len(m.Modals.featureMode.selectedFeatures) == 0 {
+			m.InitFeatureModal()
+		}
+		// Save backup of current state before opening modal (after potential initialization)
 		m.backupFeatureState()
-		// Initialize modal when opening
-		m.InitFeatureModal()
 	}
 }
 
@@ -198,9 +204,156 @@ func (m *Model) SetTaskEditMode(show bool) {
 	}
 }
 
+// Inline Search Management Methods
+
+// ActivateInlineSearch enters inline search mode in the status bar
+func (m *Model) ActivateInlineSearch() {
+	m.Data.searchMode = true
+	m.Data.searchInput = m.Data.searchQuery // Start with current search
+}
+
+// CancelInlineSearch exits search mode without applying changes
+func (m *Model) CancelInlineSearch() {
+	m.Data.searchMode = false
+	m.Data.searchInput = ""
+}
+
+// CommitInlineSearch applies the current search input and exits search mode
+func (m *Model) CommitInlineSearch() {
+	m.SetSearchQuery(m.Data.searchInput)
+	m.Data.searchMode = false
+	m.Data.searchInput = ""
+}
+
+// UpdateRealTimeSearch applies search filtering as user types
+func (m *Model) UpdateRealTimeSearch() {
+	// Temporarily update search query for real-time filtering
+	m.SetSearchQuery(m.Data.searchInput)
+}
+
+// SetSearchQuery sets the current search query and updates search state
+func (m *Model) SetSearchQuery(query string) {
+	// Trim whitespace
+	query = strings.TrimSpace(query)
+
+	// Update search state
+	m.Data.searchQuery = query
+	m.Data.searchActive = (query != "")
+
+	// Add to search history if non-empty and not duplicate
+	if query != "" {
+		m.addToSearchHistory(query)
+	}
+
+	// Update search matches for n/N navigation
+	m.updateSearchMatches()
+
+	// Reset task selection since search changed
+	m.Navigation.selectedIndex = 0
+	m.taskDetailsViewport.GotoTop()
+	m.updateTaskDetailsViewport()
+}
+
+// ClearSearch clears the current search query
+func (m *Model) ClearSearch() {
+	m.Data.searchQuery = ""
+	m.Data.searchActive = false
+
+	// Update search matches (will clear them since search is now inactive)
+	m.updateSearchMatches()
+
+	m.Navigation.selectedIndex = 0
+	m.taskDetailsViewport.GotoTop()
+	m.updateTaskDetailsViewport()
+}
+
+// addToSearchHistory adds a query to search history, avoiding duplicates
+func (m *Model) addToSearchHistory(query string) {
+	// Remove existing instance if present
+	for i, existing := range m.Data.searchHistory {
+		if existing == query {
+			// Remove existing instance
+			m.Data.searchHistory = append(m.Data.searchHistory[:i], m.Data.searchHistory[i+1:]...)
+			break
+		}
+	}
+
+	// Add to front of history
+	m.Data.searchHistory = append([]string{query}, m.Data.searchHistory...)
+
+	// Limit history size
+	if len(m.Data.searchHistory) > 10 {
+		m.Data.searchHistory = m.Data.searchHistory[:10]
+	}
+}
+
 // Helper Methods
+
+// Status Filter Modal Management Methods
+
+// IsStatusFilterModeActive returns true if the status filter modal is currently open
+func (m Model) IsStatusFilterModeActive() bool {
+	return m.Modals.statusFilter.active
+}
+
+// SetStatusFilterMode toggles the status filter modal state
+func (m *Model) SetStatusFilterMode(show bool) {
+	m.Modals.statusFilter.active = show
+	if show {
+		// Initialize with current status filters or default to all enabled
+		if m.Data.statusFilters == nil {
+			m.Modals.statusFilter.selectedStatuses = map[string]bool{
+				"todo": true, "doing": true, "review": true, "done": true,
+			}
+		} else {
+			// Copy current filters
+			m.Modals.statusFilter.selectedStatuses = make(map[string]bool)
+			for status, enabled := range m.Data.statusFilters {
+				m.Modals.statusFilter.selectedStatuses[status] = enabled
+			}
+		}
+
+		// Backup for cancel functionality
+		m.Modals.statusFilter.backupStatuses = make(map[string]bool)
+		for status, enabled := range m.Modals.statusFilter.selectedStatuses {
+			m.Modals.statusFilter.backupStatuses[status] = enabled
+		}
+
+		m.Modals.statusFilter.selectedIndex = 0
+	}
+}
+
+// ApplyStatusFilters applies the status filter selections
+func (m *Model) ApplyStatusFilters() {
+	// Check if all statuses are enabled (default state)
+	allEnabled := true
+	for _, enabled := range m.Modals.statusFilter.selectedStatuses {
+		if !enabled {
+			allEnabled = false
+			break
+		}
+	}
+
+	if allEnabled {
+		// All statuses enabled = no custom filtering
+		m.Data.statusFilters = nil
+		m.Data.statusFilterActive = false
+	} else {
+		// Copy to data state
+		m.Data.statusFilters = make(map[string]bool)
+		for status, enabled := range m.Modals.statusFilter.selectedStatuses {
+			m.Data.statusFilters[status] = enabled
+		}
+		m.Data.statusFilterActive = true
+	}
+
+	// Reset task selection since filtering changed
+	m.Navigation.selectedIndex = 0
+	m.taskDetailsViewport.GotoTop()
+	m.updateTaskDetailsViewport()
+}
 
 // HasActiveModal returns true if any modal is currently active
 func (m Model) HasActiveModal() bool {
-	return m.IsHelpMode() || m.IsStatusChangeMode() || m.Modals.projectMode.active || m.IsConfirmationMode() || m.IsFeatureModeActive() || m.IsTaskEditModeActive()
+	return m.IsHelpMode() || m.IsStatusChangeMode() || m.Modals.projectMode.active || m.IsConfirmationMode() || m.IsFeatureModeActive() || m.IsTaskEditModeActive() || m.IsStatusFilterModeActive()
 }

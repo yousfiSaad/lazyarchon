@@ -1,12 +1,16 @@
 # LazyArchon
 
-> A terminal-based task management TUI for Archon, inspired by lazygit/lazydocker
+> A terminal-based task management TUI for Archon, inspired by [lazygit](https://github.com/jesseduffield/lazygit)/[lazydocker](https://github.com/jesseduffield/lazydocker)
 
 [![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?style=flat&logo=go)](https://golang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg)]()
 
-LazyArchon is a powerful terminal user interface (TUI) for managing Archon projects and tasks. Built with [Bubble Tea](https://github.com/charmbracelet/bubbletea), it provides a vim-like navigation experience for efficient task management directly from your terminal.
+[![Homebrew](https://img.shields.io/badge/Homebrew-Available-orange?style=flat&logo=homebrew)](https://github.com/yousfisaad/homebrew-lazyarchon)
+[![Go Install](https://img.shields.io/badge/Go%20Install-Latest-blue?style=flat&logo=go)](https://pkg.go.dev/github.com/yousfisaad/lazyarchon)
+[![Script Install](https://img.shields.io/badge/Script%20Install-curl%20%7C%20bash-green?style=flat&logo=gnu-bash)](https://raw.githubusercontent.com/yousfisaad/lazyarchon/main/scripts/install.sh)
+
+LazyArchon is a powerful terminal user interface (TUI) for managing [Archon](https://github.com/coleam00/Archon) projects and tasks. Built with [Bubble Tea](https://github.com/charmbracelet/bubbletea), it provides a vim-like navigation experience for efficient task management directly from your terminal.
 
 ## ✨ Features
 
@@ -20,21 +24,27 @@ LazyArchon is a powerful terminal user interface (TUI) for managing Archon proje
 - **Task Viewing**: View task details, status, assignee, and metadata
 - **Task Status Management**: Change task status with interactive modal (press `s` key)
 - **Task Feature Management**: Edit and assign features to tasks (press `e` key)
-- **Feature-based Filtering**: Filter tasks by features with multi-select modal (press `f` key)
+- **Feature-based Filtering**: Filter tasks by features with multi-select modal (press `f` key) and high-contrast checkboxes (■/□)
 - **Task Status Indicators**: Visual symbols for todo/doing/review/done states
 - **Markdown Rendering**: Rich text display for task descriptions with syntax highlighting
 
 **Navigation & UX**
 - **Comprehensive Help System**: Press `?` for modal with all shortcuts organized by category
-- **Clean Status Bar**: Minimal design showing only essential info (active panel, help, quit)
+- **Enhanced Status Bar**: Displays comprehensive keyboard shortcuts contextually based on active modal
 - **Active Panel System**: Vim-style `h/l` keys to switch between task list and details panels
 - **Progressive Scrolling**: Three speed levels - `j/k` (precise), `J/K` (fast), `ctrl+u/d` (half-page)
-- **Unified Navigation**: Same scrolling system works in main interface AND help modal
+- **Advanced Modal Navigation**: Full vim navigation in feature modal (gg/G, J/K, ctrl+u/d, home/end)
+- **Unified Navigation**: Same scrolling system works in main interface AND all modals
 - **Visual Panel Feedback**: Active panels highlighted with bright borders, inactive dimmed
 - **Project Selection Mode**: Press `p` to browse and select projects
 - **Smart Scroll Bars**: Visual position indicators with percentage feedback
-- **Responsive Layout**: Adapts to terminal size with proper content wrapping
+- **Responsive Design**: Real-time window resize handling with automatic content reflow
+- **Filter Preservation**: Feature modal preserves selected filters when reopened
 - **Error Handling**: Graceful API failure handling with retry options
+- **Enhanced Search System**: Inline search with real-time highlighting and vim-style navigation
+- **Text Search & Highlighting**: Search task titles with yellow highlighting of matching terms
+- **Search Navigation**: n/N keys for cycling through search results with position indicators
+- **Multiple Clear Options**: Ctrl+L or Ctrl+X to clear active searches
 
 **Data Integration**
 - **API Connectivity**: Fetches current data from Archon API server
@@ -57,16 +67,22 @@ LazyArchon is a powerful terminal user interface (TUI) for managing Archon proje
 - Real-time collaboration indicators
 
 **Advanced Features**
-- Text-based search (beyond feature filtering)
 - Configuration files and themes
 - Offline mode and caching
-- Enhanced help system and tutorials
+- Enhanced task editing and creation forms
 
 ## 🚀 Installation
 
+**Quick Install:**
+```bash
+curl -sSL https://raw.githubusercontent.com/yousfisaad/lazyarchon/main/scripts/install.sh | bash
+```
+
+**Other Methods:** Go install • Homebrew • Binary downloads • Build from source
+
 ### Prerequisites
-- **Go 1.24+** (required for building)
-- **Running Archon API** server on `localhost:8181`
+- **Go 1.24+** (required for go install and building from source)
+- **Running [Archon](https://github.com/coleam00/Archon) API** server on `localhost:8181`
 - **Note**: LazyArchon supports comprehensive task management - view, browse, update status, and manage features
 
 ### ⚠️ Current Limitations
@@ -79,8 +95,8 @@ The following features are **not yet available**:
 - ❌ **Real-time Updates**: No WebSocket connection (manual refresh required for external changes)
 - ❌ **User Authentication**: No login/auth system (uses anonymous API access)
 - ❌ **Offline Mode**: Requires active API connection
-- ❌ **Configuration**: No config files or customization options yet
-- ❌ **Text Search**: No search functionality (only feature filtering available)
+- ✅ **Configuration**: Config files and customization options available
+- ✅ **Text Search**: Enhanced inline search with real-time highlighting and n/N navigation
 
 **What LazyArchon IS good for:**
 - ✅ Browsing and exploring your Archon tasks and projects
@@ -91,50 +107,220 @@ The following features are **not yet available**:
 - ✅ Reading task details and descriptions in a clean terminal interface
 - ✅ Navigating large task lists efficiently with vim-like controls
 
-### Build from Source
+### Method 1: One-Line Install (Recommended)
 
-**Using Makefile (Recommended)**
+**Install latest version:**
+```bash
+curl -sSL https://raw.githubusercontent.com/yousfisaad/lazyarchon/main/scripts/install.sh | bash
+```
+
+**System-wide install (requires sudo):**
+```bash
+curl -sSL https://raw.githubusercontent.com/yousfisaad/lazyarchon/main/scripts/install.sh | bash -s -- --dir /usr/local/bin
+```
+
+**Install specific version:**
+```bash
+curl -sSL https://raw.githubusercontent.com/yousfisaad/lazyarchon/main/scripts/install.sh | bash -s -- --version v1.0.0
+```
+
+**Verification:**
+```bash
+lazyarchon --version  # Check version
+which lazyarchon      # Check installation path
+lazyarchon --help     # Test basic functionality
+```
+
+**Uninstall:**
+```bash
+curl -sSL https://raw.githubusercontent.com/yousfisaad/lazyarchon/main/scripts/uninstall.sh | bash
+```
+
+### Method 2: Homebrew (macOS/Linux)
+
+**Quick Install:**
+```bash
+brew install yousfisaad/lazyarchon/lazyarchon
+```
+
+**First-time Setup (if tap not found):**
+```bash
+# Add the tap
+brew tap yousfisaad/lazyarchon
+
+# Install LazyArchon
+brew install lazyarchon
+```
+
+**Update to Latest:**
+```bash
+brew update && brew upgrade lazyarchon
+```
+
+**Verification:**
+```bash
+lazyarchon --version
+which lazyarchon  # Should show: /opt/homebrew/bin/lazyarchon (Apple Silicon) or /usr/local/bin/lazyarchon (Intel)
+```
+
+**Platform Support:**
+- ✅ **macOS**: Both Intel and Apple Silicon (ARM64)
+- ✅ **Linux**: AMD64 and ARM64 architectures
+- ❌ **Windows**: Use Method 1 (Script Install) instead
+
+**Troubleshooting:**
+- **Tap not found**: Ensure you have access to the internet and GitHub
+- **Permission denied**: Try `brew doctor` and fix any issues
+- **Old version**: Run `brew update && brew upgrade lazyarchon`
+- **Command not found**: Restart terminal or check `brew --prefix`/bin is in PATH
+
+### Method 3: Go Install (Go Developers)
+
+**Prerequisites**: Go 1.24+ installed
+
+```bash
+# Install latest version
+go install github.com/yousfisaad/lazyarchon/cmd/lazyarchon@latest
+```
+
+**Verification:**
+```bash
+lazyarchon --version  # Check version
+which lazyarchon      # Should show: $(go env GOPATH)/bin/lazyarchon
+go env GOPATH         # Check Go path is correct
+lazyarchon --help     # Test basic functionality
+```
+
+**Troubleshooting:**
+- Ensure `$GOPATH/bin` or `$GOBIN` is in your PATH
+- If command not found, check: `go env GOPATH` and add `$(go env GOPATH)/bin` to PATH
+- Restart terminal after adding to PATH
+
+### Method 4: Download Binary Releases
+
+Visit the [GitHub Releases](https://github.com/yousfisaad/lazyarchon/releases) page to download pre-built binaries for your platform:
+
+- **Linux**: `lazyarchon-linux-amd64.tar.gz`
+- **macOS**: `lazyarchon-darwin-amd64.tar.gz`
+- **Windows**: `lazyarchon-windows-amd64.zip`
+
+**Installation:**
+```bash
+# Extract and install (Linux/macOS example)
+tar -xzf lazyarchon-linux-amd64.tar.gz
+sudo mv lazyarchon /usr/local/bin/
+
+# For Windows (extract .zip file)
+# Move lazyarchon.exe to a directory in your PATH
+```
+
+**Verification:**
+```bash
+lazyarchon --version  # Check version
+which lazyarchon      # Should show: /usr/local/bin/lazyarchon
+ls -la /usr/local/bin/lazyarchon  # Check permissions
+lazyarchon --help     # Test basic functionality
+```
+
+### Method 4: Build from Source
+
+**Using Makefile (Development)**
 ```bash
 # Clone the repository
 git clone https://github.com/yousfisaad/lazyarchon
 cd lazyarchon
 
-# Build for current platform
-make build
-
-# Run LazyArchon
-./bin/lazyarchon
-
-# Or build and run in one step
+# Quick start: build and run
 make run
+
+# Or step by step
+make build          # Build for current platform
+./bin/lazyarchon    # Run the binary
 ```
 
-**Manual Build**
+**Using Go Commands (Alternative)**
 ```bash
-# Build the application manually
-go build -o bin/lazyarchon ./cmd/lazyarchon
-
-# Run LazyArchon
-./bin/lazyarchon
+# Direct Go commands (no Makefile needed)
+go run ./cmd/lazyarchon                      # Run directly
+go build -o lazyarchon ./cmd/lazyarchon      # Build binary
 ```
 
-**Cross-platform Builds**
+**Cross-Platform Builds**
+
+For cross-platform builds, use GoReleaser:
 ```bash
-# Build for all platforms (Linux, macOS, Windows)
-make build-all
+# Install GoReleaser
+go install github.com/goreleaser/goreleaser@latest
 
-# Build for specific platform
-make build-linux    # Linux AMD64
-make build-darwin   # macOS AMD64 
-make build-windows  # Windows AMD64
+# Build for all platforms without publishing
+goreleaser build --snapshot --clean
+
+# Binaries will be in: dist/
 ```
+
+### 📱 Platform-Specific Installation Notes
+
+#### macOS
+**Recommended Method:** Homebrew
+```bash
+brew install yousfisaad/lazyarchon/lazyarchon
+```
+- ✅ **Apple Silicon (M1/M2/M3)**: Native ARM64 support
+- ✅ **Intel Macs**: Native AMD64 support
+- 🔧 **Troubleshooting**: If Homebrew fails, use script install as fallback
+
+#### Linux
+**Recommended Method:** One-line script install
+```bash
+curl -sSL https://raw.githubusercontent.com/yousfisaad/lazyarchon/main/scripts/install.sh | bash
+```
+- ✅ **Ubuntu/Debian**: All methods work
+- ✅ **CentOS/RHEL/Fedora**: All methods work
+- ✅ **ARM64 (Raspberry Pi, etc.)**: All methods supported
+- 🔧 **Note**: Homebrew on Linux requires additional setup
+
+#### Windows
+**Recommended Method:** Script install via WSL
+```bash
+# In WSL/PowerShell:
+curl -sSL https://raw.githubusercontent.com/yousfisaad/lazyarchon/main/scripts/install.sh | bash
+```
+- ✅ **WSL 1/2**: Script install or Go install
+- ✅ **PowerShell**: Use script install
+- ❌ **Native Windows**: Download binary manually
+- 🔧 **Note**: Homebrew not supported on Windows
+
+#### Architecture Support
+- ✅ **AMD64 (x86_64)**: All platforms
+- ✅ **ARM64 (aarch64)**: macOS, Linux
+- ❌ **ARM32**: Not currently supported
+- ❌ **32-bit systems**: Not supported
 
 ### Quick Start
-```bash
-# Install Go dependencies
-go mod download
 
-# Build and run in one step
+**For Homebrew Users:**
+```bash
+# Install and run in one command
+brew install yousfisaad/lazyarchon/lazyarchon && lazyarchon
+```
+
+**For Go Developers:**
+```bash
+# Install and run in one command
+go install github.com/yousfisaad/lazyarchon/cmd/lazyarchon@latest && lazyarchon
+```
+
+**For Everyone Else:**
+```bash
+# One-line install script
+curl -sSL https://raw.githubusercontent.com/yousfisaad/lazyarchon/main/scripts/install.sh | bash && lazyarchon
+```
+
+**For Development:**
+```bash
+# Clone and run from source
+git clone https://github.com/yousfisaad/lazyarchon
+cd lazyarchon
 go run ./cmd/lazyarchon
 ```
 
@@ -143,7 +329,7 @@ go run ./cmd/lazyarchon
 ### Main Interface
 
 ```
-LazyArchon - Project Name (15)                                    
+LazyArchon - Project Name • 🔍 "api" (15)
 ┌─────────────────────────┐  ┌─────────────────────────────────┐
 │ ○ Initialize project    │  │ # Task Title                    │
 │ ◐ Implement API client  │  │                                 │
@@ -154,7 +340,7 @@ LazyArchon - Project Name (15)
 │                       ░ │  │ **Assignee:** AI IDE Agent   ▓ │
 │                       ░ │  │ **Feature:** ui-navigation    ░ │
 └─────────────────────────┘  └─────────────────────────────────┘
-[Tasks] Ready | ?: help | q: quit
+[Tasks] Connected • Match 2/3 • Sort: Status | /: search | n/N: next/prev match | Ctrl+L: clear search | ?: help
 ```
 
 ### Task Status Indicators
@@ -170,10 +356,11 @@ LazyArchon - Project Name (15)
 4. **Switch panels** with `h` (left/tasks) and `l` (right/details)
 5. **Navigate active panel** - all movement keys work on highlighted panel
 6. **Select projects** with `p` key for filtering
-7. **Edit task features** with `e` key - assign or create features  
+7. **Edit task features** with `e` key - assign or create features
 8. **Filter by features** with `f` key - multi-select filtering
-9. **Change task status** with `s` key - todo/doing/review/done
-10. **Scroll at different speeds**: `j/k` (line), `J/K` (fast), `Ctrl+u/d` (half-page)
+9. **Search tasks** with `/` key - inline search with highlighting and n/N navigation
+10. **Change task status** with `t` key - todo/doing/review/done
+11. **Scroll at different speeds**: `j/k` (line), `J/K` (fast), `Ctrl+u/d` (half-page)
 
 ## ⌨️ Keyboard Shortcuts
 
@@ -200,7 +387,35 @@ LazyArchon - Project Name (15)
 ### Task Management
 | Key | Action |
 |-----|--------|
+| `s` | **Change sorting criteria** (cycle through sort modes) |
 | `t` | **Change task status** (Todo/Doing/Review/Done) |
+| `e` | **Edit task features** (assign/create features) |
+| `f` | **Filter by features** (multi-select modal) |
+
+### Search & Navigation
+| Key | Action |
+|-----|--------|
+| `/` or `Ctrl+f` | **Start inline search** (search in task titles) |
+| `Enter` | **Apply search** and exit search mode |
+| `Esc` | **Cancel search** and exit search mode |
+| `Ctrl+L` or `Ctrl+X` | **Clear search** when search is active |
+| `n` | **Next match** - jump to next search result |
+| `N` | **Previous match** - jump to previous search result |
+
+### Feature Modal Navigation (when f is pressed)
+| Key | Action |
+|-----|--------|
+| `j/k` or `↑/↓` | Navigate feature list (1 item) |
+| `J/K` | Fast scroll feature list (5 items) |
+| `Ctrl+u/Ctrl+d` | Half-page scroll feature list |
+| `gg` | Jump to first feature |
+| `G` | Jump to last feature |
+| `Home/End` | Jump to first/last feature |
+| `Space` | Toggle feature selection |
+| `a` | Select all features |
+| `n` | Select no features |
+| `Enter` | Apply filter and close modal |
+| `Esc/q` | Cancel and close modal |
 
 ### Help & Application Controls
 | Key | Action |
@@ -286,8 +501,8 @@ lazyarchon/
 # Install dependencies
 go mod download
 
-# Development build with debugging
-make dev
+# Development build
+make build
 
 # Run tests
 make test
@@ -301,22 +516,77 @@ make clean
 # Run with live reload (using air)
 air
 
-# Build for production with optimizations
-make build-release
+# Generate test coverage
+make test-coverage
 ```
+
+### Release Management
+
+#### Automated Releases (GitHub Actions)
+LazyArchon uses GoReleaser with GitHub Actions for fully automated releases:
+
+```bash
+# Create and push a new tag to trigger release
+git tag v1.2.0
+git push origin v1.2.0
+
+# GitHub Actions will automatically:
+# 1. Build cross-platform binaries
+# 2. Create GitHub release with changelog
+# 3. Upload release assets
+# 4. Update Homebrew tap (yousfisaad/homebrew-lazyarchon)
+```
+
+#### Manual Testing (Development)
+```bash
+# Test GoReleaser configuration
+goreleaser check
+
+# Build snapshot (without publishing)
+goreleaser build --snapshot --clean
+
+# Manual release (local testing only)
+goreleaser release --clean --skip=publish
+```
+
+#### GitHub Actions Workflows
+- **Release** (`.github/workflows/release.yml`) - Automated release on git tags
+- **GoReleaser Test** (`.github/workflows/goreleaser-test.yml`) - Validates config on PRs
 
 ### Available Make Targets
 ```bash
 make help          # Show all available targets
+make run           # Build and run (quick development)
 make build         # Build for current platform
-make build-all     # Cross-platform builds
-make build-release # Optimized production build
 make test          # Run all tests
-make lint          # Run code linting
+make test-coverage # Run tests with coverage report
+make lint          # Run code linting and formatting
 make clean         # Clean build artifacts
-make run           # Build and run
-make dev           # Development mode
+make deps          # Tidy Go modules
 ```
+
+**Note**: Cross-platform builds are handled by GoReleaser, not Makefile.
+
+### Repository Setup (Maintainers)
+
+For automated Homebrew tap updates, configure these repository secrets:
+
+#### Required Secrets
+1. **HOMEBREW_TAP_GITHUB_TOKEN** - Personal Access Token with `repo` scope
+   - Used to update the `yousfisaad/homebrew-lazyarchon` repository
+   - Generate at: https://github.com/settings/tokens
+   - Grant access to: `yousfisaad/homebrew-lazyarchon` repository
+
+#### Repository Configuration
+- **Create Homebrew tap repository**: `yousfisaad/homebrew-lazyarchon`
+  - Initialize as public repository
+  - Add basic README and license
+  - GoReleaser will automatically populate with formula
+- **Configure repository settings**:
+  - Enable issues and discussions (optional)
+  - Set repository description: "Homebrew tap for LazyArchon"
+- **Automatic updates**: GoReleaser will create/update the Homebrew formula
+- **Release trigger**: Workflow runs on any `v*` tag push
 
 ### Contributing
 1. Fork the repository
@@ -326,6 +596,38 @@ make dev           # Development mode
 5. Open a Pull Request
 
 ## 🔧 Troubleshooting
+
+### Installation Issues
+
+**Homebrew: Tap not found**
+```
+Error: No available formula with name "yousfisaad/lazyarchon/lazyarchon"
+```
+- Add the tap first: `brew tap yousfisaad/lazyarchon`
+- Update Homebrew: `brew update`
+- Check tap status: `brew tap-info yousfisaad/lazyarchon`
+
+**Go Install: Command not found after installation**
+```bash
+lazyarchon: command not found
+```
+- Check if `$GOPATH/bin` is in PATH: `echo $PATH | grep $(go env GOPATH)/bin`
+- Add to PATH: `export PATH="$(go env GOPATH)/bin:$PATH"`
+- Add to shell profile: `echo 'export PATH="$(go env GOPATH)/bin:$PATH"' >> ~/.bashrc`
+
+**Script Install: Permission denied**
+```
+Permission denied (creating directory)
+```
+- Use system-wide install: `curl -sSL ... | bash -s -- --dir /usr/local/bin`
+- Or install to user directory: `curl -sSL ... | bash -s -- --dir ~/.local/bin`
+- Ensure ~/.local/bin is in PATH: `export PATH="$HOME/.local/bin:$PATH"`
+
+**Platform-Specific Issues:**
+- **macOS**: If Homebrew not working, try script install or Go install
+- **Linux ARM64**: All methods supported, Homebrew recommended
+- **Windows**: Use script install (WSL) or download binary directly
+- **Older systems**: May need Go 1.24+ for go install method
 
 ### Common Issues
 
@@ -369,14 +671,17 @@ curl -v http://localhost:8181/api/tasks
 - [x] **Status Management**: Change task status (todo → doing → review → done) ✅
 - [x] **Feature Assignment**: Assign and manage task features/tags ✅
 - [x] **Feature Filtering**: Multi-select feature-based task filtering ✅
+- [x] **Enhanced Modal Navigation**: Advanced vim navigation in all modals ✅
+- [x] **Responsive Design**: Real-time window resize with content reflow ✅
+- [x] **High-contrast UI**: Improved checkbox styling and visual feedback ✅
+- [x] **Enhanced Text Search**: Inline search with real-time highlighting and n/N navigation ✅
 - [ ] **Configuration System**: Config files for API endpoint and preferences
 - [x] **Help System**: Built-in help with `?` key ✅
-- [x] **Build System**: Cross-platform builds with Makefile ✅
+- [x] **Build System**: GoReleaser automation + minimal dev Makefile ✅
 - [ ] **Debug Mode**: Verbose logging and troubleshooting options
 
 ### 🚀 Medium Priority
 - [ ] **Real-time Updates**: WebSocket connection for live data
-- [ ] **Text-based Search**: Find tasks by content, title, description
 - [ ] **Advanced Task Editing**: Modify titles, descriptions, sources, code examples
 - [ ] **Themes & Customization**: Color schemes and layout options
 - [ ] **Project Management**: Create and edit projects
@@ -396,8 +701,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - **[Charm Bracelet](https://charm.sh/)** - For the amazing Bubble Tea ecosystem
-- **[Archon Project](https://github.com/archon-project)** - For the task management platform
-- **lazygit/lazydocker** - For UI/UX inspiration
+- **[Archon](https://github.com/coleam00/Archon)** - For the task management platform
+- **[lazygit](https://github.com/jesseduffield/lazygit)/[lazydocker](https://github.com/jesseduffield/lazydocker)** - For UI/UX inspiration
 - **Go Community** - For the robust tooling and ecosystem
 
 ## 📞 Support

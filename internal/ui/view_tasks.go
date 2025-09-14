@@ -50,7 +50,13 @@ func (m Model) renderTaskList(width, height int) string {
 		symbol := task.GetStatusSymbol()
 		statusColor := task.GetStatusColor()
 
-		baseLine := fmt.Sprintf("%s %s", symbol, task.Title)
+		// Apply search highlighting to title if search is active
+		title := task.Title
+		if m.Data.searchActive && m.Data.searchQuery != "" {
+			title = highlightSearchTerms(task.Title, m.Data.searchQuery)
+		}
+
+		baseLine := fmt.Sprintf("%s %s", symbol, title)
 
 		// Add feature/tag if present and space allows
 		var line string

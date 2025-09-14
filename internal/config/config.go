@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -78,6 +79,32 @@ var defaultConfig = Config{
 		LogLevel:        "info",
 		EnableProfiling: false,
 	},
+}
+
+// LoadFromPath loads configuration from a specific file path
+func LoadFromPath(configPath string) (*Config, error) {
+	config := defaultConfig // Start with defaults
+
+	// Check if the specified config file exists
+	if _, err := os.Stat(configPath); err != nil {
+		return &config, fmt.Errorf("config file not found: %s", configPath)
+	}
+
+	// Read and parse config file
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		return &config, fmt.Errorf("failed to read config file: %w", err)
+	}
+
+	// Parse YAML, merging with defaults
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		return &config, fmt.Errorf("failed to parse config file: %w", err)
+	}
+
+	// Override with environment variables if present
+	config.applyEnvironmentOverrides()
+
+	return &config, nil
 }
 
 // Load loads configuration from file with fallback to defaults

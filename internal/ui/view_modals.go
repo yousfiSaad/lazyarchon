@@ -229,10 +229,14 @@ func (m Model) getFeatureSelectionContent() []string {
 			}
 		}
 
-		// Checkbox symbol
-		checkbox := "☐" // Unchecked
+		// Checkbox symbol with color styling
+		var checkbox string
 		if enabled {
-			checkbox = "☑" // Checked
+			// Checked: filled square with green color
+			checkbox = lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Render("■")
+		} else {
+			// Unchecked: empty square with gray color
+			checkbox = lipgloss.NewStyle().Foreground(lipgloss.Color("244")).Render("□")
 		}
 
 		// Task count for this feature
@@ -263,6 +267,7 @@ func (m Model) getFeatureSelectionContent() []string {
 	content = append(content, "")
 
 	// Instructions
+	content = append(content, lipgloss.NewStyle().Italic(true).Render("j/k: navigate  gg/G: top/bottom  J/K: fast scroll"))
 	content = append(content, lipgloss.NewStyle().Italic(true).Render("Space: toggle  a: all  n: none"))
 	content = append(content, lipgloss.NewStyle().Italic(true).Render("Enter: apply   Esc/q: cancel"))
 
@@ -373,3 +378,4 @@ func (m Model) getTaskEditContent() []string {
 
 	return content
 }
+

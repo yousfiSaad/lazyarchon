@@ -83,17 +83,31 @@ func (m Model) renderHeader() string {
 	} else if m.IsFeatureModeActive() {
 		headerText = "LazyArchon - Select Features"
 	} else {
-		// Build header with project and feature filter information
+		// Build header with project, feature filter, and search information
 		projectName := m.GetCurrentProjectName()
 		featureSummary := m.GetFeatureFilterSummary()
 		taskCount := len(m.GetSortedTasks()) // Use filtered task count
 
-		if featureSummary == "All features" || featureSummary == "No features" {
-			// No explicit feature filtering, show simple format
-			headerText = fmt.Sprintf("LazyArchon - %s (%d)", projectName, taskCount)
+		// Build header parts
+		var headerParts []string
+		headerParts = append(headerParts, projectName)
+
+		// Add search indicator if active
+		if m.Data.searchActive && m.Data.searchQuery != "" {
+			searchIndicator := fmt.Sprintf("🔍 \"%s\"", m.Data.searchQuery)
+			headerParts = append(headerParts, searchIndicator)
+		}
+
+		// Add feature filter if not showing all
+		if featureSummary != "All features" && featureSummary != "No features" {
+			headerParts = append(headerParts, featureSummary)
+		}
+
+		// Join parts with bullets
+		if len(headerParts) > 1 {
+			headerText = fmt.Sprintf("LazyArchon - %s (%d)", strings.Join(headerParts, " • "), taskCount)
 		} else {
-			// Show feature filter status
-			headerText = fmt.Sprintf("LazyArchon - %s • %s (%d)", projectName, featureSummary, taskCount)
+			headerText = fmt.Sprintf("LazyArchon - %s (%d)", headerParts[0], taskCount)
 		}
 	}
 
@@ -107,7 +121,7 @@ func (m Model) renderStatusBar() string {
 	// Handle special states first
 	if m.IsHelpMode() {
 		statusText = "[Help] j/k to scroll • ESC: close | q: quit"
-		return StatusBarStyle.Render(statusText)
+		return CreateStatusBarStyle("ready").Render(statusText)
 	}
 
 	if m.Modals.projectMode.active {
@@ -117,30 +131,50 @@ func (m Model) renderStatusBar() string {
 		} else {
 			statusText = "Project Selection | ?: help | q: quit"
 		}
-		return StatusBarStyle.Render(statusText)
+		return CreateStatusBarStyle("ready").Render(statusText)
 	}
 
 	if m.IsFeatureModeActive() {
 		availableFeatures := m.GetUniqueFeatures()
 		featureCount := len(availableFeatures)
 		if featureCount > 0 {
-			statusText = fmt.Sprintf("[Features] %d features available | Space: toggle | a: all | n: none | Enter: apply | q: cancel", featureCount)
+			statusText = fmt.Sprintf("[Features] %d features | j/k/J/K/gg/G: navigate | Space: toggle | a: all | n: none | Enter: apply | q: cancel", featureCount)
 		} else {
 			statusText = "Feature Selection | No features available | Enter: apply | q: cancel"
 		}
-		return StatusBarStyle.Render(statusText)
+		return CreateStatusBarStyle("ready").Render(statusText)
 	}
 
-	// Show loading state
+	// Show loading state with spinner
 	if m.Data.loading {
-		statusText = "[Tasks] Loading... | q: quit"
-		return StatusBarStyle.Render(statusText)
+		spinner := m.GetLoadingSpinner()
+		message := "Loading..."
+		if m.Data.loadingMessage != "" {
+			message = m.Data.loadingMessage
+		}
+		statusText = fmt.Sprintf("[Tasks] %s %s | q: quit", spinner, message)
+		return CreateStatusBarStyle("loading").Render(statusText)
 	}
 
-	// Show error state
+	// Show error state with user-friendly message
 	if m.Data.error != "" {
-		statusText = "[Tasks] Error • Check connection | r: retry | q: quit"
-		return StatusBarStyle.Render(statusText)
+		friendlyError := m.FormatUserFriendlyError(m.Data.error)
+		statusText = fmt.Sprintf("[Tasks] Error: %s | r: retry | q: quit", friendlyError)
+		return CreateStatusBarStyle("error").Render(statusText)
+	}
+
+	// Handle search mode - show inline search interface
+	if m.Data.searchMode {
+		cursor := "_" // Simple cursor indicator
+		searchText := fmt.Sprintf("[Search] %s%s", m.Data.searchInput, cursor)
+
+		// Add match indicator if search has matches
+		if m.Data.totalMatches > 0 {
+			searchText += fmt.Sprintf(" (%d matches)", m.Data.totalMatches)
+		}
+
+		statusText = searchText + " | Enter: apply | Esc: cancel | Ctrl+U: clear"
+		return CreateStatusBarStyle("ready").Render(statusText)
 	}
 
 	// Context-aware status based on active panel
@@ -148,13 +182,14 @@ func (m Model) renderStatusBar() string {
 
 	switch activePanel {
 	case "Tasks":
-		// Left panel active - show task counts, sort mode, and position
+		// Left panel active - show task counts, sort mode, connection status and position
 		todo, doing, review, done := m.GetTaskStatusCounts()
 		totalTasks := todo + doing + review + done
 		sortMode := m.GetCurrentSortModeName()
+		connectionStatus := m.GetConnectionStatusText()
 
 		if totalTasks == 0 {
-			statusText = "[Tasks] No tasks found | r: refresh | q: quit"
+			statusText = fmt.Sprintf("[Tasks] %s No tasks found | r: refresh | q: quit", connectionStatus)
 		} else {
 			// Build status with task counts and sort mode
 			var statusParts []string
@@ -178,25 +213,46 @@ func (m Model) renderStatusBar() string {
 			// Add sort mode
 			statusParts = append(statusParts, fmt.Sprintf("Sort: %s", sortMode))
 
+			// Add search match information if search is active
+			if m.Data.searchActive && m.Data.searchQuery != "" {
+				if m.Data.totalMatches > 0 {
+					matchInfo := fmt.Sprintf("Match %d/%d", m.Data.currentMatchIndex+1, m.Data.totalMatches)
+					statusParts = append(statusParts, matchInfo)
+				} else {
+					statusParts = append(statusParts, "No matches")
+				}
+			}
+
 			statusInfo := strings.Join(statusParts, " • ")
 
-			// Add feature shortcut if features are available
+			// Build status bar with available shortcuts
+			var shortcuts []string
 			if len(m.GetUniqueFeatures()) > 0 {
-				statusText = fmt.Sprintf("[Tasks] %s | f: features | ?: help", statusInfo)
-			} else {
-				statusText = fmt.Sprintf("[Tasks] %s | ?: help", statusInfo)
+				shortcuts = append(shortcuts, "f: features")
 			}
+			shortcuts = append(shortcuts, "/: search")
+			if m.Data.searchActive {
+				if m.Data.totalMatches > 0 {
+					shortcuts = append(shortcuts, "n/N: next/prev match")
+				}
+				shortcuts = append(shortcuts, "Ctrl+L: clear search")
+			}
+			shortcuts = append(shortcuts, "?: help")
+
+			shortcutText := strings.Join(shortcuts, " | ")
+			statusText = fmt.Sprintf("[Tasks] %s %s | %s", connectionStatus, statusInfo, shortcutText)
 		}
 
 	case "Details":
-		// Right panel active - show current position and scroll info
+		// Right panel active - show current position, scroll info and connection status
 		position := m.GetCurrentPosition()
 		scrollPos := m.GetScrollPosition()
+		connectionStatus := m.GetConnectionStatusText()
 
 		if scrollPos == "Top" {
-			statusText = fmt.Sprintf("[Details] %s | ?: help", position)
+			statusText = fmt.Sprintf("[Details] %s %s | ?: help", connectionStatus, position)
 		} else {
-			statusText = fmt.Sprintf("[Details] %s • %s | ?: help", position, scrollPos)
+			statusText = fmt.Sprintf("[Details] %s %s • %s | ?: help", connectionStatus, position, scrollPos)
 		}
 
 	default:
@@ -204,5 +260,5 @@ func (m Model) renderStatusBar() string {
 		statusText = fmt.Sprintf("[%s] Ready | ?: help | q: quit", activePanel)
 	}
 
-	return StatusBarStyle.Render(statusText)
+	return CreateStatusBarStyle("ready").Render(statusText)
 }
