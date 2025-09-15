@@ -254,13 +254,21 @@ func (m *Model) SetSearchQuery(query string) {
 
 // ClearSearch clears the current search query
 func (m *Model) ClearSearch() {
+	// Remember currently selected task
+	var selectedTaskID string
+	sortedTasks := m.GetSortedTasks()
+	if len(sortedTasks) > 0 && m.Navigation.selectedIndex < len(sortedTasks) {
+		selectedTaskID = sortedTasks[m.Navigation.selectedIndex].ID
+	}
+
 	m.Data.searchQuery = ""
 	m.Data.searchActive = false
 
 	// Update search matches (will clear them since search is now inactive)
 	m.updateSearchMatches()
 
-	m.setSelectedTask(0)
+	// Find the same task in the (now unfiltered) list and select it
+	m.findAndSelectTask(selectedTaskID)
 }
 
 // addToSearchHistory adds a query to search history, avoiding duplicates

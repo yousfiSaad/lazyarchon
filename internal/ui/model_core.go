@@ -367,16 +367,18 @@ func (m *Model) nextSearchMatch() {
 		return
 	}
 
-	// Move to next match
-	m.Data.currentMatchIndex = (m.Data.currentMatchIndex + 1) % m.Data.totalMatches
+	currentIndex := m.Navigation.selectedIndex
 
-	// Update task selection to the new match
-	newIndex := m.Data.matchingTaskIndices[m.Data.currentMatchIndex]
-	m.Navigation.selectedIndex = newIndex
+	// Find next match after current position
+	for _, matchIndex := range m.Data.matchingTaskIndices {
+		if matchIndex > currentIndex {
+			m.setSelectedTask(matchIndex)
+			return
+		}
+	}
 
-	// Reset task details scroll for new task
-	m.taskDetailsViewport.GotoTop()
-	m.updateTaskDetailsViewport()
+	// No match found after current position, wrap to first match
+	m.setSelectedTask(m.Data.matchingTaskIndices[0])
 }
 
 // previousSearchMatch navigates to the previous search match (N command)
@@ -385,20 +387,20 @@ func (m *Model) previousSearchMatch() {
 		return
 	}
 
-	// Move to previous match (wrap around)
-	if m.Data.currentMatchIndex == 0 {
-		m.Data.currentMatchIndex = m.Data.totalMatches - 1
-	} else {
-		m.Data.currentMatchIndex--
+	currentIndex := m.Navigation.selectedIndex
+
+	// Find previous match before current position (reverse search)
+	for i := len(m.Data.matchingTaskIndices) - 1; i >= 0; i-- {
+		matchIndex := m.Data.matchingTaskIndices[i]
+		if matchIndex < currentIndex {
+			m.setSelectedTask(matchIndex)
+			return
+		}
 	}
 
-	// Update task selection to the new match
-	newIndex := m.Data.matchingTaskIndices[m.Data.currentMatchIndex]
-	m.Navigation.selectedIndex = newIndex
-
-	// Reset task details scroll for new task
-	m.taskDetailsViewport.GotoTop()
-	m.updateTaskDetailsViewport()
+	// No match found before current position, wrap to last match
+	lastIndex := len(m.Data.matchingTaskIndices) - 1
+	m.setSelectedTask(m.Data.matchingTaskIndices[lastIndex])
 }
 
 // parseSortModeFromConfig converts config sort mode string to sort mode constant
