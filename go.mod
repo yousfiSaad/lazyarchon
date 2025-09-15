@@ -5,6 +5,7 @@ go 1.24.0
 toolchain go1.24.7
 
 require (
+	github.com/atotto/clipboard v0.1.4
 	github.com/charmbracelet/bubbles v0.21.0
 	github.com/charmbracelet/bubbletea v1.3.8
 	github.com/charmbracelet/glamour v0.10.0

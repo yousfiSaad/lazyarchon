@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/lipgloss"
 )
@@ -161,6 +162,12 @@ func (m Model) renderStatusBar() string {
 		friendlyError := m.FormatUserFriendlyError(m.Data.error)
 		statusText = fmt.Sprintf("[Tasks] Error: %s | r: retry | q: quit", friendlyError)
 		return CreateStatusBarStyle("error").Render(statusText)
+	}
+
+	// Show temporary status message (for copy confirmations, etc.)
+	if m.Data.statusMessage != "" && time.Since(m.Data.statusMessageTime) < 3*time.Second {
+		statusText = fmt.Sprintf("[Tasks] %s | ?: help | q: quit", m.Data.statusMessage)
+		return CreateStatusBarStyle("info").Render(statusText)
 	}
 
 	// Handle search mode - show inline search interface

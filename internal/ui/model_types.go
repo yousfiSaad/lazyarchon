@@ -130,6 +130,10 @@ type DataState struct {
 	currentMatchIndex   int   // Current position in the match list (0-based)
 	totalMatches        int   // Total number of matching tasks
 
+	// Status messages
+	statusMessage     string    // Temporary status message (for copy confirmations, etc.)
+	statusMessageTime time.Time // When the status message was set
+
 	// Status filtering
 	statusFilters     map[string]bool // Status visibility (todo, doing, review, done)
 	statusFilterActive bool           // Whether custom status filtering is active
