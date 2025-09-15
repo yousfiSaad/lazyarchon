@@ -367,16 +367,18 @@ func (m *Model) nextSearchMatch() {
 		return
 	}
 
-	// Move to next match
-	m.Data.currentMatchIndex = (m.Data.currentMatchIndex + 1) % m.Data.totalMatches
+	currentIndex := m.Navigation.selectedIndex
 
-	// Update task selection to the new match
-	newIndex := m.Data.matchingTaskIndices[m.Data.currentMatchIndex]
-	m.Navigation.selectedIndex = newIndex
+	// Find next match after current position
+	for _, matchIndex := range m.Data.matchingTaskIndices {
+		if matchIndex > currentIndex {
+			m.setSelectedTask(matchIndex)
+			return
+		}
+	}
 
-	// Reset task details scroll for new task
-	m.taskDetailsViewport.GotoTop()
-	m.updateTaskDetailsViewport()
+	// No match found after current position, wrap to first match
+	m.setSelectedTask(m.Data.matchingTaskIndices[0])
 }
 
 // previousSearchMatch navigates to the previous search match (N command)
@@ -385,20 +387,20 @@ func (m *Model) previousSearchMatch() {
 		return
 	}
 
-	// Move to previous match (wrap around)
-	if m.Data.currentMatchIndex == 0 {
-		m.Data.currentMatchIndex = m.Data.totalMatches - 1
-	} else {
-		m.Data.currentMatchIndex--
+	currentIndex := m.Navigation.selectedIndex
+
+	// Find previous match before current position (reverse search)
+	for i := len(m.Data.matchingTaskIndices) - 1; i >= 0; i-- {
+		matchIndex := m.Data.matchingTaskIndices[i]
+		if matchIndex < currentIndex {
+			m.setSelectedTask(matchIndex)
+			return
+		}
 	}
 
-	// Update task selection to the new match
-	newIndex := m.Data.matchingTaskIndices[m.Data.currentMatchIndex]
-	m.Navigation.selectedIndex = newIndex
-
-	// Reset task details scroll for new task
-	m.taskDetailsViewport.GotoTop()
-	m.updateTaskDetailsViewport()
+	// No match found before current position, wrap to last match
+	lastIndex := len(m.Data.matchingTaskIndices) - 1
+	m.setSelectedTask(m.Data.matchingTaskIndices[lastIndex])
 }
 
 // parseSortModeFromConfig converts config sort mode string to sort mode constant
@@ -415,4 +417,177 @@ func parseSortModeFromConfig(sortModeStr string) int {
 	default:
 		return SortStatusPriority // Default fallback
 	}
+}
+
+// Feature search methods
+
+// GetFilteredFeatures returns features matching the current search query
+func (m Model) GetFilteredFeatures() []string {
+	allFeatures := m.GetUniqueFeatures()
+
+	// If no search is active, return all features
+	if !m.Modals.featureMode.searchMode && m.Modals.featureMode.searchQuery == "" {
+		return allFeatures
+	}
+
+	// Use search input for real-time filtering, or committed query
+	searchQuery := m.Modals.featureMode.searchInput
+	if !m.Modals.featureMode.searchMode {
+		searchQuery = m.Modals.featureMode.searchQuery
+	}
+
+	if searchQuery == "" {
+		return allFeatures
+	}
+
+	// Filter features based on search query (case-insensitive)
+	var filteredFeatures []string
+	searchQuery = strings.ToLower(strings.TrimSpace(searchQuery))
+
+	for _, feature := range allFeatures {
+		if strings.Contains(strings.ToLower(feature), searchQuery) {
+			filteredFeatures = append(filteredFeatures, feature)
+		}
+	}
+
+	return filteredFeatures
+}
+
+// updateFeatureSearchMatches updates the filtered features list and match indices
+func (m *Model) updateFeatureSearchMatches() {
+	// Update filtered features cache
+	m.Modals.featureMode.filteredFeatures = m.GetFilteredFeatures()
+
+	// Clear match tracking
+	m.Modals.featureMode.matchingIndices = nil
+	m.Modals.featureMode.currentMatchIndex = 0
+
+	// If no search is active, all features are "matches"
+	if !m.Modals.featureMode.searchMode && m.Modals.featureMode.searchQuery == "" {
+		for i := range m.Modals.featureMode.filteredFeatures {
+			m.Modals.featureMode.matchingIndices = append(m.Modals.featureMode.matchingIndices, i)
+		}
+		return
+	}
+
+	// Get search query
+	searchQuery := m.Modals.featureMode.searchInput
+	if !m.Modals.featureMode.searchMode {
+		searchQuery = m.Modals.featureMode.searchQuery
+	}
+
+	if searchQuery == "" {
+		for i := range m.Modals.featureMode.filteredFeatures {
+			m.Modals.featureMode.matchingIndices = append(m.Modals.featureMode.matchingIndices, i)
+		}
+		return
+	}
+
+	// All filtered features are matches by definition
+	for i := range m.Modals.featureMode.filteredFeatures {
+		m.Modals.featureMode.matchingIndices = append(m.Modals.featureMode.matchingIndices, i)
+	}
+
+	// Update current match index based on current selection
+	if len(m.Modals.featureMode.matchingIndices) > 0 {
+		// Find current selection in match list
+		for i, matchIndex := range m.Modals.featureMode.matchingIndices {
+			if matchIndex == m.Modals.featureMode.selectedIndex {
+				m.Modals.featureMode.currentMatchIndex = i
+				return
+			}
+		}
+		// If current selection is not a match, reset to first match
+		m.Modals.featureMode.currentMatchIndex = 0
+	}
+}
+
+// activateFeatureSearch enters search mode in the feature modal
+func (m *Model) activateFeatureSearch() {
+	m.Modals.featureMode.searchMode = true
+	m.Modals.featureMode.searchInput = m.Modals.featureMode.searchQuery // Start with current search
+}
+
+// cancelFeatureSearch exits search mode without applying changes
+func (m *Model) cancelFeatureSearch() {
+	m.Modals.featureMode.searchMode = false
+	m.Modals.featureMode.searchInput = ""
+	// Restore to previous search state
+	m.updateFeatureSearchMatches()
+}
+
+// commitFeatureSearch applies the current search input and exits search mode
+func (m *Model) commitFeatureSearch() {
+	m.setFeatureSearchQuery(m.Modals.featureMode.searchInput)
+	m.Modals.featureMode.searchMode = false
+	m.Modals.featureMode.searchInput = ""
+}
+
+// setFeatureSearchQuery sets the current feature search query and updates search state
+func (m *Model) setFeatureSearchQuery(query string) {
+	// Trim whitespace
+	query = strings.TrimSpace(query)
+
+	// Update search state
+	m.Modals.featureMode.searchQuery = query
+
+	// Update search matches
+	m.updateFeatureSearchMatches()
+
+	// Reset selection to first match if available
+	if len(m.Modals.featureMode.filteredFeatures) > 0 {
+		m.Modals.featureMode.selectedIndex = 0
+	}
+}
+
+// clearFeatureSearch clears the current feature search query
+func (m *Model) clearFeatureSearch() {
+	m.Modals.featureMode.searchQuery = ""
+	m.updateFeatureSearchMatches()
+	// Reset selection to first feature
+	if len(m.Modals.featureMode.filteredFeatures) > 0 {
+		m.Modals.featureMode.selectedIndex = 0
+	}
+}
+
+// nextFeatureMatch navigates to the next search match in the feature modal
+func (m *Model) nextFeatureMatch() {
+	if len(m.Modals.featureMode.matchingIndices) == 0 {
+		return
+	}
+
+	currentIndex := m.Modals.featureMode.selectedIndex
+
+	// Find next match after current position
+	for _, matchIndex := range m.Modals.featureMode.matchingIndices {
+		if matchIndex > currentIndex {
+			m.Modals.featureMode.selectedIndex = matchIndex
+			return
+		}
+	}
+
+	// No match found after current position, wrap to first match
+	m.Modals.featureMode.selectedIndex = m.Modals.featureMode.matchingIndices[0]
+}
+
+// previousFeatureMatch navigates to the previous search match in the feature modal
+func (m *Model) previousFeatureMatch() {
+	if len(m.Modals.featureMode.matchingIndices) == 0 {
+		return
+	}
+
+	currentIndex := m.Modals.featureMode.selectedIndex
+
+	// Find previous match before current position (reverse search)
+	for i := len(m.Modals.featureMode.matchingIndices) - 1; i >= 0; i-- {
+		matchIndex := m.Modals.featureMode.matchingIndices[i]
+		if matchIndex < currentIndex {
+			m.Modals.featureMode.selectedIndex = matchIndex
+			return
+		}
+	}
+
+	// No match found before current position, wrap to last match
+	lastIndex := len(m.Modals.featureMode.matchingIndices) - 1
+	m.Modals.featureMode.selectedIndex = m.Modals.featureMode.matchingIndices[lastIndex]
 }

@@ -168,6 +168,17 @@ func (m *Model) SetFeatureMode(show bool) {
 		}
 		// Save backup of current state before opening modal (after potential initialization)
 		m.backupFeatureState()
+
+		// Initialize search state
+		m.Modals.featureMode.searchMode = false
+		m.Modals.featureMode.searchInput = ""
+		m.Modals.featureMode.searchQuery = ""
+		m.Modals.featureMode.filteredFeatures = nil
+		m.Modals.featureMode.matchingIndices = nil
+		m.Modals.featureMode.currentMatchIndex = 0
+
+		// Update search matches (will populate with all features since search is empty)
+		m.updateFeatureSearchMatches()
 	}
 }
 
@@ -249,22 +260,26 @@ func (m *Model) SetSearchQuery(query string) {
 	m.updateSearchMatches()
 
 	// Reset task selection since search changed
-	m.Navigation.selectedIndex = 0
-	m.taskDetailsViewport.GotoTop()
-	m.updateTaskDetailsViewport()
+	m.setSelectedTask(0)
 }
 
 // ClearSearch clears the current search query
 func (m *Model) ClearSearch() {
+	// Remember currently selected task
+	var selectedTaskID string
+	sortedTasks := m.GetSortedTasks()
+	if len(sortedTasks) > 0 && m.Navigation.selectedIndex < len(sortedTasks) {
+		selectedTaskID = sortedTasks[m.Navigation.selectedIndex].ID
+	}
+
 	m.Data.searchQuery = ""
 	m.Data.searchActive = false
 
 	// Update search matches (will clear them since search is now inactive)
 	m.updateSearchMatches()
 
-	m.Navigation.selectedIndex = 0
-	m.taskDetailsViewport.GotoTop()
-	m.updateTaskDetailsViewport()
+	// Find the same task in the (now unfiltered) list and select it
+	m.findAndSelectTask(selectedTaskID)
 }
 
 // addToSearchHistory adds a query to search history, avoiding duplicates
@@ -348,9 +363,7 @@ func (m *Model) ApplyStatusFilters() {
 	}
 
 	// Reset task selection since filtering changed
-	m.Navigation.selectedIndex = 0
-	m.taskDetailsViewport.GotoTop()
-	m.updateTaskDetailsViewport()
+	m.setSelectedTask(0)
 }
 
 // HasActiveModal returns true if any modal is currently active

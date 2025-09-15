@@ -164,8 +164,7 @@ func (m Model) HandleKeyPress(key string) (Model, tea.Cmd) {
 		if !m.Modals.projectMode.active {
 			if m.IsLeftPanelActive() {
 				// Jump to first task
-				m.Navigation.selectedIndex = 0
-				m.taskDetailsViewport.GotoTop()
+				m.setSelectedTask(0)
 			} else if m.IsRightPanelActive() {
 				// Jump to top of task details
 				m.taskDetailsViewport.GotoTop()
@@ -179,8 +178,7 @@ func (m Model) HandleKeyPress(key string) (Model, tea.Cmd) {
 				// Jump to last task
 				sortedTasks := m.GetSortedTasks()
 				if len(sortedTasks) > 0 {
-					m.Navigation.selectedIndex = len(sortedTasks) - 1
-					m.taskDetailsViewport.GotoTop() // Reset scroll for new task
+					m.setSelectedTask(len(sortedTasks) - 1)
 				}
 			} else if m.IsRightPanelActive() {
 				// Jump to bottom of task details

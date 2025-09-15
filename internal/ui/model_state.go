@@ -12,26 +12,68 @@ import (
 // SetSelectedProject sets the currently selected project
 func (m *Model) SetSelectedProject(projectID *string) {
 	m.Data.selectedProjectID = projectID
-	m.Navigation.selectedIndex = 0  // Reset task selection
-	m.taskDetailsViewport.GotoTop() // Reset scroll
+	m.setSelectedTask(0)  // Reset task selection
 
 	// Reset feature filters when changing projects
 	// This ensures users see all features in the new project context
 	m.Modals.featureMode.selectedFeatures = nil
 }
 
+// findAndSelectTask finds a task by ID in the current sort order and selects it
+func (m *Model) findAndSelectTask(taskID string) {
+	if taskID == "" {
+		m.setSelectedTask(0)
+		return
+	}
+
+	sortedTasks := m.GetSortedTasks()
+	for i, task := range sortedTasks {
+		if task.ID == taskID {
+			m.setSelectedTask(i)
+			return
+		}
+	}
+
+	// Task not found, default to first task
+	m.setSelectedTask(0)
+}
+
 // CycleSortMode cycles to the next sort mode
 func (m *Model) CycleSortMode() {
+	// Remember currently selected task
+	var selectedTaskID string
+	sortedTasks := m.GetSortedTasks()
+	if len(sortedTasks) > 0 && m.Navigation.selectedIndex < len(sortedTasks) {
+		selectedTaskID = sortedTasks[m.Navigation.selectedIndex].ID
+	}
+
+	// Change sort mode
 	m.Data.sortMode = (m.Data.sortMode + 1) % 4
-	m.Navigation.selectedIndex = 0  // Reset selection to top
-	m.taskDetailsViewport.GotoTop() // Reset scroll
+
+	// Find the same task in new sort order and select it
+	m.findAndSelectTask(selectedTaskID)
+
+	// Update search matches for new sort order
+	m.updateSearchMatches()
 }
 
 // CycleSortModePrevious cycles to the previous sort mode
 func (m *Model) CycleSortModePrevious() {
+	// Remember currently selected task
+	var selectedTaskID string
+	sortedTasks := m.GetSortedTasks()
+	if len(sortedTasks) > 0 && m.Navigation.selectedIndex < len(sortedTasks) {
+		selectedTaskID = sortedTasks[m.Navigation.selectedIndex].ID
+	}
+
+	// Change sort mode
 	m.Data.sortMode = (m.Data.sortMode + 3) % 4 // +3 for wrap-around
-	m.Navigation.selectedIndex = 0              // Reset selection to top
-	m.taskDetailsViewport.GotoTop()             // Reset scroll
+
+	// Find the same task in new sort order and select it
+	m.findAndSelectTask(selectedTaskID)
+
+	// Update search matches for new sort order
+	m.updateSearchMatches()
 }
 
 // SetError sets the error state
@@ -546,9 +588,7 @@ func (m *Model) ToggleFeature(featureName string) {
 	}
 
 	// Reset task selection since filtering changed
-	m.Navigation.selectedIndex = 0
-	m.taskDetailsViewport.GotoTop()
-	m.updateTaskDetailsViewport()
+	m.setSelectedTask(0)
 }
 
 // SelectAllFeatures enables all available features
@@ -563,9 +603,7 @@ func (m *Model) SelectAllFeatures() {
 	}
 
 	// Reset task selection since filtering changed
-	m.Navigation.selectedIndex = 0
-	m.taskDetailsViewport.GotoTop()
-	m.updateTaskDetailsViewport()
+	m.setSelectedTask(0)
 }
 
 // SelectNoFeatures disables all features
@@ -580,9 +618,32 @@ func (m *Model) SelectNoFeatures() {
 	}
 
 	// Reset task selection since filtering changed
-	m.Navigation.selectedIndex = 0
-	m.taskDetailsViewport.GotoTop()
-	m.updateTaskDetailsViewport()
+	m.setSelectedTask(0)
+}
+
+// SmartToggleAllFeatures toggles between "select all" and "select none" intelligently
+func (m *Model) SmartToggleAllFeatures() {
+	availableFeatures := m.GetUniqueFeatures()
+	if m.Modals.featureMode.selectedFeatures == nil {
+		m.Modals.featureMode.selectedFeatures = make(map[string]bool)
+	}
+
+	// Check if all features are currently selected
+	allSelected := true
+	for _, feature := range availableFeatures {
+		if enabled, exists := m.Modals.featureMode.selectedFeatures[feature]; !exists || !enabled {
+			allSelected = false
+			break
+		}
+	}
+
+	if allSelected {
+		// All are selected, so unselect all
+		m.SelectNoFeatures()
+	} else {
+		// Some or none are selected, so select all
+		m.SelectAllFeatures()
+	}
 }
 
 // backupFeatureState saves the current feature selection state for cancel functionality
@@ -612,7 +673,5 @@ func (m *Model) restoreFeatureState() {
 	}
 
 	// Reset task selection since filtering changed
-	m.Navigation.selectedIndex = 0
-	m.taskDetailsViewport.GotoTop()
-	m.updateTaskDetailsViewport()
+	m.setSelectedTask(0)
 }

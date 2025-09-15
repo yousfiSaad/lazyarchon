@@ -14,7 +14,7 @@ LazyArchon is a powerful terminal user interface (TUI) for managing [Archon](htt
 
 ## ✨ Features
 
-> **📋 Current Status**: LazyArchon now includes comprehensive task management! View, navigate, edit task features, filter by features, and manage task status with intuitive modal interfaces.
+> **📋 Current Status**: LazyArchon v1.2.0 brings enhanced search and navigation! Features comprehensive search functionality with real-time highlighting, position-aware navigation, and improved task management consistency throughout the interface.
 
 ### ✅ Implemented Features
 
@@ -43,7 +43,9 @@ LazyArchon is a powerful terminal user interface (TUI) for managing [Archon](htt
 - **Error Handling**: Graceful API failure handling with retry options
 - **Enhanced Search System**: Inline search with real-time highlighting and vim-style navigation
 - **Text Search & Highlighting**: Search task titles with yellow highlighting of matching terms
-- **Search Navigation**: n/N keys for cycling through search results with position indicators
+- **Position-Aware Navigation**: n/N keys for cycling through search results relative to current selection
+- **Features Modal Search**: Comprehensive search functionality in features modal with instant filtering
+- **Search Context Preservation**: Intelligent task selection maintenance during search operations
 - **Multiple Clear Options**: Ctrl+L or Ctrl+X to clear active searches
 
 **Data Integration**

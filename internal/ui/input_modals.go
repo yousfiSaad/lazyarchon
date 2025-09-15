@@ -183,8 +183,13 @@ func (m Model) handleStatusChangeConfirm() (Model, tea.Cmd) {
 
 // handleFeatureModeInput handles keyboard input when feature selection modal is open
 func (m Model) handleFeatureModeInput(key string) (Model, tea.Cmd) {
-	availableFeatures := m.GetUniqueFeatures()
-	if len(availableFeatures) == 0 {
+	// Handle search input mode first
+	if m.Modals.featureMode.searchMode {
+		return m.handleFeatureSearchInput(key)
+	}
+
+	filteredFeatures := m.GetFilteredFeatures()
+	if len(filteredFeatures) == 0 && m.Modals.featureMode.searchQuery == "" {
 		// No features available, close modal
 		m.SetFeatureMode(false)
 		return m, nil
@@ -205,18 +210,36 @@ func (m Model) handleFeatureModeInput(key string) (Model, tea.Cmd) {
 		m.SetFeatureMode(false)
 		return m, nil
 	case " ": // Space bar toggles current feature
-		if m.Modals.featureMode.selectedIndex >= 0 && m.Modals.featureMode.selectedIndex < len(availableFeatures) {
-			selectedFeature := availableFeatures[m.Modals.featureMode.selectedIndex]
+		if m.Modals.featureMode.selectedIndex >= 0 && m.Modals.featureMode.selectedIndex < len(filteredFeatures) {
+			selectedFeature := filteredFeatures[m.Modals.featureMode.selectedIndex]
 			m.ToggleFeature(selectedFeature)
 		}
 		return m, nil
 	case "a":
-		// Select all features
-		m.SelectAllFeatures()
+		// Smart toggle: select all if not all selected, otherwise select none
+		m.SmartToggleAllFeatures()
+		return m, nil
+	case "/":
+		// Activate search mode
+		m.activateFeatureSearch()
 		return m, nil
 	case "n":
-		// Select no features
-		m.SelectNoFeatures()
+		// Next search match (only when search is active)
+		if m.Modals.featureMode.searchQuery != "" {
+			m.nextFeatureMatch()
+		}
+		return m, nil
+	case "N":
+		// Previous search match (only when search is active)
+		if m.Modals.featureMode.searchQuery != "" {
+			m.previousFeatureMatch()
+		}
+		return m, nil
+	case "ctrl+l":
+		// Clear search
+		if m.Modals.featureMode.searchQuery != "" {
+			m.clearFeatureSearch()
+		}
 		return m, nil
 	case "q":
 		// Cancel - restore previous state and close modal (same as Esc)
@@ -253,16 +276,16 @@ func (m Model) handleFeatureModeInput(key string) (Model, tea.Cmd) {
 
 // handleFeatureModeNavigation handles navigation within the feature selection modal
 func (m Model) handleFeatureModeNavigation(direction int) Model {
-	availableFeatures := m.GetUniqueFeatures()
-	if len(availableFeatures) == 0 {
+	filteredFeatures := m.GetFilteredFeatures()
+	if len(filteredFeatures) == 0 {
 		return m
 	}
 
 	newIndex := m.Modals.featureMode.selectedIndex + direction
 	if newIndex < 0 {
 		newIndex = 0
-	} else if newIndex >= len(availableFeatures) {
-		newIndex = len(availableFeatures) - 1
+	} else if newIndex >= len(filteredFeatures) {
+		newIndex = len(filteredFeatures) - 1
 	}
 	m.Modals.featureMode.selectedIndex = newIndex
 	return m
@@ -270,8 +293,8 @@ func (m Model) handleFeatureModeNavigation(direction int) Model {
 
 // handleFeatureModeJumpToFirst handles 'gg' key - jump to first feature in modal
 func (m Model) handleFeatureModeJumpToFirst() Model {
-	availableFeatures := m.GetUniqueFeatures()
-	if len(availableFeatures) > 0 {
+	filteredFeatures := m.GetFilteredFeatures()
+	if len(filteredFeatures) > 0 {
 		m.Modals.featureMode.selectedIndex = 0
 	}
 	return m
@@ -279,38 +302,38 @@ func (m Model) handleFeatureModeJumpToFirst() Model {
 
 // handleFeatureModeJumpToLast handles 'G' key - jump to last feature in modal
 func (m Model) handleFeatureModeJumpToLast() Model {
-	availableFeatures := m.GetUniqueFeatures()
-	if len(availableFeatures) > 0 {
-		m.Modals.featureMode.selectedIndex = len(availableFeatures) - 1
+	filteredFeatures := m.GetFilteredFeatures()
+	if len(filteredFeatures) > 0 {
+		m.Modals.featureMode.selectedIndex = len(filteredFeatures) - 1
 	}
 	return m
 }
 
 // handleFeatureModeFastScroll handles 'J'/'K' keys - fast scroll in feature modal
 func (m Model) handleFeatureModeFastScroll(direction int) Model {
-	availableFeatures := m.GetUniqueFeatures()
-	if len(availableFeatures) == 0 {
+	filteredFeatures := m.GetFilteredFeatures()
+	if len(filteredFeatures) == 0 {
 		return m
 	}
 
 	// Fast scroll by 5 items (similar to main interface fast scroll)
 	step := 5 * direction
 	newIndex := m.Modals.featureMode.selectedIndex + step
-	
+
 	if newIndex < 0 {
 		newIndex = 0
-	} else if newIndex >= len(availableFeatures) {
-		newIndex = len(availableFeatures) - 1
+	} else if newIndex >= len(filteredFeatures) {
+		newIndex = len(filteredFeatures) - 1
 	}
-	
+
 	m.Modals.featureMode.selectedIndex = newIndex
 	return m
 }
 
 // handleFeatureModeHalfPage handles 'ctrl+u'/'ctrl+d' keys - half-page scroll in feature modal
 func (m Model) handleFeatureModeHalfPage(direction int) Model {
-	availableFeatures := m.GetUniqueFeatures()
-	if len(availableFeatures) == 0 {
+	filteredFeatures := m.GetFilteredFeatures()
+	if len(filteredFeatures) == 0 {
 		return m
 	}
 
@@ -318,13 +341,13 @@ func (m Model) handleFeatureModeHalfPage(direction int) Model {
 	halfPage := 4 // Conservative estimate for half-page in feature modal
 	step := halfPage * direction
 	newIndex := m.Modals.featureMode.selectedIndex + step
-	
+
 	if newIndex < 0 {
 		newIndex = 0
-	} else if newIndex >= len(availableFeatures) {
-		newIndex = len(availableFeatures) - 1
+	} else if newIndex >= len(filteredFeatures) {
+		newIndex = len(filteredFeatures) - 1
 	}
-	
+
 	m.Modals.featureMode.selectedIndex = newIndex
 	return m
 }
@@ -432,5 +455,47 @@ func (m Model) handleTaskEditConfirm(feature string) (Model, tea.Cmd) {
 	// Close modal if no valid task
 	m.SetTaskEditMode(false)
 	return m, nil
+}
+
+// handleFeatureSearchInput handles keyboard input when feature search mode is active
+func (m Model) handleFeatureSearchInput(key string) (Model, tea.Cmd) {
+	switch key {
+	case "esc":
+		// Cancel search and revert to previous state
+		m.cancelFeatureSearch()
+		return m, nil
+
+	case "enter":
+		// Commit current search input
+		m.commitFeatureSearch()
+		return m, nil
+
+	case "backspace":
+		// Remove last character
+		if len(m.Modals.featureMode.searchInput) > 0 {
+			m.Modals.featureMode.searchInput = m.Modals.featureMode.searchInput[:len(m.Modals.featureMode.searchInput)-1]
+			// Update search in real-time
+			m.updateFeatureSearchMatches()
+		}
+		return m, nil
+
+	case "ctrl+u":
+		// Clear entire input
+		m.Modals.featureMode.searchInput = ""
+		m.updateFeatureSearchMatches()
+		return m, nil
+
+	case "ctrl+c":
+		return m, tea.Quit
+
+	default:
+		// Handle printable characters
+		if len(key) == 1 && key[0] >= 32 && key[0] <= 126 {
+			m.Modals.featureMode.searchInput += key
+			// Update search in real-time
+			m.updateFeatureSearchMatches()
+		}
+		return m, nil
+	}
 }
 
