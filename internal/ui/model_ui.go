@@ -249,9 +249,7 @@ func (m *Model) SetSearchQuery(query string) {
 	m.updateSearchMatches()
 
 	// Reset task selection since search changed
-	m.Navigation.selectedIndex = 0
-	m.taskDetailsViewport.GotoTop()
-	m.updateTaskDetailsViewport()
+	m.setSelectedTask(0)
 }
 
 // ClearSearch clears the current search query
@@ -262,9 +260,7 @@ func (m *Model) ClearSearch() {
 	// Update search matches (will clear them since search is now inactive)
 	m.updateSearchMatches()
 
-	m.Navigation.selectedIndex = 0
-	m.taskDetailsViewport.GotoTop()
-	m.updateTaskDetailsViewport()
+	m.setSelectedTask(0)
 }
 
 // addToSearchHistory adds a query to search history, avoiding duplicates
@@ -348,9 +344,7 @@ func (m *Model) ApplyStatusFilters() {
 	}
 
 	// Reset task selection since filtering changed
-	m.Navigation.selectedIndex = 0
-	m.taskDetailsViewport.GotoTop()
-	m.updateTaskDetailsViewport()
+	m.setSelectedTask(0)
 }
 
 // HasActiveModal returns true if any modal is currently active

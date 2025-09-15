@@ -12,9 +12,7 @@ func (m Model) handleUpNavigation() Model {
 		if m.IsLeftPanelActive() {
 			// Navigate tasks (existing behavior)
 			if m.Navigation.selectedIndex > 0 {
-				m.Navigation.selectedIndex--
-				m.taskDetailsViewport.GotoTop() // Reset scroll when changing tasks
-				m.updateTaskDetailsViewport()   // Update content for new task
+				m.setSelectedTask(m.Navigation.selectedIndex - 1)
 			}
 		} else if m.IsRightPanelActive() {
 			// Scroll content up using viewport
@@ -38,9 +36,7 @@ func (m Model) handleDownNavigation() Model {
 			// Navigate tasks (existing behavior)
 			sortedTasks := m.GetSortedTasks()
 			if m.Navigation.selectedIndex < len(sortedTasks)-1 {
-				m.Navigation.selectedIndex++
-				m.taskDetailsViewport.GotoTop() // Reset scroll when changing tasks
-				m.updateTaskDetailsViewport()   // Update content for new task
+				m.setSelectedTask(m.Navigation.selectedIndex + 1)
 			}
 		} else if m.IsRightPanelActive() {
 			// Scroll content down using viewport
@@ -57,8 +53,7 @@ func (m Model) handleJumpToFirst() Model {
 	} else {
 		if m.IsLeftPanelActive() {
 			// Jump to first task
-			m.Navigation.selectedIndex = 0
-			m.taskDetailsViewport.GotoTop()
+			m.setSelectedTask(0)
 		} else if m.IsRightPanelActive() {
 			// Jump to top of task details
 			m.taskDetailsViewport.GotoTop()
@@ -76,8 +71,7 @@ func (m Model) handleJumpToLast() Model {
 			// Jump to last task
 			sortedTasks := m.GetSortedTasks()
 			if len(sortedTasks) > 0 {
-				m.Navigation.selectedIndex = len(sortedTasks) - 1
-				m.taskDetailsViewport.GotoTop() // Reset scroll for new task
+				m.setSelectedTask(len(sortedTasks) - 1)
 			}
 		} else if m.IsRightPanelActive() {
 			// Jump to bottom of task details
@@ -100,9 +94,7 @@ func (m Model) handleFastScrollUp() Model {
 		if newIndex < 0 {
 			newIndex = 0
 		}
-		m.Navigation.selectedIndex = newIndex
-		m.taskDetailsViewport.GotoTop() // Reset detail scroll when changing tasks
-		m.updateTaskDetailsViewport()   // Update content for new task
+		m.setSelectedTask(newIndex)
 	} else if m.IsRightPanelActive() {
 		// Fast scroll up in task details panel (4 lines)
 		m.taskDetailsViewport.LineUp(4)
@@ -126,9 +118,7 @@ func (m Model) handleFastScrollDown() Model {
 			if newIndex > maxIndex {
 				newIndex = maxIndex
 			}
-			m.Navigation.selectedIndex = newIndex
-			m.taskDetailsViewport.GotoTop() // Reset detail scroll when changing tasks
-			m.updateTaskDetailsViewport()   // Update content for new task
+			m.setSelectedTask(newIndex)
 		}
 	} else if m.IsRightPanelActive() {
 		// Fast scroll down in task details panel (4 lines)
@@ -150,9 +140,7 @@ func (m Model) handleHalfPageUp() Model {
 		if newIndex < 0 {
 			newIndex = 0
 		}
-		m.Navigation.selectedIndex = newIndex
-		m.taskDetailsViewport.GotoTop() // Reset detail scroll when changing tasks
-		m.updateTaskDetailsViewport()   // Update content for new task
+		m.setSelectedTask(newIndex)
 	} else if m.IsRightPanelActive() {
 		// Half-page scroll up in task details panel
 		m.taskDetailsViewport.HalfViewUp()
@@ -176,9 +164,7 @@ func (m Model) handleHalfPageDown() Model {
 			if newIndex > maxIndex {
 				newIndex = maxIndex
 			}
-			m.Navigation.selectedIndex = newIndex
-			m.taskDetailsViewport.GotoTop() // Reset detail scroll when changing tasks
-			m.updateTaskDetailsViewport()   // Update content for new task
+			m.setSelectedTask(newIndex)
 		}
 	} else if m.IsRightPanelActive() {
 		// Half-page scroll down in task details panel
