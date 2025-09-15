@@ -2,6 +2,8 @@ package ui
 
 import (
 	"fmt"
+	"github.com/atotto/clipboard"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/yousfisaad/lazyarchon/internal/archon"
 	"os"
@@ -507,6 +509,8 @@ func (m *Model) updateHelpModalViewport() {
 	// Task Management section
 	help = append(help, lipgloss.NewStyle().Bold(true).Render("Task Management:"))
 	help = append(help, "  t            Change task status (Todo/Doing/Review/Done)")
+	help = append(help, "  y            Copy task ID to clipboard (yank)")
+	help = append(help, "  Y            Copy task title to clipboard (yank)")
 	help = append(help, "")
 
 	// Application Controls section
@@ -622,7 +626,15 @@ func (m *Model) SelectNoFeatures() {
 }
 
 // SmartToggleAllFeatures toggles between "select all" and "select none" intelligently
+// When search is active, it only operates on filtered features
 func (m *Model) SmartToggleAllFeatures() {
+	// Check if search is active - if so, only operate on filtered features
+	if m.Modals.featureMode.searchQuery != "" {
+		m.smartToggleFilteredFeatures()
+		return
+	}
+
+	// Default behavior: operate on all features
 	availableFeatures := m.GetUniqueFeatures()
 	if m.Modals.featureMode.selectedFeatures == nil {
 		m.Modals.featureMode.selectedFeatures = make(map[string]bool)
@@ -644,6 +656,61 @@ func (m *Model) SmartToggleAllFeatures() {
 		// Some or none are selected, so select all
 		m.SelectAllFeatures()
 	}
+}
+
+// smartToggleFilteredFeatures toggles between "select all" and "select none" for filtered features only
+func (m *Model) smartToggleFilteredFeatures() {
+	filteredFeatures := m.GetFilteredFeatures()
+	if m.Modals.featureMode.selectedFeatures == nil {
+		m.Modals.featureMode.selectedFeatures = make(map[string]bool)
+	}
+
+	// Check if all filtered features are currently selected
+	allFilteredSelected := true
+	for _, feature := range filteredFeatures {
+		if enabled, exists := m.Modals.featureMode.selectedFeatures[feature]; !exists || !enabled {
+			allFilteredSelected = false
+			break
+		}
+	}
+
+	if allFilteredSelected {
+		// All filtered features are selected, so unselect them
+		m.selectNoFilteredFeatures()
+	} else {
+		// Some or none of the filtered features are selected, so select all of them
+		m.selectAllFilteredFeatures()
+	}
+}
+
+// selectAllFilteredFeatures enables only the currently filtered features
+func (m *Model) selectAllFilteredFeatures() {
+	filteredFeatures := m.GetFilteredFeatures()
+	if m.Modals.featureMode.selectedFeatures == nil {
+		m.Modals.featureMode.selectedFeatures = make(map[string]bool)
+	}
+
+	for _, feature := range filteredFeatures {
+		m.Modals.featureMode.selectedFeatures[feature] = true
+	}
+
+	// Reset task selection since filtering changed
+	m.setSelectedTask(0)
+}
+
+// selectNoFilteredFeatures disables only the currently filtered features
+func (m *Model) selectNoFilteredFeatures() {
+	filteredFeatures := m.GetFilteredFeatures()
+	if m.Modals.featureMode.selectedFeatures == nil {
+		m.Modals.featureMode.selectedFeatures = make(map[string]bool)
+	}
+
+	for _, feature := range filteredFeatures {
+		m.Modals.featureMode.selectedFeatures[feature] = false
+	}
+
+	// Reset task selection since filtering changed
+	m.setSelectedTask(0)
 }
 
 // backupFeatureState saves the current feature selection state for cancel functionality
@@ -674,4 +741,44 @@ func (m *Model) restoreFeatureState() {
 
 	// Reset task selection since filtering changed
 	m.setSelectedTask(0)
+}
+
+// handleTaskIDCopy copies the current task ID to clipboard
+func (m Model) handleTaskIDCopy() (Model, tea.Cmd) {
+	sortedTasks := m.GetSortedTasks()
+	if m.Navigation.selectedIndex >= len(sortedTasks) || len(sortedTasks) == 0 {
+		return m.setTemporaryStatusMessage("No task selected"), nil
+	}
+
+	selectedTask := sortedTasks[m.Navigation.selectedIndex]
+	err := clipboard.WriteAll(selectedTask.ID)
+	if err != nil {
+		return m.setTemporaryStatusMessage("Failed to copy task ID"), nil
+	}
+
+	return m.setTemporaryStatusMessage("Copied task ID to clipboard"), nil
+}
+
+// handleTaskTitleCopy copies the current task title to clipboard
+func (m Model) handleTaskTitleCopy() (Model, tea.Cmd) {
+	sortedTasks := m.GetSortedTasks()
+	if m.Navigation.selectedIndex >= len(sortedTasks) || len(sortedTasks) == 0 {
+		return m.setTemporaryStatusMessage("No task selected"), nil
+	}
+
+	selectedTask := sortedTasks[m.Navigation.selectedIndex]
+	err := clipboard.WriteAll(selectedTask.Title)
+	if err != nil {
+		return m.setTemporaryStatusMessage("Failed to copy task title"), nil
+	}
+
+	return m.setTemporaryStatusMessage("Copied task title to clipboard"), nil
+}
+
+// setTemporaryStatusMessage sets a temporary status message that will be displayed briefly
+func (m Model) setTemporaryStatusMessage(message string) Model {
+	// Set status message (this integrates with existing status display system)
+	m.Data.statusMessage = message
+	m.Data.statusMessageTime = time.Now()
+	return m
 }

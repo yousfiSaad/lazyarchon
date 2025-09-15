@@ -226,6 +226,19 @@ func (m Model) HandleKeyPress(key string) (Model, tea.Cmd) {
 		}
 		return m, nil
 
+	// Yank (copy) functionality
+	case "y":
+		if !m.Modals.projectMode.active && len(m.Data.tasks) > 0 && m.Navigation.selectedIndex < len(m.GetSortedTasks()) {
+			return m.handleTaskIDCopy()
+		}
+		return m, nil
+
+	case "Y":
+		if !m.Modals.projectMode.active && len(m.Data.tasks) > 0 && m.Navigation.selectedIndex < len(m.GetSortedTasks()) {
+			return m.handleTaskTitleCopy()
+		}
+		return m, nil
+
 	// Inline search activation
 	case "/", "ctrl+f":
 		if !m.Modals.projectMode.active && !m.Data.searchMode {
