@@ -208,6 +208,8 @@ func (m Model) handleFeatureModeInput(key string) (Model, tea.Cmd) {
 	case "enter", "l":
 		// Apply - keep current selections and close modal
 		m.SetFeatureMode(false)
+		// Update search matches after filter change
+		m.updateSearchMatches()
 		return m, nil
 	case " ": // Space bar toggles current feature
 		if m.Modals.featureMode.selectedIndex >= 0 && m.Modals.featureMode.selectedIndex < len(filteredFeatures) {
