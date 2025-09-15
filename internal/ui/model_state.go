@@ -621,6 +621,31 @@ func (m *Model) SelectNoFeatures() {
 	m.setSelectedTask(0)
 }
 
+// SmartToggleAllFeatures toggles between "select all" and "select none" intelligently
+func (m *Model) SmartToggleAllFeatures() {
+	availableFeatures := m.GetUniqueFeatures()
+	if m.Modals.featureMode.selectedFeatures == nil {
+		m.Modals.featureMode.selectedFeatures = make(map[string]bool)
+	}
+
+	// Check if all features are currently selected
+	allSelected := true
+	for _, feature := range availableFeatures {
+		if enabled, exists := m.Modals.featureMode.selectedFeatures[feature]; !exists || !enabled {
+			allSelected = false
+			break
+		}
+	}
+
+	if allSelected {
+		// All are selected, so unselect all
+		m.SelectNoFeatures()
+	} else {
+		// Some or none are selected, so select all
+		m.SelectAllFeatures()
+	}
+}
+
 // backupFeatureState saves the current feature selection state for cancel functionality
 func (m *Model) backupFeatureState() {
 	if m.Modals.featureMode.selectedFeatures == nil {

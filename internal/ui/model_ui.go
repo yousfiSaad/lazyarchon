@@ -168,6 +168,17 @@ func (m *Model) SetFeatureMode(show bool) {
 		}
 		// Save backup of current state before opening modal (after potential initialization)
 		m.backupFeatureState()
+
+		// Initialize search state
+		m.Modals.featureMode.searchMode = false
+		m.Modals.featureMode.searchInput = ""
+		m.Modals.featureMode.searchQuery = ""
+		m.Modals.featureMode.filteredFeatures = nil
+		m.Modals.featureMode.matchingIndices = nil
+		m.Modals.featureMode.currentMatchIndex = 0
+
+		// Update search matches (will populate with all features since search is empty)
+		m.updateFeatureSearchMatches()
 	}
 }
 

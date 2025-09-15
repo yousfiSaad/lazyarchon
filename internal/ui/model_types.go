@@ -61,6 +61,14 @@ type FeatureModeState struct {
 	selectedIndex    int             // Currently highlighted feature in list
 	selectedFeatures map[string]bool // Which features are enabled/disabled
 	backupFeatures   map[string]bool // Backup of features before modal opened (for cancel)
+
+	// Search functionality
+	searchMode       bool     // Whether user is actively typing search
+	searchInput      string   // Current search input (while typing)
+	searchQuery      string   // Committed search query
+	filteredFeatures []string // Cached filtered results
+	matchingIndices  []int    // Indices of features that match search (in filtered list)
+	currentMatchIndex int     // Current position in match list for n/N navigation
 }
 
 // TaskEditModalState manages task editing modal state

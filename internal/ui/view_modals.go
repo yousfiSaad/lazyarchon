@@ -206,21 +206,51 @@ func (m Model) renderFeatureModal(baseUI string) string {
 // getFeatureSelectionContent returns the feature selection modal content
 func (m Model) getFeatureSelectionContent() []string {
 	var content []string
-	availableFeatures := m.GetUniqueFeatures()
+	filteredFeatures := m.GetFilteredFeatures()
+	allFeatures := m.GetUniqueFeatures()
 
-	// Title
-	content = append(content, lipgloss.NewStyle().Bold(true).Render("Select Features"))
+	// Title with search indicator
+	title := "Select Features"
+	if m.Modals.featureMode.searchQuery != "" {
+		title += fmt.Sprintf(" (search: \"%s\")", m.Modals.featureMode.searchQuery)
+	}
+	content = append(content, lipgloss.NewStyle().Bold(true).Render(title))
 	content = append(content, "")
 
-	if len(availableFeatures) == 0 {
+	// Handle search input mode
+	if m.Modals.featureMode.searchMode {
+		cursor := "_" // Simple cursor indicator
+		searchText := fmt.Sprintf("[Search] %s%s", m.Modals.featureMode.searchInput, cursor)
+
+		// Add match indicator if search has results
+		if len(filteredFeatures) > 0 {
+			searchText += fmt.Sprintf(" (%d matches)", len(filteredFeatures))
+		} else if m.Modals.featureMode.searchInput != "" {
+			searchText += " (no matches)"
+		}
+
+		content = append(content, searchText)
+		content = append(content, "")
+		content = append(content, lipgloss.NewStyle().Italic(true).Render("Enter: apply search  Esc: cancel  Ctrl+U: clear"))
+		return content
+	}
+
+	if len(allFeatures) == 0 {
 		content = append(content, "No features available")
 		content = append(content, "")
 		content = append(content, lipgloss.NewStyle().Italic(true).Render("Enter: close"))
 		return content
 	}
 
-	// Feature list with checkboxes
-	for i, feature := range availableFeatures {
+	if len(filteredFeatures) == 0 && m.Modals.featureMode.searchQuery != "" {
+		content = append(content, "No features match your search")
+		content = append(content, "")
+		content = append(content, lipgloss.NewStyle().Italic(true).Render("Ctrl+L: clear search  Esc: cancel"))
+		return content
+	}
+
+	// Feature list with checkboxes (showing filtered features)
+	for i, feature := range filteredFeatures {
 		// Determine if feature is enabled
 		enabled := true // Default to enabled
 		if len(m.Modals.featureMode.selectedFeatures) > 0 {
@@ -247,8 +277,14 @@ func (m Model) getFeatureSelectionContent() []string {
 		}
 		taskText += ")"
 
+		// Highlight search terms in feature name if search is active
+		featureName := feature
+		if m.Modals.featureMode.searchQuery != "" {
+			featureName = highlightSearchTerms(feature, m.Modals.featureMode.searchQuery)
+		}
+
 		// Build the line
-		line := fmt.Sprintf("%s %s %s", checkbox, feature,
+		line := fmt.Sprintf("%s %s %s", checkbox, featureName,
 			lipgloss.NewStyle().Foreground(lipgloss.Color("244")).Render(taskText))
 
 		// Highlight selected feature
@@ -266,10 +302,19 @@ func (m Model) getFeatureSelectionContent() []string {
 	content = append(content, "──────────────────────────────────────")
 	content = append(content, "")
 
-	// Instructions
-	content = append(content, lipgloss.NewStyle().Italic(true).Render("j/k: navigate  gg/G: top/bottom  J/K: fast scroll"))
-	content = append(content, lipgloss.NewStyle().Italic(true).Render("Space: toggle  a: all  n: none"))
-	content = append(content, lipgloss.NewStyle().Italic(true).Render("Enter: apply   Esc/q: cancel"))
+	// Instructions (dynamic based on search state)
+	if m.Modals.featureMode.searchQuery != "" {
+		// Show search-specific instructions
+		content = append(content, lipgloss.NewStyle().Italic(true).Render("j/k: navigate  gg/G: top/bottom  J/K: fast scroll"))
+		content = append(content, lipgloss.NewStyle().Italic(true).Render("Space: toggle  a: toggle all/none  /: search"))
+		content = append(content, lipgloss.NewStyle().Italic(true).Render("n/N: next/prev match  Ctrl+L: clear search"))
+		content = append(content, lipgloss.NewStyle().Italic(true).Render("Enter: apply   Esc/q: cancel"))
+	} else {
+		// Show normal instructions
+		content = append(content, lipgloss.NewStyle().Italic(true).Render("j/k: navigate  gg/G: top/bottom  J/K: fast scroll"))
+		content = append(content, lipgloss.NewStyle().Italic(true).Render("Space: toggle  a: toggle all/none  /: search"))
+		content = append(content, lipgloss.NewStyle().Italic(true).Render("Enter: apply   Esc/q: cancel"))
+	}
 
 	return content
 }
