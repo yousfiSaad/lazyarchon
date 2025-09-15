@@ -19,6 +19,9 @@ func (m *Model) SetSelectedProject(projectID *string) {
 	// Reset feature filters when changing projects
 	// This ensures users see all features in the new project context
 	m.Modals.featureMode.selectedFeatures = nil
+
+	// Update search matches after project filter change
+	m.updateSearchMatches()
 }
 
 // findAndSelectTask finds a task by ID in the current sort order and selects it
@@ -178,6 +181,9 @@ func (m *Model) UpdateTasks(tasks []archon.Task) {
 		// Tasks updated but selection still valid - update viewport content
 		m.updateTaskDetailsViewport()
 	}
+
+	// Update search matches after task data changes
+	m.updateSearchMatches()
 }
 
 // UpdateProjects updates the project list and validates current selection
