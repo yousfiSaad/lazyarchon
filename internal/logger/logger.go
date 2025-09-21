@@ -131,28 +131,26 @@ func (l *Logger) Usage(action string, attrs ...slog.Attr) {
 }
 
 // Error logs errors with context
-func (l *Logger) Error(msg string, err error, attrs ...slog.Attr) {
+func (l *Logger) Error(msg string, err error, attrs ...any) {
 	args := []any{
 		"error", err.Error(),
 	}
 
-	for _, attr := range attrs {
-		args = append(args, attr.Key, attr.Value)
-	}
+	// Add the provided key-value pairs
+	args = append(args, attrs...)
 
 	l.Logger.Error(msg, args...)
 }
 
 // Debug logs debug information with component context
-func (l *Logger) Debug(component, msg string, attrs ...slog.Attr) {
+func (l *Logger) Debug(component, msg string, attrs ...any) {
 	if l.config.Development.Debug {
 		args := []any{
 			"component", component,
 		}
 
-		for _, attr := range attrs {
-			args = append(args, attr.Key, attr.Value)
-		}
+		// Add the provided key-value pairs
+		args = append(args, attrs...)
 
 		l.Logger.Debug(msg, args...)
 	}

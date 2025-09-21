@@ -171,7 +171,7 @@ type StructuredLoggerAdapter struct {
 }
 
 func (l *StructuredLoggerAdapter) Debug(msg string, args ...interface{}) {
-	l.logger.Debug("app", msg, convertToSlogAttrs(args...)...)
+	l.logger.Debug("app", msg, convertToSlogArgs(args...)...)
 }
 
 func (l *StructuredLoggerAdapter) Info(msg string, args ...interface{}) {
@@ -185,7 +185,7 @@ func (l *StructuredLoggerAdapter) Warn(msg string, args ...interface{}) {
 func (l *StructuredLoggerAdapter) Error(msg string, args ...interface{}) {
 	if len(args) > 0 {
 		if err, ok := args[0].(error); ok {
-			l.logger.Error(msg, err, convertToSlogAttrs(args[1:]...)...)
+			l.logger.Error(msg, err, convertToSlogArgs(args[1:]...)...)
 			return
 		}
 	}
