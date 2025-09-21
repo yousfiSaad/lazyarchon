@@ -1,5 +1,9 @@
 package ui
 
+import (
+	"github.com/yousfisaad/lazyarchon/internal/ui/styling"
+)
+
 // ModelFeatureHelpers implements the modals.FeatureHelpers interface
 type ModelFeatureHelpers struct {
 	model *Model
@@ -17,12 +21,12 @@ func (h *ModelFeatureHelpers) GetFeatureTaskCount(feature string) int {
 
 // GetFeatureColor returns the color for a given feature
 func (h *ModelFeatureHelpers) GetFeatureColor(feature string) string {
-	return GetFeatureColor(feature)
+	return styling.GetFeatureColor(feature)
 }
 
 // GetMutedFeatureColor returns the muted color for a given feature
 func (h *ModelFeatureHelpers) GetMutedFeatureColor(feature string) string {
-	return GetMutedFeatureColor(feature)
+	return styling.GetMutedFeatureColor(feature)
 }
 
 // HighlightSearchTermsWithColor highlights search terms with color

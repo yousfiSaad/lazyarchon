@@ -13,6 +13,7 @@ import (
 	"github.com/yousfisaad/lazyarchon/internal/interfaces"
 	"github.com/yousfisaad/lazyarchon/internal/logger"
 	"github.com/yousfisaad/lazyarchon/internal/ui"
+	"github.com/yousfisaad/lazyarchon/internal/ui/commands"
 )
 
 // NewConfigProvider creates a config provider instance
@@ -115,9 +116,9 @@ func (c *CommandExecutorImpl) LoadTasks(client interfaces.ArchonClient, projectI
 	return func() tea.Msg {
 		response, err := client.ListTasks(projectID, nil, false)
 		if err != nil {
-			return ui.TasksLoadedMsg{Error: err}
+			return commands.TasksLoadedMsg{Error: err}
 		}
-		return ui.TasksLoadedMsg{Tasks: response.Tasks}
+		return commands.TasksLoadedMsg{Tasks: response.Tasks}
 	}
 }
 
@@ -125,9 +126,9 @@ func (c *CommandExecutorImpl) LoadProjects(client interfaces.ArchonClient) inter
 	return func() tea.Msg {
 		response, err := client.ListProjects()
 		if err != nil {
-			return ui.ProjectsLoadedMsg{Error: err}
+			return commands.ProjectsLoadedMsg{Error: err}
 		}
-		return ui.ProjectsLoadedMsg{Projects: response.Projects}
+		return commands.ProjectsLoadedMsg{Projects: response.Projects}
 	}
 }
 
@@ -136,9 +137,9 @@ func (c *CommandExecutorImpl) UpdateTaskStatus(client interfaces.ArchonClient, t
 		updates := archon.UpdateTaskRequest{Status: &newStatus}
 		response, err := client.UpdateTask(taskID, updates)
 		if err != nil {
-			return ui.TaskUpdateMsg{Error: err}
+			return commands.TaskUpdateMsg{Error: err}
 		}
-		return ui.TaskUpdateMsg{Task: &response.Task}
+		return commands.TaskUpdateMsg{Task: &response.Task}
 	}
 }
 

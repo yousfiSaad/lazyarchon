@@ -68,6 +68,3 @@ coverage.txt
 
 # Air live reload tool
 tmp/
-
-# Personal todo files
-todos.md

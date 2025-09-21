@@ -237,7 +237,7 @@ func TestGetConnectionStatusText(t *testing.T) {
 // TestUpdateTasks tests task list updates and index adjustments
 func TestUpdateTasks(t *testing.T) {
 	model := NewModel(createTestConfig())
-	// Set proper window dimensions to avoid RenderLine issues
+	// Set proper window dimensions to avoid styling.RenderLine issues
 	model.Window.width = 120
 	model.Window.height = 40
 	model.Navigation.selectedIndex = 5 // Set out of bounds initially

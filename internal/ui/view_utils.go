@@ -2,6 +2,7 @@ package ui
 
 import (
 	"github.com/yousfisaad/lazyarchon/internal/ui/view"
+	"github.com/yousfisaad/lazyarchon/internal/ui/styling"
 )
 
 // Min returns the minimum of two integers
@@ -21,12 +22,12 @@ func calculateScrollWindow(totalItems, selectedIndex, maxItems int) (int, int) {
 
 // applyScrolling applies scrolling to content and adds scroll indicators
 func (m Model) applyScrolling(content []string, scrollOffset, maxLines int) []string {
-	return view.ApplyScrolling(content, scrollOffset, maxLines, ScrollIndicatorStyle)
+	return view.ApplyScrolling(content, scrollOffset, maxLines, styling.ScrollIndicatorStyle)
 }
 
 // applyScrollingWithScrollBar applies scrolling to content with visual scroll bar and enhanced feedback
 func (m Model) applyScrollingWithScrollBar(content []string, scrollOffset, maxLines int) ([]string, []string) {
-	return view.ApplyScrollingWithScrollBar(content, scrollOffset, maxLines, ScrollIndicatorStyle)
+	return view.ApplyScrollingWithScrollBar(content, scrollOffset, maxLines, styling.ScrollIndicatorStyle)
 }
 
 // renderDetailScrollBar generates ASCII scroll bar for task details panel

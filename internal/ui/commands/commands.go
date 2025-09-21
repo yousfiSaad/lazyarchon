@@ -1,4 +1,4 @@
-package ui
+package commands
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
@@ -7,24 +7,24 @@ import (
 )
 
 // Messages for async operations
-type tasksLoadedMsg struct {
-	tasks []archon.Task
+type TasksLoadedMsgSimple struct {
+	Tasks []archon.Task
 }
 
-type projectsLoadedMsg struct {
-	projects []archon.Project
+type ProjectsLoadedMsgSimple struct {
+	Projects []archon.Project
 }
 
-type errorMsg string
+type ErrorMsgSimple string
 
-type taskStatusUpdatedMsg struct {
-	taskID    string
-	newStatus string
+type TaskStatusUpdatedMsgSimple struct {
+	TaskID    string
+	NewStatus string
 }
 
-type taskFeatureUpdatedMsg struct {
-	taskID     string
-	newFeature string
+type TaskFeatureUpdatedMsgSimple struct {
+	TaskID     string
+	NewFeature string
 }
 
 // Additional message types for dependency injection
@@ -82,10 +82,10 @@ func LoadTasksWithProject(client *archon.Client, projectID *string) tea.Cmd {
 	return func() tea.Msg {
 		resp, err := client.ListTasks(projectID, nil, true) // include_closed=true for full visibility
 		if err != nil {
-			return errorMsg("Failed to load tasks: " + err.Error())
+			return ErrorMsgSimple("Failed to load tasks: " + err.Error())
 		}
 
-		return tasksLoadedMsg{tasks: resp.Tasks}
+		return TasksLoadedMsgSimple{Tasks: resp.Tasks}
 	}
 }
 
@@ -96,10 +96,10 @@ func LoadProjects(client *archon.Client) tea.Cmd {
 		if err != nil {
 			// Return error if projects can't be loaded
 			// App will still work with task list only
-			return errorMsg("Failed to load projects: " + err.Error())
+			return ErrorMsgSimple("Failed to load projects: " + err.Error())
 		}
 
-		return projectsLoadedMsg{projects: resp.Projects}
+		return ProjectsLoadedMsgSimple{Projects: resp.Projects}
 	}
 }
 
@@ -122,12 +122,12 @@ func UpdateTaskStatusCmd(client *archon.Client, taskID string, newStatus string)
 		// Call API to update task
 		_, err := client.UpdateTask(taskID, updateRequest)
 		if err != nil {
-			return errorMsg("Failed to update task status: " + err.Error())
+			return ErrorMsgSimple("Failed to update task status: " + err.Error())
 		}
 
-		return taskStatusUpdatedMsg{
-			taskID:    taskID,
-			newStatus: newStatus,
+		return TaskStatusUpdatedMsgSimple{
+			TaskID:    taskID,
+			NewStatus: newStatus,
 		}
 	}
 }
@@ -143,12 +143,12 @@ func UpdateTaskFeatureCmd(client *archon.Client, taskID string, newFeature strin
 		// Call API to update task
 		_, err := client.UpdateTask(taskID, updateRequest)
 		if err != nil {
-			return errorMsg("Failed to update task feature: " + err.Error())
+			return ErrorMsgSimple("Failed to update task feature: " + err.Error())
 		}
 
-		return taskFeatureUpdatedMsg{
-			taskID:     taskID,
-			newFeature: newFeature,
+		return TaskFeatureUpdatedMsgSimple{
+			TaskID:     taskID,
+			NewFeature: newFeature,
 		}
 	}
 }

@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"github.com/yousfisaad/lazyarchon/internal/archon"
+	"github.com/yousfisaad/lazyarchon/internal/ui/sorting"
 )
 
 // GetTasks returns the current tasks (implements interfaces.UIModel)
@@ -94,13 +95,13 @@ func (m Model) GetCurrentPosition() string {
 // GetCurrentSortModeName returns the human-readable name of the current sort mode
 func (m Model) GetCurrentSortModeName() string {
 	switch m.Data.sortMode {
-	case SortStatusPriority:
+	case sorting.SortStatusPriority:
 		return "Status"
-	case SortPriorityOnly:
+	case sorting.SortPriorityOnly:
 		return "Priority"
-	case SortTimeCreated:
+	case sorting.SortTimeCreated:
 		return "Created"
-	case SortAlphabetical:
+	case sorting.SortAlphabetical:
 		return "Alpha"
 	default:
 		return "Unknown"

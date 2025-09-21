@@ -5,12 +5,14 @@ import (
 	"github.com/yousfisaad/lazyarchon/internal/archon"
 	configpkg "github.com/yousfisaad/lazyarchon/internal/config"
 	"github.com/yousfisaad/lazyarchon/internal/interfaces"
+	"github.com/yousfisaad/lazyarchon/internal/ui/sorting"
+	"github.com/yousfisaad/lazyarchon/internal/ui/styling"
 )
 
 // NewModel creates a new application model
 func NewModel(cfg *configpkg.Config) Model {
 	// Initialize theme from configuration
-	InitializeTheme(cfg)
+	styling.InitializeTheme(cfg)
 
 	// Connect to Archon server using configuration
 	client := archon.NewClient(cfg.GetServerURL(), cfg.GetAPIKey())
@@ -90,7 +92,7 @@ func NewModelWithDependencies(
 	}
 
 	// Initialize theme from configuration using the concrete config
-	InitializeTheme(concreteConfig)
+	styling.InitializeTheme(concreteConfig)
 
 	// Create viewports using factory
 	taskDetailsViewport := viewportFactory.CreateTaskDetailsViewport(80, 20)
@@ -139,14 +141,14 @@ func NewModelWithDependencies(
 func parseSortModeFromConfig(sortModeStr string) int {
 	switch sortModeStr {
 	case "status+priority":
-		return SortStatusPriority
+		return sorting.SortStatusPriority
 	case "priority":
-		return SortPriorityOnly
+		return sorting.SortPriorityOnly
 	case "time":
-		return SortTimeCreated
+		return sorting.SortTimeCreated
 	case "alphabetical":
-		return SortAlphabetical
+		return sorting.SortAlphabetical
 	default:
-		return SortStatusPriority // Default fallback
+		return sorting.SortStatusPriority // Default fallback
 	}
 }

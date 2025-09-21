@@ -1,4 +1,4 @@
-package ui
+package styling
 
 import (
 	"fmt"
@@ -6,7 +6,6 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/yousfisaad/lazyarchon/internal/archon"
-	styling "github.com/yousfisaad/lazyarchon/internal/ui/styles"
 )
 
 // LineComponent represents a styled component of a task line
@@ -22,12 +21,12 @@ type LineComponent struct {
 type TaskLineBuilder struct {
 	availableWidth int
 	components     []LineComponent
-	styleContext   *styling.StyleContext
+	styleContext   *StyleContext
 	statusColor    string // Store status color for search highlighting
 }
 
 // NewTaskLineBuilder creates a new builder for the given available width with styling context
-func NewTaskLineBuilder(availableWidth int, styleContext *styling.StyleContext) *TaskLineBuilder {
+func NewTaskLineBuilder(availableWidth int, styleContext *StyleContext) *TaskLineBuilder {
 	return &TaskLineBuilder{
 		availableWidth: availableWidth,
 		components:     make([]LineComponent, 0),
