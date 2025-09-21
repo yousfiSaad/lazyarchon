@@ -6,6 +6,7 @@ import (
 
 	"github.com/yousfisaad/lazyarchon/internal/archon"
 	"github.com/yousfisaad/lazyarchon/internal/config"
+	"github.com/yousfisaad/lazyarchon/internal/ui/sorting"
 )
 
 // createTestConfig creates a config for testing
@@ -38,8 +39,8 @@ func TestNewModel(t *testing.T) {
 		t.Errorf("Expected loading to be true")
 	}
 
-	if model.Data.sortMode != SortStatusPriority {
-		t.Errorf("Expected sortMode to be SortStatusPriority (%d), got %d", SortStatusPriority, model.Data.sortMode)
+	if model.Data.sortMode != sorting.SortStatusPriority {
+		t.Errorf("Expected sortMode to be SortStatusPriority (%d), got %d", sorting.SortStatusPriority, model.Data.sortMode)
 	}
 
 	if model.client == nil {
