@@ -6,63 +6,75 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"gopkg.in/yaml.v3"
 )
 
 // Config represents the application configuration
 type Config struct {
-	Server      ServerConfig      `yaml:"server"`
-	UI          UIConfig          `yaml:"ui"`
-	Development DevelopmentConfig `yaml:"development"`
+	Version     string            `yaml:"version,omitempty" validate:"omitempty,semver"`
+	Profile     string            `yaml:"profile,omitempty" validate:"omitempty,oneof=dev development staging production prod"`
+	Server      ServerConfig      `yaml:"server" validate:"required"`
+	UI          UIConfig          `yaml:"ui" validate:"required"`
+	Development DevelopmentConfig `yaml:"development" validate:"required"`
 }
 
 // ServerConfig holds server-related configuration
 type ServerConfig struct {
-	URL     string        `yaml:"url"`
-	Timeout time.Duration `yaml:"timeout"`
-	APIKey  string        `yaml:"api_key"`
+	URL     string        `yaml:"url" validate:"required,url"`
+	Timeout time.Duration `yaml:"timeout" validate:"min=1s,max=300s"`
+	APIKey  string        `yaml:"api_key" validate:"omitempty,min=10"`
 }
 
 // UIConfig holds UI-related configuration
 type UIConfig struct {
-	Theme       ThemeConfig   `yaml:"theme"`
-	Display     DisplayConfig `yaml:"display"`
+	Theme       ThemeConfig   `yaml:"theme" validate:"required"`
+	Display     DisplayConfig `yaml:"display" validate:"required"`
 	Keybindings interface{}   `yaml:"keybindings"` // Future enhancement
 }
 
 // ThemeConfig holds theme/color configuration
 type ThemeConfig struct {
-	Name        string `yaml:"name"`         // Predefined theme name (default, monokai, gruvbox, dracula)
+	Name        string `yaml:"name" validate:"oneof=default monokai gruvbox dracula"`         // Predefined theme name
 	// PanelBG removed - using terminal natural background
-	SelectedBG  string `yaml:"selected_bg"`
-	BorderColor string `yaml:"border_color"`
-	StatusColor string `yaml:"status_color"`
-	HeaderColor string `yaml:"header_color"`
-	ErrorColor  string `yaml:"error_color"`
+	SelectedBG  string `yaml:"selected_bg" validate:"omitempty,numeric"`
+	BorderColor string `yaml:"border_color" validate:"omitempty,numeric"`
+	StatusColor string `yaml:"status_color" validate:"omitempty,numeric"`
+	HeaderColor string `yaml:"header_color" validate:"omitempty,numeric"`
+	ErrorColor  string `yaml:"error_color" validate:"omitempty,numeric"`
 }
 
 // DisplayConfig holds display-related settings
 type DisplayConfig struct {
 	ShowCompletedTasks  bool   `yaml:"show_completed_tasks"`
-	DefaultSortMode     string `yaml:"default_sort_mode"`
-	AutoRefreshInterval int    `yaml:"auto_refresh_interval"`
+	DefaultSortMode     string `yaml:"default_sort_mode" validate:"oneof=status+priority priority time alphabetical"`
+	AutoRefreshInterval int    `yaml:"auto_refresh_interval" validate:"min=0,max=300"`
 
 	// Color enhancement options
 	FeatureColors       bool   `yaml:"feature_colors"`       // Enable vibrant feature tag colors
 	FeatureBackgrounds  bool   `yaml:"feature_backgrounds"`  // Enable subtle background tints for feature groups
 	PriorityIndicators  bool   `yaml:"priority_indicators"`  // Show priority symbols and colors
-	StatusColorScheme   string `yaml:"status_color_scheme"`  // Task status color hierarchy (blue, gray, warm_gray, cool_gray)
+	StatusColorScheme   string `yaml:"status_color_scheme" validate:"oneof=blue gray warm_gray cool_gray"`  // Task status color hierarchy
 }
 
 // DevelopmentConfig holds development-related settings
 type DevelopmentConfig struct {
 	Debug           bool   `yaml:"debug"`
-	LogLevel        string `yaml:"log_level"`
+	LogLevel        string `yaml:"log_level" validate:"oneof=debug info warn error"`
 	EnableProfiling bool   `yaml:"enable_profiling"`
+}
+
+// Global validator instance
+var validate *validator.Validate
+
+func init() {
+	validate = validator.New()
 }
 
 // Default configuration values
 var defaultConfig = Config{
+	Version: "1.0.0",
+	Profile: "development",
 	Server: ServerConfig{
 		URL:     "http://localhost:8181",
 		Timeout: 30 * time.Second,
@@ -115,11 +127,24 @@ func LoadFromPath(configPath string) (*Config, error) {
 		return &config, fmt.Errorf("failed to parse config file: %w", err)
 	}
 
+	// Validate configuration
+	if err := validate.Struct(&config); err != nil {
+		return &config, fmt.Errorf("config validation failed: %w", err)
+	}
+
 	// Override with environment variables if present
 	config.applyEnvironmentOverrides()
 
 	// Apply predefined theme if specified
 	config.applyPredefinedTheme()
+
+	// Apply profile-specific configuration
+	config.applyProfileDefaults()
+
+	// Validate again after environment overrides and profile application
+	if err := validate.Struct(&config); err != nil {
+		return &config, fmt.Errorf("config validation failed after environment overrides and profile application: %w", err)
+	}
 
 	return &config, nil
 }
@@ -162,11 +187,24 @@ func Load() (*Config, error) {
 		return &config, err // Return defaults even on error
 	}
 
+	// Validate configuration
+	if err := validate.Struct(&config); err != nil {
+		return &config, fmt.Errorf("config validation failed: %w", err)
+	}
+
 	// Override with environment variables if present
 	config.applyEnvironmentOverrides()
 
 	// Apply predefined theme if specified
 	config.applyPredefinedTheme()
+
+	// Apply profile-specific configuration
+	config.applyProfileDefaults()
+
+	// Validate again after environment overrides and profile application
+	if err := validate.Struct(&config); err != nil {
+		return &config, fmt.Errorf("config validation failed after environment overrides and profile application: %w", err)
+	}
 
 	return &config, nil
 }
@@ -322,4 +360,72 @@ func (c *Config) applyPredefinedTheme() {
 	if c.UI.Theme.ErrorColor == "" || c.UI.Theme.ErrorColor == defaultConfig.UI.Theme.ErrorColor {
 		c.UI.Theme.ErrorColor = theme.ErrorColor
 	}
+}
+
+// applyProfileDefaults applies profile-specific configuration defaults
+func (c *Config) applyProfileDefaults() {
+	// Get profile from environment variable if not set in config
+	if c.Profile == "" {
+		if profile := os.Getenv("LAZYARCHON_PROFILE"); profile != "" {
+			c.Profile = profile
+		} else {
+			c.Profile = "development" // Default profile
+		}
+	}
+
+	switch c.Profile {
+	case "development", "dev":
+		c.Development.Debug = true
+		c.Development.LogLevel = "debug"
+		c.Development.EnableProfiling = true
+		if c.Server.URL == "http://localhost:8181" { // Only override if using default
+			c.Server.URL = "http://localhost:8181"
+		}
+
+	case "staging":
+		c.Development.Debug = false
+		c.Development.LogLevel = "info"
+		c.Development.EnableProfiling = false
+		if c.Server.URL == "http://localhost:8181" { // Only override if using default
+			c.Server.URL = "http://staging.archon.example.com"
+		}
+
+	case "production", "prod":
+		c.Development.Debug = false
+		c.Development.LogLevel = "warn"
+		c.Development.EnableProfiling = false
+		if c.Server.URL == "http://localhost:8181" { // Only override if using default
+			c.Server.URL = "http://archon.example.com"
+		}
+	}
+}
+
+// Validate validates the configuration
+func (c *Config) Validate() error {
+	return validate.Struct(c)
+}
+
+// GetProfile returns the current configuration profile
+func (c *Config) GetProfile() string {
+	if c.Profile == "" {
+		return "development"
+	}
+	return c.Profile
+}
+
+// IsProductionProfile returns true if running in production profile
+func (c *Config) IsProductionProfile() bool {
+	profile := c.GetProfile()
+	return profile == "production" || profile == "prod"
+}
+
+// IsDevelopmentProfile returns true if running in development profile
+func (c *Config) IsDevelopmentProfile() bool {
+	profile := c.GetProfile()
+	return profile == "development" || profile == "dev"
+}
+
+// IsStagingProfile returns true if running in staging profile
+func (c *Config) IsStagingProfile() bool {
+	return c.GetProfile() == "staging"
 }
