@@ -5,224 +5,114 @@ import (
 	"github.com/yousfisaad/lazyarchon/internal/config"
 )
 
-// Theme holds configurable colors
-type Theme struct {
-	SelectedBG  string
-	BorderColor string
-	StatusColor string
-	HeaderColor string
-	ErrorColor  string
-}
+// styles.go - Main entry point for LazyArchon UI styling
+// This file provides a compatibility layer for the modular styling system.
+//
+// The styling system is now organized into focused modules:
+// - styles_theme.go: Theme management and configuration
+// - styles_factory.go: Style creation functions
+// - styles_colors.go: Color management and status colors
+// - styles_utils.go: Utility functions for rendering
 
-// CurrentTheme holds the active theme (will be initialized from config)
-var CurrentTheme Theme
-
-// InitializeTheme sets up the theme from configuration
-func InitializeTheme(cfg *config.Config) {
-	CurrentTheme = Theme{
-		SelectedBG:  cfg.UI.Theme.SelectedBG,
-		BorderColor: cfg.UI.Theme.BorderColor,
-		StatusColor: cfg.UI.Theme.StatusColor,
-		HeaderColor: cfg.UI.Theme.HeaderColor,
-		ErrorColor:  cfg.UI.Theme.ErrorColor,
-	}
-	
-	// Update styles with new theme
-	updateStylesFromTheme()
-}
-
-// updateStylesFromTheme applies the current theme to all styles
-func updateStylesFromTheme() {
-	// Update header style
-	HeaderStyle = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color(CurrentTheme.HeaderColor)).
-		Padding(0, 2)
-
-	// Update base panel style
-	BasePanelStyle = lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color(CurrentTheme.BorderColor))
-
-	// Update selected item style
-	SelectedItemStyle = lipgloss.NewStyle().
-		Background(lipgloss.Color(CurrentTheme.SelectedBG)).
-		Bold(true)
-}
-
-// Color constants (fallback defaults)
-const (
-	ColorSelected       = "237" // Background color for selected items
-	ColorBorder         = "62"  // Border color for inactive panels
-	ColorActiveBorder   = "51"  // Border color for active panel (bright cyan)
-	ColorInactiveBorder = "240" // Border color for inactive panel (dim)
-	ColorStatus         = "205" // Header text color
-	ColorStatusBar      = "241" // Status bar text color
-	ColorProject        = "39"  // Blue for projects
-	ColorAllTasks       = "208" // Orange for "All Tasks" option
-
-	// Status bar state colors
-	ColorStatusConnected = "46"  // Green for connected/ready states
-	ColorStatusWarning   = "220" // Yellow for warnings/loading
-	ColorStatusError     = "196" // Red for errors/disconnected
-	ColorStatusInfo      = "51"  // Cyan for informational elements
-	ColorStatusAccent    = "75"  // Light blue for accent text
-)
-
-// Layout constants
-const (
-	HeaderHeight       = 1
-	StatusBarHeight    = 1
-	PanelPadding       = 1
-	BorderWidth        = 2
-	SelectionIndicator = "> "
-	NoSelection        = "  "
-	MaxTasksPerPage    = 100
-)
-
-// Styles for different UI components
+// Global style variables that need to be accessible from other modules
 var (
-	// Header style for the top bar
-	HeaderStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color(ColorStatus)).
-			Padding(0, 2)
-
-	// Status bar style for the bottom bar
-	StatusBarStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(ColorStatusBar)).
-			Padding(0, 1).
-			Width(0) // Let it expand naturally
-
-	// Base panel style (can be customized for specific panels)
-	BasePanelStyle = lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color(ColorBorder))
-
-	// Style for selected list items
-	SelectedItemStyle = lipgloss.NewStyle().
-				Background(lipgloss.Color(ColorSelected)).
-				Bold(true)
-
-	// Style for project items in project list
-	ProjectStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(ColorProject))
-
-	// Style for "All Tasks" option
-	AllTasksStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(ColorAllTasks))
-
-	// Style for task detail headers
-	DetailHeaderStyle = lipgloss.NewStyle().
-				Bold(true)
-
-	// Style for scroll indicators
-	ScrollIndicatorStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color(ColorStatusBar))
-
-	// Style for feature/tag display
-	TagStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("244")) // Subtle gray - good contrast without being jarring
+	// Header style for section headers
+	HeaderStyle lipgloss.Style
+	// Status bar style for bottom status line
+	StatusBarStyle lipgloss.Style
+	// Base panel style for containers
+	BasePanelStyle lipgloss.Style
+	// Detail header style for task detail sections
+	DetailHeaderStyle lipgloss.Style
+	// Scroll indicator style
+	ScrollIndicatorStyle lipgloss.Style
+	// Tag style for feature tags
+	TagStyle lipgloss.Style
 )
 
-// CreatePanelStyle creates a styled panel with given dimensions
+// Status symbols - Single Source of Truth
+const (
+	StatusSymbolTodo   = "○"
+	StatusSymbolDoing  = "●"
+	StatusSymbolReview = "◐"
+	StatusSymbolDone   = "◉"
+)
+
+// UI layout constants
+const (
+	HeaderHeight      = 1
+	StatusBarHeight   = 1
+	BorderWidth       = 2
+	PanelPadding      = 1
+	SelectionIndicator = "→ " // Arrow indicator for better visibility
+	NoSelection       = "  "
+	MaxTasksPerPage   = 100
+)
+
+// Priority levels for task ordering
+type PriorityLevel int
+
+const (
+	PriorityLow PriorityLevel = iota
+	PriorityMedium
+	PriorityHigh
+)
+
+// DebugLog is available from debug_log.go
+
+// Theme management compatibility functions
+func InitializeTheme(cfg *config.Config) {
+	InitializeThemeNew(cfg)
+}
+
+// Style factory compatibility functions
 func CreatePanelStyle(width, height int) lipgloss.Style {
-	return BasePanelStyle.Copy().
-		Width(width - BorderWidth).
-		Height(height - BorderWidth).
-		Padding(PanelPadding)
+	return CreatePanelStyleNew(width, height)
 }
 
-// CreateTaskItemStyle creates a style for task list items based on selection and status
 func CreateTaskItemStyle(selected bool, statusColor string) lipgloss.Style {
-	style := lipgloss.NewStyle().Foreground(lipgloss.Color(statusColor))
-	if selected {
-		selectedBG := CurrentTheme.SelectedBG
-		if selectedBG == "" {
-			selectedBG = ColorSelected // fallback
-		}
-		style = style.Background(lipgloss.Color(selectedBG)).Bold(true)
-	}
-	return style
+	return CreateTaskItemStyleNew(selected, statusColor)
 }
 
-// CreateProjectItemStyle creates a style for project list items based on selection
 func CreateProjectItemStyle(selected bool, isAllTasks bool) lipgloss.Style {
-	var baseStyle lipgloss.Style
-	if isAllTasks {
-		baseStyle = AllTasksStyle.Copy()
-	} else {
-		baseStyle = ProjectStyle.Copy()
-	}
-
-	if selected {
-		selectedBG := CurrentTheme.SelectedBG
-		if selectedBG == "" {
-			selectedBG = ColorSelected // fallback
-		}
-		baseStyle = baseStyle.Background(lipgloss.Color(selectedBG)).Bold(true)
-	}
-
-	return baseStyle
+	return CreateProjectItemStyleNew(selected, isAllTasks)
 }
 
-// CreateScrollBarStyle creates a style for the scroll bar panel
 func CreateScrollBarStyle(width, height int) lipgloss.Style {
-	return lipgloss.NewStyle().
-		Width(width).
-		Height(height).
-		Foreground(lipgloss.Color("241")). // Dim color for scroll bar
-		Align(lipgloss.Right).             // Align scroll bar to right
-		Padding(0, 0)                      // No padding for clean alignment
+	return CreateScrollBarStyleNew(width, height)
 }
 
-// CreateActivePanelStyle creates a styled panel with active state indication
 func CreateActivePanelStyle(width, height int, isActive bool) lipgloss.Style {
-	var borderColor string
-	if isActive {
-		borderColor = ColorActiveBorder
-	} else {
-		borderColor = ColorInactiveBorder
-	}
-
-	return lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color(borderColor)).
-		Width(width - BorderWidth).
-		Height(height - BorderWidth).
-		Padding(PanelPadding)
+	return CreateActivePanelStyleNew(width, height, isActive)
 }
 
-// Status Bar Contextual Styles
-
-// CreateStatusBarStyle creates a status bar with contextual styling
 func CreateStatusBarStyle(state string) lipgloss.Style {
-	baseStyle := StatusBarStyle.Copy()
+	return CreateStatusBarStyleNew(state)
+}
 
-	switch state {
-	case "loading":
-		return baseStyle.Foreground(lipgloss.Color(ColorStatusWarning))
-	case "error":
-		return baseStyle.Foreground(lipgloss.Color(ColorStatusError))
-	case "connected", "ready":
-		return baseStyle.Foreground(lipgloss.Color(ColorStatusBar))
-	case "info":
-		return baseStyle.Foreground(lipgloss.Color(ColorStatusInfo))
+// Priority utility functions
+func GetPrioritySymbol(priority PriorityLevel) string {
+	switch priority {
+	case PriorityHigh:
+		return "▲" // Upward triangle - urgent/ascending
+	case PriorityMedium:
+		return "△" // Empty triangle - moderate attention
+	case PriorityLow:
+		return "▽" // Downward triangle - low priority
 	default:
-		return baseStyle
+		return " " // Single space for no priority
 	}
 }
 
-// CreateStatusBarAccentStyle creates accent styling for status bar elements
-func CreateStatusBarAccentStyle() lipgloss.Style {
-	return lipgloss.NewStyle().
-		Foreground(lipgloss.Color(ColorStatusAccent)).
-		Bold(false)
+func GetTaskPriority(taskOrder int, allTasks []interface{}) PriorityLevel {
+	// Simplified priority calculation for compatibility
+	if taskOrder >= 80 {
+		return PriorityHigh
+	} else if taskOrder >= 50 {
+		return PriorityMedium
+	}
+	return PriorityLow
 }
 
-// CreateStatusBarInfoStyle creates informational styling for counts and stats
-func CreateStatusBarInfoStyle() lipgloss.Style {
-	return lipgloss.NewStyle().
-		Foreground(lipgloss.Color(ColorStatusInfo)).
-		Bold(false)
-}
+// Re-export CurrentTheme from styles_theme.go for backward compatibility
+var CurrentTheme = &ActiveTheme

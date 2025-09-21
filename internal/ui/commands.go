@@ -3,6 +3,7 @@ package ui
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/yousfisaad/lazyarchon/internal/archon"
+	"github.com/yousfisaad/lazyarchon/internal/interfaces"
 )
 
 // Messages for async operations
@@ -24,6 +25,50 @@ type taskStatusUpdatedMsg struct {
 type taskFeatureUpdatedMsg struct {
 	taskID     string
 	newFeature string
+}
+
+// Additional message types for dependency injection
+type TasksLoadedMsg struct {
+	Tasks []archon.Task
+	Error error
+}
+
+type ProjectsLoadedMsg struct {
+	Projects []archon.Project
+	Error    error
+}
+
+type TaskUpdateMsg struct {
+	Task  *archon.Task
+	Error error
+}
+
+// Real-time WebSocket message types
+type RealtimeConnectedMsg struct{}
+
+type RealtimeDisconnectedMsg struct {
+	Error error
+}
+
+type RealtimeTaskUpdateMsg struct {
+	TaskID string
+	Task   archon.Task
+	Old    *archon.Task
+}
+
+type RealtimeTaskCreateMsg struct {
+	Task archon.Task
+}
+
+type RealtimeTaskDeleteMsg struct {
+	TaskID string
+	Task   archon.Task
+}
+
+type RealtimeProjectUpdateMsg struct {
+	ProjectID string
+	Project   archon.Project
+	Old       *archon.Project
 }
 
 // LoadTasks loads all tasks from the API (deprecated - use LoadTasksWithProject)
@@ -104,6 +149,88 @@ func UpdateTaskFeatureCmd(client *archon.Client, taskID string, newFeature strin
 		return taskFeatureUpdatedMsg{
 			taskID:     taskID,
 			newFeature: newFeature,
+		}
+	}
+}
+
+// InitializeRealtimeCmd sets up the WebSocket connection and event handlers
+func InitializeRealtimeCmd(wsClient interfaces.RealtimeClient) tea.Cmd {
+	return func() tea.Msg {
+		// Set up legacy event handlers (optional, mainly for backward compatibility)
+		wsClient.SetEventHandlers(
+			// Task update handler
+			func(event archon.TaskUpdateEvent) {
+				// Legacy handler - events are now handled via channel
+			},
+			// Task create handler
+			func(event archon.TaskCreateEvent) {
+				// Legacy handler - events are now handled via channel
+			},
+			// Task delete handler
+			func(event archon.TaskDeleteEvent) {
+				// Legacy handler - events are now handled via channel
+			},
+			// Project update handler
+			func(event archon.ProjectUpdateEvent) {
+				// Legacy handler - events are now handled via channel
+			},
+			// Connect handler
+			func() {
+				// Legacy handler - events are now handled via channel
+			},
+			// Disconnect handler
+			func(err error) {
+				// Legacy handler - events are now handled via channel
+			},
+		)
+
+		// Attempt to connect
+		if err := wsClient.Connect(); err != nil {
+			return RealtimeDisconnectedMsg{Error: err}
+		}
+
+		return RealtimeConnectedMsg{}
+	}
+}
+
+// ListenForRealtimeEvents creates a command that listens for WebSocket events
+// and converts them to Bubble Tea messages
+func ListenForRealtimeEvents(wsClient interfaces.RealtimeClient) tea.Cmd {
+	return func() tea.Msg {
+		// Block and wait for the next event from the WebSocket client
+		eventCh := wsClient.GetEventChannel()
+
+		select {
+		case event := <-eventCh:
+			// Convert archon message types to ui message types
+			switch e := event.(type) {
+			case archon.RealtimeTaskCreateMsg:
+				return RealtimeTaskCreateMsg{Task: e.Task}
+			case archon.RealtimeTaskUpdateMsg:
+				return RealtimeTaskUpdateMsg{
+					TaskID: e.TaskID,
+					Task:   e.Task,
+					Old:    e.Old,
+				}
+			case archon.RealtimeTaskDeleteMsg:
+				return RealtimeTaskDeleteMsg{
+					TaskID: e.TaskID,
+					Task:   e.Task,
+				}
+			case archon.RealtimeProjectUpdateMsg:
+				return RealtimeProjectUpdateMsg{
+					ProjectID: e.ProjectID,
+					Project:   e.Project,
+					Old:       e.Old,
+				}
+			case archon.RealtimeConnectedMsg:
+				return RealtimeConnectedMsg{}
+			case archon.RealtimeDisconnectedMsg:
+				return RealtimeDisconnectedMsg{Error: e.Error}
+			default:
+				// Unknown event type, return nil to ignore
+				return nil
+			}
 		}
 	}
 }

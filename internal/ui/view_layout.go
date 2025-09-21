@@ -72,6 +72,7 @@ func (m Model) View() string {
 		return m.renderTaskEditModal(baseUI)
 	}
 
+	// Return base UI without background - let terminal handle backgrounds naturally
 	return baseUI
 }
 
@@ -122,7 +123,10 @@ func (m Model) renderStatusBar() string {
 	// Handle special states first
 	if m.IsHelpMode() {
 		statusText = "[Help] j/k to scroll • ESC: close | q: quit"
-		return CreateStatusBarStyle("ready").Render(statusText)
+		styleContext := m.CreateStyleContext(false)
+		availableWidth := m.Window.width - 2
+		truncatedText := m.truncateStatusText(statusText, availableWidth)
+		return styleContext.Factory().StatusBar("ready").Width(m.Window.width).Render(truncatedText)
 	}
 
 	if m.Modals.projectMode.active {
@@ -132,7 +136,10 @@ func (m Model) renderStatusBar() string {
 		} else {
 			statusText = "Project Selection | ?: help | q: quit"
 		}
-		return CreateStatusBarStyle("ready").Render(statusText)
+		styleContext := m.CreateStyleContext(false)
+		availableWidth := m.Window.width - 2
+		truncatedText := m.truncateStatusText(statusText, availableWidth)
+		return styleContext.Factory().StatusBar("ready").Width(m.Window.width).Render(truncatedText)
 	}
 
 	if m.IsFeatureModeActive() {
@@ -143,7 +150,10 @@ func (m Model) renderStatusBar() string {
 		} else {
 			statusText = "Feature Selection | No features available | Enter: apply | q: cancel"
 		}
-		return CreateStatusBarStyle("ready").Render(statusText)
+		styleContext := m.CreateStyleContext(false)
+		availableWidth := m.Window.width - 2
+		truncatedText := m.truncateStatusText(statusText, availableWidth)
+		return styleContext.Factory().StatusBar("ready").Width(m.Window.width).Render(truncatedText)
 	}
 
 	// Show loading state with spinner
@@ -154,20 +164,29 @@ func (m Model) renderStatusBar() string {
 			message = m.Data.loadingMessage
 		}
 		statusText = fmt.Sprintf("[Tasks] %s %s | q: quit", spinner, message)
-		return CreateStatusBarStyle("loading").Render(statusText)
+		styleContext := m.CreateStyleContext(false)
+		availableWidth := m.Window.width - 2
+		truncatedText := m.truncateStatusText(statusText, availableWidth)
+		return styleContext.Factory().StatusBar("loading").Width(m.Window.width).Render(truncatedText)
 	}
 
 	// Show error state with user-friendly message
 	if m.Data.error != "" {
 		friendlyError := m.FormatUserFriendlyError(m.Data.error)
 		statusText = fmt.Sprintf("[Tasks] Error: %s | r: retry | q: quit", friendlyError)
-		return CreateStatusBarStyle("error").Render(statusText)
+		styleContext := m.CreateStyleContext(false)
+		availableWidth := m.Window.width - 2
+		truncatedText := m.truncateStatusText(statusText, availableWidth)
+		return styleContext.Factory().StatusBar("error").Width(m.Window.width).Render(truncatedText)
 	}
 
 	// Show temporary status message (for copy confirmations, etc.)
 	if m.Data.statusMessage != "" && time.Since(m.Data.statusMessageTime) < 3*time.Second {
 		statusText = fmt.Sprintf("[Tasks] %s | ?: help | q: quit", m.Data.statusMessage)
-		return CreateStatusBarStyle("info").Render(statusText)
+		styleContext := m.CreateStyleContext(false)
+		availableWidth := m.Window.width - 2
+		truncatedText := m.truncateStatusText(statusText, availableWidth)
+		return styleContext.Factory().StatusBar("info").Width(m.Window.width).Render(truncatedText)
 	}
 
 	// Handle search mode - show inline search interface
@@ -181,7 +200,10 @@ func (m Model) renderStatusBar() string {
 		}
 
 		statusText = searchText + " | Enter: apply | Esc: cancel | Ctrl+U: clear"
-		return CreateStatusBarStyle("ready").Render(statusText)
+		styleContext := m.CreateStyleContext(false)
+		availableWidth := m.Window.width - 2
+		truncatedText := m.truncateStatusText(statusText, availableWidth)
+		return styleContext.Factory().StatusBar("ready").Width(m.Window.width).Render(truncatedText)
 	}
 
 	// Context-aware status based on active panel
@@ -267,5 +289,54 @@ func (m Model) renderStatusBar() string {
 		statusText = fmt.Sprintf("[%s] Ready | ?: help | q: quit", activePanel)
 	}
 
-	return CreateStatusBarStyle("ready").Render(statusText)
+	styleContext := m.CreateStyleContext(false)
+
+	// Truncate text to fit terminal width, accounting for padding (2 chars)
+	availableWidth := m.Window.width - 2
+	truncatedText := m.truncateStatusText(statusText, availableWidth)
+
+	return styleContext.Factory().StatusBar("ready").Width(m.Window.width).Render(truncatedText)
+}
+
+// truncateStatusText intelligently truncates status text to fit the available width
+// Prioritizes keeping core status information while truncating less critical shortcuts
+func (m Model) truncateStatusText(text string, maxWidth int) string {
+	if len(text) <= maxWidth {
+		return text
+	}
+
+	// Try to preserve the core status part by truncating from the shortcuts section
+	parts := strings.Split(text, " | ")
+	if len(parts) <= 1 {
+		// No separators, just truncate with ellipsis
+		if maxWidth <= 3 {
+			return text[:maxWidth]
+		}
+		return text[:maxWidth-3] + "..."
+	}
+
+	// Keep the first part (core status) and as many shortcuts as possible
+	result := parts[0]
+	for i := 1; i < len(parts); i++ {
+		candidate := result + " | " + parts[i]
+		if len(candidate) <= maxWidth {
+			result = candidate
+		} else {
+			// Add ellipsis if we had to cut shortcuts
+			if len(result+" | ...") <= maxWidth {
+				result += " | ..."
+			}
+			break
+		}
+	}
+
+	// Final fallback: if even the core part is too long
+	if len(result) > maxWidth {
+		if maxWidth <= 3 {
+			return result[:maxWidth]
+		}
+		return result[:maxWidth-3] + "..."
+	}
+
+	return result
 }

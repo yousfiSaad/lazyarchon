@@ -2,6 +2,7 @@ package ui
 
 import (
 	"strings"
+	"github.com/yousfisaad/lazyarchon/internal/ui/styling"
 )
 
 // Panel and View Management Methods
@@ -247,6 +248,13 @@ func (m *Model) SetSearchQuery(query string) {
 	// Trim whitespace
 	query = strings.TrimSpace(query)
 
+	// Remember currently selected task before search changes (same pattern as ClearSearch)
+	var selectedTaskID string
+	sortedTasks := m.GetSortedTasks()
+	if len(sortedTasks) > 0 && m.Navigation.selectedIndex < len(sortedTasks) {
+		selectedTaskID = sortedTasks[m.Navigation.selectedIndex].ID
+	}
+
 	// Update search state
 	m.Data.searchQuery = query
 	m.Data.searchActive = (query != "")
@@ -259,8 +267,11 @@ func (m *Model) SetSearchQuery(query string) {
 	// Update search matches for n/N navigation
 	m.updateSearchMatches()
 
-	// Reset task selection since search changed
-	m.setSelectedTask(0)
+	// Preserve task selection when possible (same pattern as ClearSearch)
+	m.findAndSelectTask(selectedTaskID)
+
+	// Update task details viewport to refresh highlighting in content panel
+	m.updateTaskDetailsViewport()
 }
 
 // ClearSearch clears the current search query
@@ -369,4 +380,26 @@ func (m *Model) ApplyStatusFilters() {
 // HasActiveModal returns true if any modal is currently active
 func (m Model) HasActiveModal() bool {
 	return m.IsHelpMode() || m.IsStatusChangeMode() || m.Modals.projectMode.active || m.IsConfirmationMode() || m.IsFeatureModeActive() || m.IsTaskEditModeActive() || m.IsStatusFilterModeActive()
+}
+
+// Styling Helper Methods
+
+// CreateStyleContext creates a StyleContext for UI components with current model state
+func (m Model) CreateStyleContext(isSelected bool) *styling.StyleContext {
+	themeAdapter := &styling.ThemeAdapter{
+		TodoColor:     CurrentTheme.TodoColor,
+		DoingColor:    CurrentTheme.DoingColor,
+		ReviewColor:   CurrentTheme.ReviewColor,
+		DoneColor:     CurrentTheme.DoneColor,
+		HeaderColor:   CurrentTheme.HeaderColor,
+		MutedColor:    CurrentTheme.MutedColor,
+		AccentColor:   CurrentTheme.AccentColor,
+		StatusColor:   CurrentTheme.StatusColor,
+		FeatureColors: CurrentTheme.FeatureColors,
+		Name:          CurrentTheme.Name,
+	}
+
+	return styling.NewStyleContext(themeAdapter, m.config).
+		WithSelection(isSelected).
+		WithSearch(m.Data.searchQuery, m.Data.searchActive)
 }
