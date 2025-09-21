@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/yousfisaad/lazyarchon/internal/ui/styling"
 )
 
 // View renders the complete UI
@@ -113,7 +114,7 @@ func (m Model) renderHeader() string {
 		}
 	}
 
-	return HeaderStyle.Render(headerText)
+	return styling.HeaderStyle.Render(headerText)
 }
 
 // renderStatusBar renders the bottom status bar

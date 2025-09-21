@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/yousfisaad/lazyarchon/internal/archon"
-	styling "github.com/yousfisaad/lazyarchon/internal/ui/styles"
+	"github.com/yousfisaad/lazyarchon/internal/ui/styling"
 )
 
 // calculateTaskDetailsWidth calculates the effective content width for task details
@@ -39,15 +39,15 @@ func (m *Model) renderTaskHeader(task *archon.Task, factory *styling.StyleFactor
 
 	// Task Details header
 	taskDetailsHeader := factory.Header().Render("Task Details")
-	content = append(content, RenderLine(taskDetailsHeader, contentWidth))
-	content = append(content, RenderLine("", contentWidth))
+	content = append(content, styling.RenderLine(taskDetailsHeader, contentWidth))
+	content = append(content, styling.RenderLine("", contentWidth))
 
 	// Title with proper styling and search highlighting using status color
 	titleHeader := factory.Header().Render("Title:")
-	content = append(content, RenderLine(titleHeader, contentWidth))
+	content = append(content, styling.RenderLine(titleHeader, contentWidth))
 
 	title := task.Title
-	statusColor := GetThemeStatusColor(task.Status)
+	statusColor := styling.GetThemeStatusColor(task.Status)
 	if m.Data.searchActive && m.Data.searchQuery != "" {
 		// Use status color for both highlighted and non-highlighted text in content panel
 		title = highlightSearchTermsWithColor(task.Title, m.Data.searchQuery, statusColor)
@@ -58,9 +58,9 @@ func (m *Model) renderTaskHeader(task *archon.Task, factory *styling.StyleFactor
 
 	titleLines := strings.Split(wordWrap(title, contentWidth-2), "\n")
 	for _, line := range titleLines {
-		content = append(content, RenderLine(line, contentWidth))
+		content = append(content, styling.RenderLine(line, contentWidth))
 	}
-	content = append(content, RenderLine("", contentWidth))
+	content = append(content, styling.RenderLine("", contentWidth))
 
 	return content
 }
@@ -70,47 +70,47 @@ func (m *Model) renderTaskMetadata(task *archon.Task, factory *styling.StyleFact
 	var content []string
 
 	// Status and assignee with colors - build complete styled strings first
-	statusLabel := factory.Text(CurrentTheme.MutedColor).Render("Status:")
-	statusSymbol := factory.Text(GetThemeStatusColor(task.Status)).Render(task.GetStatusSymbol())
-	statusText := factory.Text(GetThemeStatusColor(task.Status)).Render(strings.ToUpper(task.Status))
+	statusLabel := factory.Text(styling.CurrentTheme.MutedColor).Render("Status:")
+	statusSymbol := factory.Text(styling.GetThemeStatusColor(task.Status)).Render(task.GetStatusSymbol())
+	statusText := factory.Text(styling.GetThemeStatusColor(task.Status)).Render(strings.ToUpper(task.Status))
 	statusLine := fmt.Sprintf("%s %s %s", statusLabel, statusSymbol, statusText)
-	content = append(content, RenderLine(statusLine, contentWidth))
+	content = append(content, styling.RenderLine(statusLine, contentWidth))
 
-	assigneeLabel := factory.Text(CurrentTheme.MutedColor).Render("Assignee:")
-	assigneeName := factory.Text(CurrentTheme.HeaderColor).Render(task.Assignee)
+	assigneeLabel := factory.Text(styling.CurrentTheme.MutedColor).Render("Assignee:")
+	assigneeName := factory.Text(styling.CurrentTheme.HeaderColor).Render(task.Assignee)
 	assigneeLine := fmt.Sprintf("%s %s", assigneeLabel, assigneeName)
-	content = append(content, RenderLine(assigneeLine, contentWidth))
+	content = append(content, styling.RenderLine(assigneeLine, contentWidth))
 
 	// Priority information with color and symbol (if enabled)
 	if m.config.IsPriorityIndicatorsEnabled() {
-		priority := GetTaskPriority(task.TaskOrder, nil)
-		prioritySymbol := GetPrioritySymbol(priority)
-		priorityColor := GetPriorityColor(priority)
+		priority := styling.GetTaskPriority(task.TaskOrder, nil)
+		prioritySymbol := styling.GetPrioritySymbol(priority)
+		priorityColor := styling.GetPriorityColor(priority)
 
 		var priorityText string
 		switch priority {
-		case PriorityHigh:
+		case styling.PriorityHigh:
 			priorityText = "High"
-		case PriorityMedium:
+		case styling.PriorityMedium:
 			priorityText = "Medium"
-		case PriorityLow:
+		case styling.PriorityLow:
 			priorityText = "Low"
 		default:
 			priorityText = "Unknown"
 		}
 
-		priorityLabel := factory.Text(CurrentTheme.MutedColor).Render("Priority:")
+		priorityLabel := factory.Text(styling.CurrentTheme.MutedColor).Render("Priority:")
 		styledSymbol := factory.Text(priorityColor).Render(prioritySymbol)
 		styledText := factory.Text(priorityColor).Render(priorityText)
-		orderText := factory.Text(CurrentTheme.MutedColor).Render(fmt.Sprintf("(order: %d)", task.TaskOrder))
+		orderText := factory.Text(styling.CurrentTheme.MutedColor).Render(fmt.Sprintf("(order: %d)", task.TaskOrder))
 		priorityLine := fmt.Sprintf("%s %s %s %s", priorityLabel, styledSymbol, styledText, orderText)
-		content = append(content, RenderLine(priorityLine, contentWidth))
+		content = append(content, styling.RenderLine(priorityLine, contentWidth))
 	} else {
 		// Just show the raw task order when priority indicators are disabled
-		taskOrderLabel := factory.Text(CurrentTheme.MutedColor).Render("Task Order:")
-		taskOrderValue := factory.Text(CurrentTheme.MutedColor).Render(fmt.Sprintf("%d", task.TaskOrder))
+		taskOrderLabel := factory.Text(styling.CurrentTheme.MutedColor).Render("Task Order:")
+		taskOrderValue := factory.Text(styling.CurrentTheme.MutedColor).Render(fmt.Sprintf("%d", task.TaskOrder))
 		taskOrderLine := fmt.Sprintf("%s %s", taskOrderLabel, taskOrderValue)
-		content = append(content, RenderLine(taskOrderLine, contentWidth))
+		content = append(content, styling.RenderLine(taskOrderLine, contentWidth))
 	}
 
 	return content
@@ -121,12 +121,12 @@ func (m *Model) renderTaskTags(task *archon.Task, factory *styling.StyleFactory,
 	var content []string
 
 	if task.Feature != nil && *task.Feature != "" {
-		tagsLabel := factory.Text(CurrentTheme.MutedColor).Render("Tags:")
-		featureTag := factory.Text(GetFeatureColor(*task.Feature)).Render(fmt.Sprintf("#%s", *task.Feature))
+		tagsLabel := factory.Text(styling.CurrentTheme.MutedColor).Render("Tags:")
+		featureTag := factory.Text(styling.GetFeatureColor(*task.Feature)).Render(fmt.Sprintf("#%s", *task.Feature))
 		tagsLine := fmt.Sprintf("%s %s", tagsLabel, featureTag)
-		content = append(content, RenderLine(tagsLine, contentWidth))
+		content = append(content, styling.RenderLine(tagsLine, contentWidth))
 	}
-	content = append(content, RenderLine("", contentWidth))
+	content = append(content, styling.RenderLine("", contentWidth))
 
 	return content
 }
@@ -137,15 +137,15 @@ func (m *Model) renderTaskDescription(task *archon.Task, factory *styling.StyleF
 
 	if task.Description != "" {
 		descriptionHeader := factory.Header().Render("Description:")
-		content = append(content, RenderLine(descriptionHeader, contentWidth))
+		content = append(content, styling.RenderLine(descriptionHeader, contentWidth))
 		descriptionContent := renderMarkdown(task.Description, contentWidth-2)
 		descriptionLines := strings.Split(descriptionContent, "\n")
 
 		// Pad each description line to full width (markdown provides foreground styling)
 		for _, line := range descriptionLines {
-			content = append(content, RenderLine(line, contentWidth))
+			content = append(content, styling.RenderLine(line, contentWidth))
 		}
-		content = append(content, RenderLine("", contentWidth))
+		content = append(content, styling.RenderLine("", contentWidth))
 	}
 
 	return content
@@ -155,10 +155,10 @@ func (m *Model) renderTaskDescription(task *archon.Task, factory *styling.StyleF
 func (m *Model) renderTaskTimestamps(task *archon.Task, factory *styling.StyleFactory, contentWidth int) []string {
 	var content []string
 
-	createdText := factory.Text(CurrentTheme.MutedColor).Render(fmt.Sprintf("Created: %s", task.CreatedAt.Format("2006-01-02 15:04")))
-	content = append(content, RenderLine(createdText, contentWidth))
-	updatedText := factory.Text(CurrentTheme.MutedColor).Render(fmt.Sprintf("Updated: %s", task.UpdatedAt.Format("2006-01-02 15:04")))
-	content = append(content, RenderLine(updatedText, contentWidth))
+	createdText := factory.Text(styling.CurrentTheme.MutedColor).Render(fmt.Sprintf("Created: %s", task.CreatedAt.Format("2006-01-02 15:04")))
+	content = append(content, styling.RenderLine(createdText, contentWidth))
+	updatedText := factory.Text(styling.CurrentTheme.MutedColor).Render(fmt.Sprintf("Updated: %s", task.UpdatedAt.Format("2006-01-02 15:04")))
+	content = append(content, styling.RenderLine(updatedText, contentWidth))
 
 	return content
 }
@@ -168,12 +168,12 @@ func (m *Model) renderTaskSources(task *archon.Task, factory *styling.StyleFacto
 	var content []string
 
 	if len(task.Sources) > 0 {
-		content = append(content, RenderLine("", contentWidth))
+		content = append(content, styling.RenderLine("", contentWidth))
 		sourcesHeader := factory.Header().Render("Sources:")
-		content = append(content, RenderLine(sourcesHeader, contentWidth))
+		content = append(content, styling.RenderLine(sourcesHeader, contentWidth))
 		for _, source := range task.Sources {
-			sourceText := factory.Text(CurrentTheme.MutedColor).Render(fmt.Sprintf("• %s (%s)", source.URL, source.Type))
-			content = append(content, RenderLine(sourceText, contentWidth))
+			sourceText := factory.Text(styling.CurrentTheme.MutedColor).Render(fmt.Sprintf("• %s (%s)", source.URL, source.Type))
+			content = append(content, styling.RenderLine(sourceText, contentWidth))
 		}
 	}
 
@@ -185,12 +185,12 @@ func (m *Model) renderTaskCodeExamples(task *archon.Task, factory *styling.Style
 	var content []string
 
 	if len(task.CodeExamples) > 0 {
-		content = append(content, RenderLine("", contentWidth))
+		content = append(content, styling.RenderLine("", contentWidth))
 		examplesHeader := factory.Header().Render("Code Examples:")
-		content = append(content, RenderLine(examplesHeader, contentWidth))
+		content = append(content, styling.RenderLine(examplesHeader, contentWidth))
 		for _, example := range task.CodeExamples {
-			exampleText := factory.Text(CurrentTheme.MutedColor).Render(fmt.Sprintf("• %s - %s", example.File, example.Purpose))
-			content = append(content, RenderLine(exampleText, contentWidth))
+			exampleText := factory.Text(styling.CurrentTheme.MutedColor).Render(fmt.Sprintf("• %s - %s", example.File, example.Purpose))
+			content = append(content, styling.RenderLine(exampleText, contentWidth))
 		}
 	}
 
@@ -285,10 +285,10 @@ func (m *Model) updateHelpModalViewport() {
 
 	// Task Status Symbols section
 	help = append(help, factory.Header().Render("Task Status Symbols:"))
-	help = append(help, "  "+StatusSymbolTodo+"  Todo       Not started")
-	help = append(help, "  "+StatusSymbolDoing+"  Doing      In progress")
-	help = append(help, "  "+StatusSymbolReview+"  Review     Under review")
-	help = append(help, "  "+StatusSymbolDone+"  Done       Completed")
+	help = append(help, "  "+styling.StatusSymbolTodo+"  Todo       Not started")
+	help = append(help, "  "+styling.StatusSymbolDoing+"  Doing      In progress")
+	help = append(help, "  "+styling.StatusSymbolReview+"  Review     Under review")
+	help = append(help, "  "+styling.StatusSymbolDone+"  Done       Completed")
 	help = append(help, "")
 
 	// Help Navigation section
@@ -300,7 +300,7 @@ func (m *Model) updateHelpModalViewport() {
 	help = append(help, "")
 
 	// Footer
-	help = append(help, factory.Italic(CurrentTheme.MutedColor).Render("Press ? or ESC to close this help"))
+	help = append(help, factory.Italic(styling.CurrentTheme.MutedColor).Render("Press ? or ESC to close this help"))
 
 	// Set the content in the viewport
 	content := strings.Join(help, "\n")

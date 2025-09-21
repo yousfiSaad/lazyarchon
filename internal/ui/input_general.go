@@ -3,6 +3,7 @@ package ui
 import (
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/yousfisaad/lazyarchon/internal/ui/commands"
 	"github.com/yousfisaad/lazyarchon/internal/ui/input"
 )
 
@@ -86,7 +87,7 @@ func (m Model) HandleKeyPress(key string) (Model, tea.Cmd) {
 		m.SetSelectedProject(nil)
 		m.Modals.projectMode.active = false
 		m.SetLoadingWithMessage(true, "Loading all tasks...")
-		return m, LoadTasksWithProject(m.client, m.Data.selectedProjectID)
+		return m, commands.LoadTasksWithProject(m.client, m.Data.selectedProjectID)
 
 	case "h":
 		if m.Modals.projectMode.active {
@@ -116,7 +117,7 @@ func (m Model) HandleKeyPress(key string) (Model, tea.Cmd) {
 			}
 			m.Modals.projectMode.active = false
 			m.SetLoadingWithMessage(true, "Loading project tasks...")
-			return m, LoadTasksWithProject(m.client, m.Data.selectedProjectID)
+			return m, commands.LoadTasksWithProject(m.client, m.Data.selectedProjectID)
 		} else if !m.Modals.projectMode.active {
 			// In task view mode, l switches to right panel
 			m.SetActiveView(RightPanel)
@@ -135,7 +136,7 @@ func (m Model) HandleKeyPress(key string) (Model, tea.Cmd) {
 			}
 			m.Modals.projectMode.active = false
 			m.SetLoadingWithMessage(true, "Loading project tasks...")
-			return m, LoadTasksWithProject(m.client, m.Data.selectedProjectID)
+			return m, commands.LoadTasksWithProject(m.client, m.Data.selectedProjectID)
 		}
 		return m, nil
 
@@ -268,7 +269,7 @@ func (m Model) HandleKeyPress(key string) (Model, tea.Cmd) {
 			// Regular refresh
 			m.SetLoadingWithMessage(true, "Refreshing data...")
 		}
-		return m, RefreshData(m.client, m.Data.selectedProjectID)
+		return m, commands.RefreshData(m.client, m.Data.selectedProjectID)
 
 	// Search navigation (n/N keys for next/previous match)
 	case "n":

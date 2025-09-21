@@ -3,6 +3,8 @@ package ui
 import (
 	"fmt"
 	"strings"
+
+	"github.com/yousfisaad/lazyarchon/internal/ui/styling"
 )
 
 // renderProjectList renders the left panel with the list of projects
@@ -41,9 +43,9 @@ func (m Model) renderProjectList(width, height int) string {
 		style := itemFactory.ProjectItem(isSelected, false)
 
 		if isSelected {
-			line = SelectionIndicator + line
+			line = styling.SelectionIndicator + line
 		} else {
-			line = NoSelection + line
+			line = styling.NoSelection + line
 		}
 
 		lines = append(lines, style.Render(line))
@@ -57,9 +59,9 @@ func (m Model) renderProjectList(width, height int) string {
 	allTasksStyle := allTasksFactory.ProjectItem(isAllTasksSelected, true)
 
 	if isAllTasksSelected {
-		allTasksLine = SelectionIndicator + allTasksLine
+		allTasksLine = styling.SelectionIndicator + allTasksLine
 	} else {
-		allTasksLine = NoSelection + allTasksLine
+		allTasksLine = styling.NoSelection + allTasksLine
 	}
 
 	lines = append(lines, "")

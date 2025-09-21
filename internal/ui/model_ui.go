@@ -2,7 +2,7 @@ package ui
 
 import (
 	"strings"
-	styling "github.com/yousfisaad/lazyarchon/internal/ui/styles"
+	"github.com/yousfisaad/lazyarchon/internal/ui/styling"
 )
 
 // Panel and View Management Methods
@@ -387,16 +387,16 @@ func (m Model) HasActiveModal() bool {
 // CreateStyleContext creates a StyleContext for UI components with current model state
 func (m Model) CreateStyleContext(isSelected bool) *styling.StyleContext {
 	themeAdapter := &styling.ThemeAdapter{
-		TodoColor:     CurrentTheme.TodoColor,
-		DoingColor:    CurrentTheme.DoingColor,
-		ReviewColor:   CurrentTheme.ReviewColor,
-		DoneColor:     CurrentTheme.DoneColor,
-		HeaderColor:   CurrentTheme.HeaderColor,
-		MutedColor:    CurrentTheme.MutedColor,
-		AccentColor:   CurrentTheme.AccentColor,
-		StatusColor:   CurrentTheme.StatusColor,
-		FeatureColors: CurrentTheme.FeatureColors,
-		Name:          CurrentTheme.Name,
+		TodoColor:     styling.CurrentTheme.TodoColor,
+		DoingColor:    styling.CurrentTheme.DoingColor,
+		ReviewColor:   styling.CurrentTheme.ReviewColor,
+		DoneColor:     styling.CurrentTheme.DoneColor,
+		HeaderColor:   styling.CurrentTheme.HeaderColor,
+		MutedColor:    styling.CurrentTheme.MutedColor,
+		AccentColor:   styling.CurrentTheme.AccentColor,
+		StatusColor:   styling.CurrentTheme.StatusColor,
+		FeatureColors: styling.CurrentTheme.FeatureColors,
+		Name:          styling.CurrentTheme.Name,
 	}
 
 	return styling.NewStyleContext(themeAdapter, m.config).

@@ -2,6 +2,7 @@ package ui
 
 import (
 	"github.com/yousfisaad/lazyarchon/internal/ui/view/modals"
+	"github.com/yousfisaad/lazyarchon/internal/ui/styling"
 )
 
 // renderHelpModal renders the help modal overlay on top of the base UI
@@ -17,10 +18,10 @@ func (m Model) renderHelpModal(baseUI string) string {
 func (m Model) renderStatusChangeModal(baseUI string) string {
 	// Configure status options
 	statusOptions := []modals.StatusOption{
-		{"Todo", StatusSymbolTodo, "240"},     // gray
-		{"Doing", StatusSymbolDoing, "33"},   // yellow
-		{"Review", StatusSymbolReview, "34"}, // blue
-		{"Done", StatusSymbolDone, "32"},     // green
+		{"Todo", styling.StatusSymbolTodo, "240"},     // gray
+		{"Doing", styling.StatusSymbolDoing, "33"},   // yellow
+		{"Review", styling.StatusSymbolReview, "34"}, // blue
+		{"Done", styling.StatusSymbolDone, "32"},     // green
 	}
 
 	config := modals.StatusChangeConfig{
@@ -32,7 +33,7 @@ func (m Model) renderStatusChangeModal(baseUI string) string {
 	styleContext := m.CreateStyleContext(false)
 	factory := styleContext.Factory()
 
-	return modals.RenderStatusChangeModal(config, factory, CurrentTheme.MutedColor, m.Window.width, m.Window.height)
+	return modals.RenderStatusChangeModal(config, factory, styling.CurrentTheme.MutedColor, m.Window.width, m.Window.height)
 }
 
 
@@ -49,7 +50,7 @@ func (m Model) renderConfirmationModal(baseUI string) string {
 	styleContext := m.CreateStyleContext(false)
 	factory := styleContext.Factory()
 
-	return modals.RenderConfirmationModal(config, factory, CurrentTheme.MutedColor, m.Window.width, m.Window.height)
+	return modals.RenderConfirmationModal(config, factory, styling.CurrentTheme.MutedColor, m.Window.width, m.Window.height)
 }
 
 
@@ -73,7 +74,7 @@ func (m Model) renderFeatureModal(baseUI string) string {
 	// Create feature helpers adapter
 	helpers := m.NewModelFeatureHelpers()
 
-	return modals.RenderFeatureModal(config, factory, helpers, CurrentTheme.HeaderColor, CurrentTheme.MutedColor, m.Window.width, m.Window.height)
+	return modals.RenderFeatureModal(config, factory, helpers, styling.CurrentTheme.HeaderColor, styling.CurrentTheme.MutedColor, m.Window.width, m.Window.height)
 }
 
 
@@ -93,7 +94,7 @@ func (m Model) renderTaskEditModal(baseUI string) string {
 	// Create task edit helpers adapter
 	helpers := m.NewModelTaskEditHelpers()
 
-	return modals.RenderTaskEditModal(config, factory, helpers, CurrentTheme.HeaderColor, CurrentTheme.MutedColor, m.Window.width, m.Window.height)
+	return modals.RenderTaskEditModal(config, factory, helpers, styling.CurrentTheme.HeaderColor, styling.CurrentTheme.MutedColor, m.Window.width, m.Window.height)
 }
 
 

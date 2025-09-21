@@ -62,10 +62,10 @@ func HighlightSearchTermsWithColor(text, query, textColor string) string {
 		Foreground(lipgloss.Color("11")). // Bright yellow foreground
 		Bold(true)
 
-	// Style for non-highlighted text - foreground only (background handled by RenderLine)
+	// Style for non-highlighted text - foreground only (background handled by styling.RenderLine)
 	normalStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color(textColor)) // Apply status color to non-highlighted parts
-		// Background removed: handled by RenderLine()
+		// Background removed: handled by styling.RenderLine()
 
 	// Split query into individual words for multi-word highlighting
 	queryWords := strings.Fields(strings.ToLower(query))

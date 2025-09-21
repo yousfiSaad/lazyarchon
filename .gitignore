@@ -70,4 +70,5 @@ coverage.txt
 tmp/
 
 # Personal todo files
+.claude/
 todos.md

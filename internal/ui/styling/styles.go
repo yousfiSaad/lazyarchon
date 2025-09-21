@@ -1,4 +1,4 @@
-package ui
+package styling
 
 import (
 	"github.com/charmbracelet/lipgloss"
@@ -67,27 +67,33 @@ func InitializeTheme(cfg *config.Config) {
 
 // Style factory compatibility functions
 func CreatePanelStyle(width, height int) lipgloss.Style {
-	return CreatePanelStyleNew(width, height)
+	factory := NewStyleFactory()
+	return factory.Panel(width, height, false)
 }
 
 func CreateTaskItemStyle(selected bool, statusColor string) lipgloss.Style {
-	return CreateTaskItemStyleNew(selected, statusColor)
+	factory := NewStyleFactory()
+	return factory.Text(statusColor)
 }
 
 func CreateProjectItemStyle(selected bool, isAllTasks bool) lipgloss.Style {
-	return CreateProjectItemStyleNew(selected, isAllTasks)
+	factory := NewStyleFactory()
+	return factory.ProjectItem(selected, isAllTasks)
 }
 
 func CreateScrollBarStyle(width, height int) lipgloss.Style {
-	return CreateScrollBarStyleNew(width, height)
+	factory := NewStyleFactory()
+	return factory.Panel(width, height, false)
 }
 
 func CreateActivePanelStyle(width, height int, isActive bool) lipgloss.Style {
-	return CreateActivePanelStyleNew(width, height, isActive)
+	factory := NewStyleFactory()
+	return factory.Panel(width, height, isActive)
 }
 
 func CreateStatusBarStyle(state string) lipgloss.Style {
-	return CreateStatusBarStyleNew(state)
+	factory := NewStyleFactory()
+	return factory.StatusBar(state)
 }
 
 // Priority utility functions
