@@ -2,7 +2,7 @@ package ui
 
 import (
 	"strings"
-	"github.com/yousfisaad/lazyarchon/internal/ui/styling"
+	styling "github.com/yousfisaad/lazyarchon/internal/ui/styles"
 )
 
 // Panel and View Management Methods

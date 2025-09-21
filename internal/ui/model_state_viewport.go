@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/yousfisaad/lazyarchon/internal/archon"
-	"github.com/yousfisaad/lazyarchon/internal/ui/styling"
+	styling "github.com/yousfisaad/lazyarchon/internal/ui/styles"
 )
 
 // calculateTaskDetailsWidth calculates the effective content width for task details

@@ -1,4 +1,4 @@
-package styling
+package styles
 
 import (
 	"github.com/yousfisaad/lazyarchon/internal/config"
