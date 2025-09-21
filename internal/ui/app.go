@@ -3,6 +3,7 @@ package ui
 import (
 	"time"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/yousfisaad/lazyarchon/internal/ui/commands"
 )
 
 // tickMsg is sent periodically to animate the loading spinner
@@ -18,10 +19,10 @@ func tick() tea.Cmd {
 // Init initializes the application
 func (m Model) Init() tea.Cmd {
 	return tea.Batch(
-		LoadTasksWithProject(m.client, m.Data.selectedProjectID),
-		LoadProjects(m.client),
-		InitializeRealtimeCmd(m.wsClient),                  // Initialize WebSocket connection
-		ListenForRealtimeEvents(m.wsClient),               // Start listening for events
+		commands.LoadTasksWithProject(m.client, m.Data.selectedProjectID),
+		commands.LoadProjects(m.client),
+		commands.InitializeRealtimeCmd(m.wsClient),                  // Initialize WebSocket connection
+		commands.ListenForRealtimeEvents(m.wsClient),               // Start listening for events
 		tick(),                                            // Start spinner animation
 	)
 }
@@ -62,23 +63,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		return m.HandleKeyPress(msg.String())
 
-	case tasksLoadedMsg:
-		m.UpdateTasks(msg.tasks)
+	case commands.TasksLoadedMsgSimple:
+		m.UpdateTasks(msg.Tasks)
 		return m, nil
 
-	case projectsLoadedMsg:
-		m.UpdateProjects(msg.projects)
+	case commands.ProjectsLoadedMsgSimple:
+		m.UpdateProjects(msg.Projects)
 		return m, nil
 
-	case taskStatusUpdatedMsg:
+	case commands.TaskStatusUpdatedMsgSimple:
 		// Task status was successfully updated, refresh tasks to show changes
-		return m, LoadTasksWithProject(m.client, m.Data.selectedProjectID)
+		return m, commands.LoadTasksWithProject(m.client, m.Data.selectedProjectID)
 
-	case taskFeatureUpdatedMsg:
+	case commands.TaskFeatureUpdatedMsgSimple:
 		// Task feature was successfully updated, refresh tasks to show changes
-		return m, LoadTasksWithProject(m.client, m.Data.selectedProjectID)
+		return m, commands.LoadTasksWithProject(m.client, m.Data.selectedProjectID)
 
-	case errorMsg:
+	case commands.ErrorMsgSimple:
 		m.SetError(string(msg))
 		return m, nil
 
@@ -90,44 +91,44 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tick() // Continue animation
 
 	// WebSocket real-time events
-	case RealtimeConnectedMsg:
+	case commands.RealtimeConnectedMsg:
 		// Connection established - update UI status
 		m.SetConnectionStatus(true)
-		return m, ListenForRealtimeEvents(m.wsClient) // Continue listening for events
+		return m, commands.ListenForRealtimeEvents(m.wsClient) // Continue listening for events
 
-	case RealtimeDisconnectedMsg:
+	case commands.RealtimeDisconnectedMsg:
 		// Connection lost - update UI status
 		m.SetConnectionStatus(false)
 		// Try to reconnect after a delay (the WebSocket client handles this internally)
 		return m, nil
 
-	case RealtimeTaskUpdateMsg:
+	case commands.RealtimeTaskUpdateMsg:
 		// Task was updated - refresh the task list to show changes
 		return m, tea.Batch(
-			LoadTasksWithProject(m.client, m.Data.selectedProjectID),
-			ListenForRealtimeEvents(m.wsClient), // Continue listening for events
+			commands.LoadTasksWithProject(m.client, m.Data.selectedProjectID),
+			commands.ListenForRealtimeEvents(m.wsClient), // Continue listening for events
 		)
 
-	case RealtimeTaskCreateMsg:
+	case commands.RealtimeTaskCreateMsg:
 		// New task was created - refresh the task list
 		return m, tea.Batch(
-			LoadTasksWithProject(m.client, m.Data.selectedProjectID),
-			ListenForRealtimeEvents(m.wsClient), // Continue listening for events
+			commands.LoadTasksWithProject(m.client, m.Data.selectedProjectID),
+			commands.ListenForRealtimeEvents(m.wsClient), // Continue listening for events
 		)
 
-	case RealtimeTaskDeleteMsg:
+	case commands.RealtimeTaskDeleteMsg:
 		// Task was deleted - refresh the task list
 		return m, tea.Batch(
-			LoadTasksWithProject(m.client, m.Data.selectedProjectID),
-			ListenForRealtimeEvents(m.wsClient), // Continue listening for events
+			commands.LoadTasksWithProject(m.client, m.Data.selectedProjectID),
+			commands.ListenForRealtimeEvents(m.wsClient), // Continue listening for events
 		)
 
-	case RealtimeProjectUpdateMsg:
+	case commands.RealtimeProjectUpdateMsg:
 		// Project was updated - refresh both tasks and projects
 		return m, tea.Batch(
-			LoadTasksWithProject(m.client, m.Data.selectedProjectID),
-			LoadProjects(m.client),
-			ListenForRealtimeEvents(m.wsClient), // Continue listening for events
+			commands.LoadTasksWithProject(m.client, m.Data.selectedProjectID),
+			commands.LoadProjects(m.client),
+			commands.ListenForRealtimeEvents(m.wsClient), // Continue listening for events
 		)
 	}
 

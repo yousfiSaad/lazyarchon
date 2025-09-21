@@ -4,6 +4,8 @@ import (
 	"fmt"
 	tea "github.com/charmbracelet/bubbletea"
 	"time"
+
+	"github.com/yousfisaad/lazyarchon/internal/ui/commands"
 )
 
 
@@ -70,7 +72,7 @@ func (m Model) handleStatusChangeConfirm() (Model, tea.Cmd) {
 		m.SetLoadingWithMessage(true, fmt.Sprintf("Updating task status to %s...", newStatus))
 
 		// Update task status via API
-		return m, UpdateTaskStatusCmd(m.client, task.ID, newStatus)
+		return m, commands.UpdateTaskStatusCmd(m.client, task.ID, newStatus)
 	}
 
 	m.SetStatusChangeMode(false)
@@ -347,7 +349,7 @@ func (m Model) handleTaskEditConfirm(feature string) (Model, tea.Cmd) {
 		m.SetTaskEditMode(false)
 
 		// Update task feature via API
-		return m, UpdateTaskFeatureCmd(m.client, currentTask.ID, feature)
+		return m, commands.UpdateTaskFeatureCmd(m.client, currentTask.ID, feature)
 	}
 
 	// Close modal if no valid task

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/yousfisaad/lazyarchon/internal/ui/styling"
 )
 
 
@@ -45,8 +46,8 @@ func (m Model) renderTaskList(width, height int) string {
 	}
 
 	var lines []string
-	lines = append(lines, RenderLine("Tasks:", contentWidth))
-	lines = append(lines, RenderLine("", contentWidth))
+	lines = append(lines, styling.RenderLine("Tasks:", contentWidth))
+	lines = append(lines, styling.RenderLine("", contentWidth))
 
 	// Available width for task line content (before selection indicator)
 	// Selection indicator is added outside the content width
@@ -59,7 +60,7 @@ func (m Model) renderTaskList(width, height int) string {
 		// Build task line using the new TaskLineBuilder with styling context
 		isSelected := i == m.Navigation.selectedIndex
 		styleContext := m.CreateStyleContext(isSelected)
-		builder := NewTaskLineBuilder(taskContentWidth, styleContext)
+		builder := styling.NewTaskLineBuilder(taskContentWidth, styleContext)
 
 		// Assemble line components in logical order
 		line := builder.
@@ -71,20 +72,20 @@ func (m Model) renderTaskList(width, height int) string {
 
 		// Add selection indicator and ensure consistent width with headers
 		if isSelected {
-			line = SelectionIndicator + line
+			line = styling.SelectionIndicator + line
 		} else {
-			line = NoSelection + line
+			line = styling.NoSelection + line
 		}
 
 		// Components now handle their own backgrounds for selected items
-		line = RenderLine(line, contentWidth)
+		line = styling.RenderLine(line, contentWidth)
 
 		lines = append(lines, line)
 	}
 
 	// Show enhanced scrolling indicator if needed
 	if len(sortedTasks) > maxLines {
-		lines = append(lines, RenderLine("", contentWidth))
+		lines = append(lines, styling.RenderLine("", contentWidth))
 
 		// Enhanced position feedback with percentage
 		percentage := ((end * 100) / len(sortedTasks))
@@ -102,8 +103,8 @@ func (m Model) renderTaskList(width, height int) string {
 		// Create style context for styling position info
 		styleContext := m.CreateStyleContext(false)
 		factory := styleContext.Factory()
-		styledPositionInfo := factory.Text(CurrentTheme.MutedColor).Render(positionInfo)
-		lines = append(lines, RenderLine(styledPositionInfo, contentWidth))
+		styledPositionInfo := factory.Text(styling.CurrentTheme.MutedColor).Render(positionInfo)
+		lines = append(lines, styling.RenderLine(styledPositionInfo, contentWidth))
 	}
 
 	// Combine task list with scroll bar if present
@@ -115,7 +116,7 @@ func (m Model) renderTaskList(width, height int) string {
 
 		// Create scroll bar panel
 		scrollContent := strings.Join(scrollBar, "\n")
-		scrollStyle := CreateScrollBarStyle(2, len(scrollBar))
+		scrollStyle := styling.CreateScrollBarStyle(2, len(scrollBar))
 		scrollPanel := scrollStyle.Render(scrollContent)
 
 		// Join horizontally

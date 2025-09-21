@@ -1,4 +1,4 @@
-package ui
+package sorting
 
 import (
 	"sort"

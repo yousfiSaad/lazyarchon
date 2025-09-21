@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/yousfisaad/lazyarchon/internal/ui/sorting"
 	"github.com/yousfisaad/lazyarchon/internal/archon"
 )
 
@@ -62,5 +63,5 @@ func (m Model) GetSortedTasks() []archon.Task {
 		filteredTasks = featureFilteredTasks
 	}
 
-	return SortTasks(filteredTasks, m.Data.sortMode)
+	return sorting.SortTasks(filteredTasks, m.Data.sortMode)
 }

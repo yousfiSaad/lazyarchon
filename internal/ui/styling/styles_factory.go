@@ -1,4 +1,4 @@
-package styles
+package styling
 
 import (
 	"fmt"
@@ -13,6 +13,13 @@ import (
 // It automatically applies selection state, search highlighting, and theme colors
 type StyleFactory struct {
 	context *StyleContext
+}
+
+// NewStyleFactory creates a new StyleFactory with a default context
+func NewStyleFactory() *StyleFactory {
+	return &StyleFactory{
+		context: &StyleContext{}, // Default empty context
+	}
 }
 
 // Text creates a basic text style with the specified foreground color
