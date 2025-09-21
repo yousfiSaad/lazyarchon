@@ -20,7 +20,9 @@ func (m Model) Init() tea.Cmd {
 	return tea.Batch(
 		LoadTasksWithProject(m.client, m.Data.selectedProjectID),
 		LoadProjects(m.client),
-		tick(), // Start spinner animation
+		InitializeRealtimeCmd(m.wsClient),                  // Initialize WebSocket connection
+		ListenForRealtimeEvents(m.wsClient),               // Start listening for events
+		tick(),                                            // Start spinner animation
 	)
 }
 
@@ -86,6 +88,47 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.AdvanceSpinner()
 		}
 		return m, tick() // Continue animation
+
+	// WebSocket real-time events
+	case RealtimeConnectedMsg:
+		// Connection established - update UI status
+		m.SetConnectionStatus(true)
+		return m, ListenForRealtimeEvents(m.wsClient) // Continue listening for events
+
+	case RealtimeDisconnectedMsg:
+		// Connection lost - update UI status
+		m.SetConnectionStatus(false)
+		// Try to reconnect after a delay (the WebSocket client handles this internally)
+		return m, nil
+
+	case RealtimeTaskUpdateMsg:
+		// Task was updated - refresh the task list to show changes
+		return m, tea.Batch(
+			LoadTasksWithProject(m.client, m.Data.selectedProjectID),
+			ListenForRealtimeEvents(m.wsClient), // Continue listening for events
+		)
+
+	case RealtimeTaskCreateMsg:
+		// New task was created - refresh the task list
+		return m, tea.Batch(
+			LoadTasksWithProject(m.client, m.Data.selectedProjectID),
+			ListenForRealtimeEvents(m.wsClient), // Continue listening for events
+		)
+
+	case RealtimeTaskDeleteMsg:
+		// Task was deleted - refresh the task list
+		return m, tea.Batch(
+			LoadTasksWithProject(m.client, m.Data.selectedProjectID),
+			ListenForRealtimeEvents(m.wsClient), // Continue listening for events
+		)
+
+	case RealtimeProjectUpdateMsg:
+		// Project was updated - refresh both tasks and projects
+		return m, tea.Batch(
+			LoadTasksWithProject(m.client, m.Data.selectedProjectID),
+			LoadProjects(m.client),
+			ListenForRealtimeEvents(m.wsClient), // Continue listening for events
+		)
 	}
 
 	return m, nil

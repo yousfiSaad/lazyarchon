@@ -7,9 +7,13 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+
 // renderTaskList renders the left panel with the list of tasks
 func (m Model) renderTaskList(width, height int) string {
-	listStyle := CreateActivePanelStyle(width, height, m.IsLeftPanelActive())
+	// Create style context for panel styling
+	styleContext := m.CreateStyleContext(false)
+	factory := styleContext.Factory()
+	listStyle := factory.Panel(width, height, m.IsLeftPanelActive())
 
 	if m.Data.loading {
 		return listStyle.Render("Loading tasks...")
@@ -26,10 +30,6 @@ func (m Model) renderTaskList(width, height int) string {
 	// Apply current sorting to tasks
 	sortedTasks := m.GetSortedTasks()
 
-	var lines []string
-	lines = append(lines, "Tasks:")
-	lines = append(lines, "")
-
 	maxLines := height - 6 // Account for border and padding
 	start, end := calculateScrollWindow(len(sortedTasks), m.Navigation.selectedIndex, maxLines)
 
@@ -37,64 +37,54 @@ func (m Model) renderTaskList(width, height int) string {
 	scrollBar := renderScrollBar(start, len(sortedTasks), maxLines)
 	hasScrollBar := scrollBar != nil
 
-	// Adjust available width for task text if scroll bar is present
-	textWidth := width - 8 // Base padding
+	// Calculate available width for task content more accurately
+	// Only subtract actual panel chrome (borders and padding)
+	contentWidth := width - 8 // Panel borders and padding
 	if hasScrollBar {
-		textWidth -= 2 // Make room for scroll bar
+		contentWidth -= 2 // Scroll bar width
 	}
+
+	var lines []string
+	lines = append(lines, RenderLine("Tasks:", contentWidth))
+	lines = append(lines, RenderLine("", contentWidth))
+
+	// Available width for task line content (before selection indicator)
+	// Selection indicator is added outside the content width
+	taskContentWidth := contentWidth - 2 // Selection indicator space ("► ")
 
 	for i := start; i < end; i++ {
 		task := sortedTasks[i]
 
-		// Format task line
-		symbol := task.GetStatusSymbol()
-		statusColor := task.GetStatusColor()
 
-		// Apply search highlighting to title if search is active
-		title := task.Title
-		if m.Data.searchActive && m.Data.searchQuery != "" {
-			title = highlightSearchTerms(task.Title, m.Data.searchQuery)
-		}
+		// Build task line using the new TaskLineBuilder with styling context
+		isSelected := i == m.Navigation.selectedIndex
+		styleContext := m.CreateStyleContext(isSelected)
+		builder := NewTaskLineBuilder(taskContentWidth, styleContext)
 
-		baseLine := fmt.Sprintf("%s %s", symbol, title)
+		// Assemble line components in logical order
+		line := builder.
+			AddPriorityIndicator(task).
+			AddStatusIndicator(task).
+			AddTitle(task, m.Data.searchQuery, m.Data.searchActive).
+			AddFeatureTag(task).
+			Build(m.Data.searchQuery, m.Data.searchActive)
 
-		// Add feature/tag if present and space allows
-		var line string
-		if task.Feature != nil && *task.Feature != "" {
-			tagText := fmt.Sprintf(" #%s", *task.Feature)
-			// Check if we have enough space for the tag (minimum 15 chars for readability)
-			if len(baseLine)+len(tagText) <= textWidth {
-				// We have space - render the tag with styling
-				styledTag := TagStyle.Render(tagText)
-				line = baseLine + styledTag
-			} else {
-				// Not enough space - show just the base line
-				line = baseLine
-			}
-		} else {
-			line = baseLine
-		}
-
-		// Truncate if still too long
-		if len(line) > textWidth {
-			line = line[:textWidth-3] + "..."
-		}
-
-		// Style based on selection
-		style := CreateTaskItemStyle(i == m.Navigation.selectedIndex, statusColor)
-
-		if i == m.Navigation.selectedIndex {
+		// Add selection indicator and ensure consistent width with headers
+		if isSelected {
 			line = SelectionIndicator + line
 		} else {
 			line = NoSelection + line
 		}
 
-		lines = append(lines, style.Render(line))
+		// Components now handle their own backgrounds for selected items
+		line = RenderLine(line, contentWidth)
+
+		lines = append(lines, line)
 	}
 
 	// Show enhanced scrolling indicator if needed
 	if len(sortedTasks) > maxLines {
-		lines = append(lines, "")
+		lines = append(lines, RenderLine("", contentWidth))
 
 		// Enhanced position feedback with percentage
 		percentage := ((end * 100) / len(sortedTasks))
@@ -109,14 +99,18 @@ func (m Model) renderTaskList(width, height int) string {
 		selectedPos := m.Navigation.selectedIndex + 1
 		positionInfo += fmt.Sprintf(" | Task %d selected", selectedPos)
 
-		lines = append(lines, positionInfo)
+		// Create style context for styling position info
+		styleContext := m.CreateStyleContext(false)
+		factory := styleContext.Factory()
+		styledPositionInfo := factory.Text(CurrentTheme.MutedColor).Render(positionInfo)
+		lines = append(lines, RenderLine(styledPositionInfo, contentWidth))
 	}
 
 	// Combine task list with scroll bar if present
 	taskContent := strings.Join(lines, "\n")
 	if hasScrollBar {
 		// Create task list without border for horizontal joining
-		taskListStyle := CreateActivePanelStyle(width-2, height, m.IsLeftPanelActive())
+		taskListStyle := factory.Panel(width-2, height, m.IsLeftPanelActive())
 		taskPanel := taskListStyle.Render(taskContent)
 
 		// Create scroll bar panel
@@ -128,12 +122,16 @@ func (m Model) renderTaskList(width, height int) string {
 		return lipgloss.JoinHorizontal(lipgloss.Top, taskPanel, scrollPanel)
 	}
 
+	// Since lines are already fully styled with backgrounds, just add border/padding
 	return listStyle.Render(taskContent)
 }
 
 // renderTaskDetails renders the right panel with detailed task information and scrolling support
 func (m Model) renderTaskDetails(width, height int) string {
-	detailStyle := CreateActivePanelStyle(width, height, m.IsRightPanelActive())
+	// Create style context for panel styling - reuse from renderTaskList
+	styleContext := m.CreateStyleContext(false)
+	factory := styleContext.Factory()
+	detailStyle := factory.Panel(width, height, m.IsRightPanelActive())
 
 	// The viewport content is managed by the model and updated when tasks change
 	// We just need to render the viewport view
@@ -141,3 +139,5 @@ func (m Model) renderTaskDetails(width, height int) string {
 
 	return detailStyle.Render(viewportContent)
 }
+
+// Note: truncateTaskLine function removed - replaced by TaskLineBuilder for cleaner, more efficient truncation

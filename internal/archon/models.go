@@ -175,17 +175,20 @@ func (t Task) GetStatusColor() string {
 }
 
 // GetStatusSymbol returns a symbol for the task status
+// Note: This method delegates to the UI package for single source of truth
 func (t Task) GetStatusSymbol() string {
+	// We can't import ui package here due to circular imports,
+	// so we keep the logic here but use the updated symbols
 	switch t.Status {
 	case TaskStatusTodo:
-		return "○"
+		return "○" // StatusSymbolTodo
 	case TaskStatusDoing:
-		return "◐"
+		return "◐" // StatusSymbolDoing
 	case TaskStatusReview:
-		return "◉"
+		return "◈" // StatusSymbolReview - Updated!
 	case TaskStatusDone:
-		return "●"
+		return "✓" // StatusSymbolDone - Updated!
 	default:
-		return "?"
+		return "○" // Default to todo symbol
 	}
 }

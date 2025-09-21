@@ -7,7 +7,10 @@ import (
 
 // renderProjectList renders the left panel with the list of projects
 func (m Model) renderProjectList(width, height int) string {
-	listStyle := CreateActivePanelStyle(width, height, true) // Always active in project mode
+	// Create style context for panel styling - always active in project mode
+	styleContext := m.CreateStyleContext(false) // No selection highlighting for panel itself
+	factory := styleContext.Factory()
+	listStyle := factory.Panel(width, height, true) // Always active in project mode
 
 	if m.Data.loading {
 		return listStyle.Render("Loading projects...")
@@ -23,17 +26,21 @@ func (m Model) renderProjectList(width, height int) string {
 
 	// Add projects with task counts
 	for i, project := range m.Data.projects {
-		// TODO: Get actual task count for each project
-		// For now, we'll show a placeholder
-		line := fmt.Sprintf("%s", project.Title)
+		taskCount := m.GetTaskCountForProject(project.ID)
+		line := fmt.Sprintf("%s (%d)", project.Title, taskCount)
 		if len(line) > width-8 {
 			line = line[:width-11] + "..."
 		}
 
-		// Style based on selection
-		style := CreateProjectItemStyle(i == m.Modals.projectMode.selectedIndex, false)
+		// Create style context with selection state for this project item
+		isSelected := i == m.Modals.projectMode.selectedIndex
+		itemStyleContext := m.CreateStyleContext(isSelected)
+		itemFactory := itemStyleContext.Factory()
 
-		if i == m.Modals.projectMode.selectedIndex {
+		// Style based on selection using factory
+		style := itemFactory.ProjectItem(isSelected, false)
+
+		if isSelected {
 			line = SelectionIndicator + line
 		} else {
 			line = NoSelection + line
@@ -44,9 +51,12 @@ func (m Model) renderProjectList(width, height int) string {
 
 	// Add "All Tasks" option at the end
 	allTasksLine := "[All Tasks]"
-	allTasksStyle := CreateProjectItemStyle(m.Modals.projectMode.selectedIndex == len(m.Data.projects), true)
+	isAllTasksSelected := m.Modals.projectMode.selectedIndex == len(m.Data.projects)
+	allTasksStyleContext := m.CreateStyleContext(isAllTasksSelected)
+	allTasksFactory := allTasksStyleContext.Factory()
+	allTasksStyle := allTasksFactory.ProjectItem(isAllTasksSelected, true)
 
-	if m.Modals.projectMode.selectedIndex == len(m.Data.projects) {
+	if isAllTasksSelected {
 		allTasksLine = SelectionIndicator + allTasksLine
 	} else {
 		allTasksLine = NoSelection + allTasksLine
@@ -60,15 +70,18 @@ func (m Model) renderProjectList(width, height int) string {
 
 // renderProjectModeHelp renders the right panel with project mode instructions
 func (m Model) renderProjectModeHelp(width, height int) string {
-	helpStyle := CreateActivePanelStyle(width, height, false) // Inactive in project mode
+	// Create style context for panel styling - inactive in project mode
+	styleContext := m.CreateStyleContext(false)
+	factory := styleContext.Factory()
+	helpStyle := factory.Panel(width, height, false) // Inactive in project mode
 
 	var helpLines []string
-	helpLines = append(helpLines, DetailHeaderStyle.Render("Project Selection"))
+	helpLines = append(helpLines, factory.Header().Render("Project Selection"))
 	helpLines = append(helpLines, "")
 	helpLines = append(helpLines, "Select a project to filter tasks, or choose")
 	helpLines = append(helpLines, "[All Tasks] to view all tasks.")
 	helpLines = append(helpLines, "")
-	helpLines = append(helpLines, DetailHeaderStyle.Render("Controls:"))
+	helpLines = append(helpLines, factory.Header().Render("Controls:"))
 	helpLines = append(helpLines, "")
 	helpLines = append(helpLines, "↑↓ or j/k    Navigate projects")
 	helpLines = append(helpLines, "l or Enter   Select project")
@@ -80,7 +93,7 @@ func (m Model) renderProjectModeHelp(width, height int) string {
 	if len(m.Data.projects) > 0 && m.Modals.projectMode.selectedIndex < len(m.Data.projects) {
 		project := m.Data.projects[m.Modals.projectMode.selectedIndex]
 		helpLines = append(helpLines, "")
-		helpLines = append(helpLines, DetailHeaderStyle.Render("Selected Project:"))
+		helpLines = append(helpLines, factory.Header().Render("Selected Project:"))
 		helpLines = append(helpLines, "")
 		helpLines = append(helpLines, fmt.Sprintf("Name: %s", project.Title))
 		if project.Description != "" {

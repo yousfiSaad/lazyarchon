@@ -4,6 +4,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/yousfisaad/lazyarchon/internal/archon"
 	"github.com/yousfisaad/lazyarchon/internal/config"
+	"github.com/yousfisaad/lazyarchon/internal/interfaces"
 	"time"
 )
 
@@ -141,9 +142,10 @@ type DataState struct {
 
 // Model represents the state of the application using composition
 type Model struct {
-	// Core infrastructure
-	client *archon.Client
-	config *config.Config
+	// Core infrastructure (keeping concrete types for compatibility)
+	client   *archon.Client
+	wsClient interfaces.RealtimeClient
+	config   *config.Config
 
 	// Feature-focused state groups
 	Window     WindowState
@@ -154,6 +156,20 @@ type Model struct {
 	// UI Components
 	taskDetailsViewport viewport.Model
 	helpModalViewport   viewport.Model
+
+	// Dependencies (for gradual migration to interfaces)
+	deps *ModelDependencies
+}
+
+// ModelDependencies holds interface-based dependencies
+type ModelDependencies struct {
+	ArchonClient        interfaces.ArchonClient
+	ConfigProvider      interfaces.ConfigProvider
+	ViewportFactory     interfaces.ViewportFactory
+	StyleContextProvider interfaces.StyleContextProvider
+	CommandExecutor     interfaces.CommandExecutor
+	Logger              interfaces.Logger
+	HealthChecker       interfaces.HealthChecker
 }
 
 // ScrollContext defines which part of the UI is being scrolled

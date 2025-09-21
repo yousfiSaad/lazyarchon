@@ -10,6 +10,8 @@ require (
 	github.com/charmbracelet/bubbletea v1.3.8
 	github.com/charmbracelet/glamour v0.10.0
 	github.com/charmbracelet/lipgloss v1.1.1-0.20250404203927-76690c660834
+	github.com/gorilla/websocket v1.5.3
+	go.uber.org/dig v1.17.1
 	gopkg.in/yaml.v3 v3.0.1
 )
 

@@ -3,11 +3,18 @@ package archon
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"time"
+)
+
+// Common errors
+var (
+	ErrTaskNotFound    = errors.New("task not found")
+	ErrProjectNotFound = errors.New("project not found")
 )
 
 // Client represents an Archon API client

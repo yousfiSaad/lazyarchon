@@ -2,6 +2,8 @@ package ui
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/yousfisaad/lazyarchon/internal/ui/input"
 )
 
 // HandleKeyPress processes keyboard input and returns updated model and commands
@@ -65,8 +67,11 @@ func (m Model) HandleKeyPress(key string) (Model, tea.Cmd) {
 			return m, nil
 		}
 	case "ctrl+c":
-		// Emergency quit - always works regardless of modals
-		return m, tea.Quit
+		if input.IsApplicationKey(key) {
+			// Emergency quit - always works regardless of modals
+			return m, tea.Quit
+		}
+		return m, nil
 
 	// Project mode controls
 	case "p":
@@ -207,34 +212,34 @@ func (m Model) HandleKeyPress(key string) (Model, tea.Cmd) {
 
 	// Status change modal
 	case "t":
-		if !m.Modals.projectMode.active && len(m.Data.tasks) > 0 && m.Navigation.selectedIndex < len(m.GetSortedTasks()) {
+		if input.IsTaskOperationKey(key) && !m.Modals.projectMode.active && len(m.Data.tasks) > 0 && m.Navigation.selectedIndex < len(m.GetSortedTasks()) {
 			m.SetStatusChangeMode(true)
 		}
 		return m, nil
 
 	// Task edit modal
 	case "e":
-		if !m.Modals.projectMode.active && len(m.Data.tasks) > 0 && m.Navigation.selectedIndex < len(m.GetSortedTasks()) {
+		if input.IsTaskOperationKey(key) && !m.Modals.projectMode.active && len(m.Data.tasks) > 0 && m.Navigation.selectedIndex < len(m.GetSortedTasks()) {
 			m.SetTaskEditMode(true)
 		}
 		return m, nil
 
 	// Feature selection modal
 	case "f":
-		if !m.Modals.projectMode.active && len(m.GetUniqueFeatures()) > 0 {
+		if input.IsTaskOperationKey(key) && !m.Modals.projectMode.active && len(m.GetUniqueFeatures()) > 0 {
 			m.SetFeatureMode(true)
 		}
 		return m, nil
 
 	// Yank (copy) functionality
 	case "y":
-		if !m.Modals.projectMode.active && len(m.Data.tasks) > 0 && m.Navigation.selectedIndex < len(m.GetSortedTasks()) {
+		if input.IsTaskOperationKey(key) && !m.Modals.projectMode.active && len(m.Data.tasks) > 0 && m.Navigation.selectedIndex < len(m.GetSortedTasks()) {
 			return m.handleTaskIDCopy()
 		}
 		return m, nil
 
 	case "Y":
-		if !m.Modals.projectMode.active && len(m.Data.tasks) > 0 && m.Navigation.selectedIndex < len(m.GetSortedTasks()) {
+		if input.IsTaskOperationKey(key) && !m.Modals.projectMode.active && len(m.Data.tasks) > 0 && m.Navigation.selectedIndex < len(m.GetSortedTasks()) {
 			return m.handleTaskTitleCopy()
 		}
 		return m, nil

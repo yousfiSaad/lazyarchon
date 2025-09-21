@@ -1,0 +1,87 @@
+# LazyArchon Configuration Example
+# Copy this file to config.yaml to customize your setup
+
+server:
+  url: "http://localhost:8181"
+  timeout: 30s
+  api_key: ""
+
+ui:
+  theme:
+    # Choose a predefined theme (recommended)
+    # Options: "default", "monokai", "gruvbox", "dracula"
+    name: "default"
+
+    # Custom color overrides (optional)
+    # These will override the selected theme colors
+    # Use ANSI color codes (0-255) or color names
+    # selected_bg: "237"      # Background for selected items
+    # border_color: "62"      # Border color for panels
+    # status_color: "205"     # Status text color
+    # header_color: "39"      # Header text color
+    # error_color: "196"      # Error message color
+
+  display:
+    show_completed_tasks: true
+    default_sort_mode: "status+priority"  # Options: status+priority, priority, time, alphabetical
+    auto_refresh_interval: 0              # Auto refresh in seconds (0 = disabled)
+
+    # Color enhancement options - NEW!
+    feature_colors: true       # Enable vibrant colors for feature tags (#feature-name)
+    feature_backgrounds: false # Enable subtle background tints for entire task rows
+    priority_indicators: true  # Show priority symbols (⬆⬇➡) with colors based on task_order
+
+development:
+  debug: false
+  log_level: "info"        # Options: debug, info, warn, error
+  enable_profiling: false
+
+# Theme Selection:
+# LazyArchon comes with 4 built-in themes that you can select using ui.theme.name:
+# - "default": Modern dark theme with blue/cyan accents
+# - "monokai": Inspired by Monokai color scheme (pink/green/cyan)
+# - "gruvbox": Warm, retro-inspired colors (orange/green/yellow)
+# - "dracula": Dark theme with purple/pink accents
+#
+# You can also override individual colors by uncommenting the color options above.
+# Color overrides take precedence over the selected theme.
+#
+# Theme Usage Examples:
+# ui:
+#   theme:
+#     name: "gruvbox"  # Use gruvbox theme with all its colors
+#
+# ui:
+#   theme:
+#     name: "monokai"       # Use monokai as base
+#     header_color: "226"   # But override header to bright yellow
+#
+# Status symbols used in the interface:
+# ○ Todo     - Empty circle (clear starting state)
+# ◐ Doing    - Half-filled circle (work in progress)
+# ◈ Review   - Diamond with center dot (under review)
+# ✓ Done     - Checkmark (completed)
+#
+# Color Enhancement Features:
+# feature_colors: When enabled, feature tags (#tag-name) get unique colors per feature
+#   - Each feature gets a consistent color assigned via hash algorithm
+#   - Works with all 4 themes - colors are theme-specific
+#   - Helps quickly identify tasks belonging to the same feature area
+#   - Feature modal checkboxes and names also use feature-specific colors for consistency
+#
+# feature_backgrounds: When enabled, entire task rows get subtle background tints
+#   - Very subtle color hints based on the feature
+#   - Only applies to non-selected tasks to avoid conflicts
+#   - Provides additional visual grouping for related tasks
+#
+# priority_indicators: When enabled, shows priority symbols before task status
+#   - ⬆ High priority (task_order >= 80) - red color
+#   - ➡ Medium priority (task_order >= 50) - yellow color
+#   - ⬇ Low priority (task_order < 50) - gray color
+#   - Helps quickly identify important tasks that need attention
+#
+# Smart Layout Features:
+# - Adaptive text width calculation accounts for all visual indicators
+# - Intelligent truncation preserves priority symbols and feature tags when possible
+# - Feature tags are automatically hidden in narrow terminals to preserve title visibility
+# - Uses visual width measurements instead of string length for accurate sizing
