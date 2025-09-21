@@ -139,3 +139,185 @@ func TestThemeOverrides(t *testing.T) {
 		t.Errorf("Expected gruvbox status color 142, got %s", config.UI.Theme.StatusColor)
 	}
 }
+
+func TestConfigValidation(t *testing.T) {
+	tests := []struct {
+		name      string
+		config    Config
+		shouldErr bool
+		errMsg    string
+	}{
+		{
+			name:      "valid config",
+			config:    defaultConfig,
+			shouldErr: false,
+		},
+		{
+			name: "invalid theme name",
+			config: Config{
+				Version: "1.0.0",
+				Profile: "dev",
+				Server: ServerConfig{
+					URL:     "http://localhost:8181",
+					Timeout: 30 * time.Second,
+				},
+				UI: UIConfig{
+					Theme: ThemeConfig{
+						Name: "invalid-theme",
+					},
+					Display: DisplayConfig{
+						DefaultSortMode:   "status+priority",
+						StatusColorScheme: "blue",
+					},
+				},
+				Development: DevelopmentConfig{
+					LogLevel: "info",
+				},
+			},
+			shouldErr: true,
+			errMsg:    "Theme.Name",
+		},
+		{
+			name: "invalid log level",
+			config: Config{
+				Version: "1.0.0",
+				Profile: "dev",
+				Server: ServerConfig{
+					URL:     "http://localhost:8181",
+					Timeout: 30 * time.Second,
+				},
+				UI: UIConfig{
+					Theme: ThemeConfig{
+						Name: "default",
+					},
+					Display: DisplayConfig{
+						DefaultSortMode:   "status+priority",
+						StatusColorScheme: "blue",
+					},
+				},
+				Development: DevelopmentConfig{
+					LogLevel: "invalid",
+				},
+			},
+			shouldErr: true,
+			errMsg:    "Development.LogLevel",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.config.Validate()
+			if tt.shouldErr {
+				if err == nil {
+					t.Errorf("Expected validation error but got none")
+				} else if tt.errMsg != "" && !contains(err.Error(), tt.errMsg) {
+					t.Errorf("Expected error to contain '%s', got: %s", tt.errMsg, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Expected no validation error, got: %s", err.Error())
+				}
+			}
+		})
+	}
+}
+
+func TestProfileDefaults(t *testing.T) {
+	tests := []struct {
+		name     string
+		profile  string
+		expected struct {
+			debug    bool
+			logLevel string
+		}
+	}{
+		{
+			name:    "development profile",
+			profile: "development",
+			expected: struct {
+				debug    bool
+				logLevel string
+			}{true, "debug"},
+		},
+		{
+			name:    "production profile",
+			profile: "production",
+			expected: struct {
+				debug    bool
+				logLevel string
+			}{false, "warn"},
+		},
+		{
+			name:    "staging profile",
+			profile: "staging",
+			expected: struct {
+				debug    bool
+				logLevel string
+			}{false, "info"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := defaultConfig
+			config.Profile = tt.profile
+			config.applyProfileDefaults()
+
+			if config.Development.Debug != tt.expected.debug {
+				t.Errorf("Expected debug=%v for profile %s, got %v", tt.expected.debug, tt.profile, config.Development.Debug)
+			}
+			if config.Development.LogLevel != tt.expected.logLevel {
+				t.Errorf("Expected logLevel=%s for profile %s, got %s", tt.expected.logLevel, tt.profile, config.Development.LogLevel)
+			}
+		})
+	}
+}
+
+func TestProfileHelpers(t *testing.T) {
+	tests := []struct {
+		profile      string
+		isDev        bool
+		isStaging    bool
+		isProduction bool
+	}{
+		{"development", true, false, false},
+		{"dev", true, false, false},
+		{"staging", false, true, false},
+		{"production", false, false, true},
+		{"prod", false, false, true},
+		{"", true, false, false}, // Default to development
+	}
+
+	for _, tt := range tests {
+		config := &Config{Profile: tt.profile}
+
+		if config.IsDevelopmentProfile() != tt.isDev {
+			t.Errorf("Profile %s: expected IsDevelopmentProfile()=%v, got %v",
+				tt.profile, tt.isDev, config.IsDevelopmentProfile())
+		}
+		if config.IsStagingProfile() != tt.isStaging {
+			t.Errorf("Profile %s: expected IsStagingProfile()=%v, got %v",
+				tt.profile, tt.isStaging, config.IsStagingProfile())
+		}
+		if config.IsProductionProfile() != tt.isProduction {
+			t.Errorf("Profile %s: expected IsProductionProfile()=%v, got %v",
+				tt.profile, tt.isProduction, config.IsProductionProfile())
+		}
+	}
+}
+
+// Helper function to check if a string contains a substring
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(substr) == 0 ||
+		(len(s) > len(substr) && (s[:len(substr)] == substr || s[len(s)-len(substr):] == substr ||
+		 findSubstring(s, substr))))
+}
+
+func findSubstring(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
+}

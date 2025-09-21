@@ -3,6 +3,7 @@ package di
 import (
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 
 	"github.com/charmbracelet/bubbles/viewport"
@@ -10,6 +11,7 @@ import (
 	"github.com/yousfisaad/lazyarchon/internal/archon"
 	"github.com/yousfisaad/lazyarchon/internal/config"
 	"github.com/yousfisaad/lazyarchon/internal/interfaces"
+	"github.com/yousfisaad/lazyarchon/internal/logger"
 	"github.com/yousfisaad/lazyarchon/internal/ui"
 )
 
@@ -147,14 +149,55 @@ func (c *CommandExecutorImpl) RefreshData(client interfaces.ArchonClient, select
 	)
 }
 
-// NewLogger creates a logger instance
-func NewLogger(config interfaces.ConfigProvider) interfaces.Logger {
+// NewLogger creates a structured logger instance
+func NewLogger(configProvider interfaces.ConfigProvider) interfaces.Logger {
+	// Convert config provider to our config type to create structured logger
+	// Since NewConfigProvider returns *config.Config, we can safely cast it
+	if cfg, ok := configProvider.(*config.Config); ok {
+		structuredLogger := logger.New(cfg)
+		logger.SetDefault(structuredLogger)
+		return &StructuredLoggerAdapter{logger: structuredLogger}
+	}
+
+	// Fallback to basic logger if config conversion fails
 	return &LoggerImpl{
-		debugEnabled: config.IsDebugEnabled(),
+		debugEnabled: configProvider.IsDebugEnabled(),
 	}
 }
 
-// LoggerImpl implements the Logger interface
+// StructuredLoggerAdapter adapts our structured logger to the interface
+type StructuredLoggerAdapter struct {
+	logger *logger.Logger
+}
+
+func (l *StructuredLoggerAdapter) Debug(msg string, args ...interface{}) {
+	l.logger.Debug("app", msg, convertToSlogAttrs(args...)...)
+}
+
+func (l *StructuredLoggerAdapter) Info(msg string, args ...interface{}) {
+	l.logger.Info(msg, convertToSlogArgs(args...)...)
+}
+
+func (l *StructuredLoggerAdapter) Warn(msg string, args ...interface{}) {
+	l.logger.Warn(msg, convertToSlogArgs(args...)...)
+}
+
+func (l *StructuredLoggerAdapter) Error(msg string, args ...interface{}) {
+	if len(args) > 0 {
+		if err, ok := args[0].(error); ok {
+			l.logger.Error(msg, err, convertToSlogAttrs(args[1:]...)...)
+			return
+		}
+	}
+	l.logger.Logger.Error(msg, convertToSlogArgs(args...)...)
+}
+
+func (l *StructuredLoggerAdapter) Fatal(msg string, args ...interface{}) {
+	l.logger.Logger.Error(msg, convertToSlogArgs(args...)...)
+	os.Exit(1)
+}
+
+// LoggerImpl implements the Logger interface (fallback)
 type LoggerImpl struct {
 	debugEnabled bool
 }
@@ -301,4 +344,21 @@ func (w *UIModelWrapper) IsLoading() bool {
 
 func (w *UIModelWrapper) GetError() string {
 	return w.model.GetError()
+}
+
+// Helper functions for converting args to slog format
+func convertToSlogArgs(args ...interface{}) []any {
+	result := make([]any, len(args))
+	copy(result, args)
+	return result
+}
+
+func convertToSlogAttrs(args ...interface{}) []slog.Attr {
+	attrs := make([]slog.Attr, 0, len(args)/2)
+	for i := 0; i < len(args)-1; i += 2 {
+		if key, ok := args[i].(string); ok {
+			attrs = append(attrs, slog.Any(key, args[i+1]))
+		}
+	}
+	return attrs
 }
