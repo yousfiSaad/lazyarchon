@@ -1,4 +1,4 @@
-package styling
+package styles
 
 // SelectionState encapsulates all selection-related styling state
 type SelectionState struct {

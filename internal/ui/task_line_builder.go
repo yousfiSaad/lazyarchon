@@ -6,7 +6,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/yousfisaad/lazyarchon/internal/archon"
-	"github.com/yousfisaad/lazyarchon/internal/ui/styling"
+	styling "github.com/yousfisaad/lazyarchon/internal/ui/styles"
 )
 
 // LineComponent represents a styled component of a task line
