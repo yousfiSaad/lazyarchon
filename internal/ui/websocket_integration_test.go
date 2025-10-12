@@ -7,7 +7,8 @@ import (
 	"time"
 
 	"github.com/yousfisaad/lazyarchon/internal/archon"
-	"github.com/yousfisaad/lazyarchon/internal/interfaces"
+	"github.com/yousfisaad/lazyarchon/internal/domain/realtime"
+	"github.com/yousfisaad/lazyarchon/internal/shared/interfaces"
 )
 
 // Ensure MockWebSocketClient implements interfaces.RealtimeClient
@@ -95,18 +96,6 @@ func (m *MockWebSocketClient) IsConnected() bool {
 	return m.connected
 }
 
-// SetEventHandlers is a no-op for the mock
-func (m *MockWebSocketClient) SetEventHandlers(
-	onTaskUpdate func(archon.TaskUpdateEvent),
-	onTaskCreate func(archon.TaskCreateEvent),
-	onTaskDelete func(archon.TaskDeleteEvent),
-	onProjectUpdate func(archon.ProjectUpdateEvent),
-	onConnect func(),
-	onDisconnect func(error),
-) {
-	// No-op for mock
-}
-
 // GetEventChannel returns the event channel
 func (m *MockWebSocketClient) GetEventChannel() <-chan interface{} {
 	return m.eventCh
@@ -119,7 +108,7 @@ func TestWebSocketIntegration_ConnectionStatus(t *testing.T) {
 	model.wsClient = mockWS
 
 	// Test initial state
-	if model.Data.connected {
+	if model.programContext.Connected {
 		t.Error("Model should not be connected initially")
 	}
 
@@ -129,27 +118,27 @@ func TestWebSocketIntegration_ConnectionStatus(t *testing.T) {
 	// Process connection event - need to convert from archon to UI type
 	msg := <-mockWS.GetEventChannel()
 
-	// Convert archon message to UI message (simulating what ListenForRealtimeEvents does)
+	// Convert archon message to UI message (simulating what realtime.ListenForRealtimeEvents does)
 	var uiMsg interface{}
 	switch e := msg.(type) {
 	case archon.RealtimeConnectedMsg:
-		uiMsg = RealtimeConnectedMsg{}
+		uiMsg = realtime.RealtimeConnectedMsg{}
 	default:
 		t.Fatalf("Unexpected message type: %T", e)
 	}
 
 	updatedModel, cmd := model.Update(uiMsg)
-	model = updatedModel.(Model)
+	model = *updatedModel.(*MainModel)
 
-	if !model.Data.connected {
+	if !model.programContext.Connected {
 		t.Error("Model should be connected after connection event")
 	}
 
-	if model.GetConnectionStatusText() != "●" {
+	if model.getConnectionStatusText() != "●" {
 		t.Error("Expected connected status indicator")
 	}
 
-	// Verify command was returned (ListenForRealtimeEvents)
+	// Verify command was returned (realtime.ListenForRealtimeEvents)
 	if cmd == nil {
 		t.Error("Expected command after connection event")
 	}
@@ -163,19 +152,19 @@ func TestWebSocketIntegration_ConnectionStatus(t *testing.T) {
 	// Convert archon message to UI message
 	switch e := msg.(type) {
 	case archon.RealtimeDisconnectedMsg:
-		uiMsg = RealtimeDisconnectedMsg{Error: e.Error}
+		uiMsg = realtime.RealtimeDisconnectedMsg{Error: e.Error}
 	default:
 		t.Fatalf("Unexpected message type: %T", e)
 	}
 
 	updatedModel, _ = model.Update(uiMsg)
-	model = updatedModel.(Model)
+	model = *updatedModel.(*MainModel)
 
-	if model.Data.connected {
+	if model.programContext.Connected {
 		t.Error("Model should not be connected after disconnection event")
 	}
 
-	if model.GetConnectionStatusText() != "○" {
+	if model.getConnectionStatusText() != "○" {
 		t.Error("Expected disconnected status indicator")
 	}
 }
@@ -183,8 +172,7 @@ func TestWebSocketIntegration_ConnectionStatus(t *testing.T) {
 // TestWebSocketIntegration_TaskEvents tests real-time task event handling
 func TestWebSocketIntegration_TaskEvents(t *testing.T) {
 	model := NewModel(createTestConfig())
-	model.Window.width = 120
-	model.Window.height = 40
+	model.programContext.UpdateScreenDimensions(120, 40)
 	mockWS := NewMockWebSocketClient()
 	model.wsClient = mockWS
 
@@ -193,10 +181,10 @@ func TestWebSocketIntegration_TaskEvents(t *testing.T) {
 		{ID: "task1", Title: "Task 1", Status: "todo"},
 		{ID: "task2", Title: "Task 2", Status: "doing"},
 	}
-	model.UpdateTasks(initialTasks)
+	model.updateTasks(initialTasks)
 
-	if len(model.Data.tasks) != 2 {
-		t.Fatalf("Expected 2 initial tasks, got %d", len(model.Data.tasks))
+	if len(model.programContext.Tasks) != 2 {
+		t.Fatalf("Expected 2 initial tasks, got %d", len(model.programContext.Tasks))
 	}
 
 	// Test task update event
@@ -213,7 +201,7 @@ func TestWebSocketIntegration_TaskEvents(t *testing.T) {
 	var uiMsg interface{}
 	switch e := msg.(type) {
 	case archon.RealtimeTaskUpdateMsg:
-		uiMsg = RealtimeTaskUpdateMsg{
+		uiMsg = realtime.RealtimeTaskUpdateMsg{
 			TaskID: e.TaskID,
 			Task:   e.Task,
 			Old:    e.Old,
@@ -223,7 +211,7 @@ func TestWebSocketIntegration_TaskEvents(t *testing.T) {
 	}
 
 	updatedModel, cmd := model.Update(uiMsg)
-	model = updatedModel.(Model)
+	model = *updatedModel.(*MainModel)
 
 	// Verify that a refresh command was returned
 	if cmd == nil {
@@ -243,13 +231,13 @@ func TestWebSocketIntegration_TaskEvents(t *testing.T) {
 	msg = <-mockWS.GetEventChannel()
 	switch e := msg.(type) {
 	case archon.RealtimeTaskCreateMsg:
-		uiMsg = RealtimeTaskCreateMsg{Task: e.Task}
+		uiMsg = realtime.RealtimeTaskCreateMsg{Task: e.Task}
 	default:
 		t.Fatalf("Unexpected message type: %T", e)
 	}
 
 	updatedModel, cmd = model.Update(uiMsg)
-	model = updatedModel.(Model)
+	model = *updatedModel.(*MainModel)
 
 	// Verify that a refresh command was returned
 	if cmd == nil {
@@ -263,7 +251,7 @@ func TestWebSocketIntegration_TaskEvents(t *testing.T) {
 	msg = <-mockWS.GetEventChannel()
 	switch e := msg.(type) {
 	case archon.RealtimeTaskDeleteMsg:
-		uiMsg = RealtimeTaskDeleteMsg{
+		uiMsg = realtime.RealtimeTaskDeleteMsg{
 			TaskID: e.TaskID,
 			Task:   e.Task,
 		}
@@ -272,7 +260,7 @@ func TestWebSocketIntegration_TaskEvents(t *testing.T) {
 	}
 
 	updatedModel, cmd = model.Update(uiMsg)
-	model = updatedModel.(Model)
+	model = *updatedModel.(*MainModel)
 
 	// Verify that a refresh command was returned
 	if cmd == nil {
@@ -293,13 +281,13 @@ func TestWebSocketIntegration_EventListener(t *testing.T) {
 	mockWS.SimulateTaskUpdate(testTask)
 
 	// Create the event listener command
-	cmd := ListenForRealtimeEvents(mockWS)
+	cmd := realtime.ListenForRealtimeEvents(mockWS)
 
 	// Execute the command
 	result := cmd()
 
 	// Verify we got the expected message type
-	if updateMsg, ok := result.(RealtimeTaskUpdateMsg); ok {
+	if updateMsg, ok := result.(realtime.RealtimeTaskUpdateMsg); ok {
 		if updateMsg.TaskID != testTask.ID {
 			t.Errorf("Expected task ID %s, got %s", testTask.ID, updateMsg.TaskID)
 		}
@@ -307,7 +295,7 @@ func TestWebSocketIntegration_EventListener(t *testing.T) {
 			t.Errorf("Expected task title %s, got %s", testTask.Title, updateMsg.Task.Title)
 		}
 	} else {
-		t.Errorf("Expected RealtimeTaskUpdateMsg, got %T", result)
+		t.Errorf("Expected realtime.RealtimeTaskUpdateMsg, got %T", result)
 	}
 }
 
@@ -316,14 +304,14 @@ func TestWebSocketIntegration_InitializeRealtime(t *testing.T) {
 	mockWS := NewMockWebSocketClient()
 
 	// Create the initialization command
-	cmd := InitializeRealtimeCmd(mockWS)
+	cmd := realtime.InitializeRealtimeCmd(mockWS)
 
 	// Execute the command
 	result := cmd()
 
-	// Should return a RealtimeConnectedMsg since mock Connect() succeeds
-	if _, ok := result.(RealtimeConnectedMsg); !ok {
-		t.Errorf("Expected RealtimeConnectedMsg, got %T", result)
+	// Should return a realtime.RealtimeConnectedMsg since mock Connect() succeeds
+	if _, ok := result.(realtime.RealtimeConnectedMsg); !ok {
+		t.Errorf("Expected realtime.RealtimeConnectedMsg, got %T", result)
 	}
 
 	// Verify that the mock client is connected
@@ -335,8 +323,7 @@ func TestWebSocketIntegration_InitializeRealtime(t *testing.T) {
 // TestWebSocketIntegration_ConcurrentEvents tests handling multiple concurrent events
 func TestWebSocketIntegration_ConcurrentEvents(t *testing.T) {
 	model := NewModel(createTestConfig())
-	model.Window.width = 120
-	model.Window.height = 40
+	model.programContext.UpdateScreenDimensions(120, 40)
 	mockWS := NewMockWebSocketClient()
 	model.wsClient = mockWS
 
@@ -353,33 +340,33 @@ func TestWebSocketIntegration_ConcurrentEvents(t *testing.T) {
 		for {
 			select {
 			case event := <-mockWS.GetEventChannel():
-				// Convert archon event to UI event (like ListenForRealtimeEvents does)
+				// Convert archon event to UI event (like realtime.ListenForRealtimeEvents does)
 				var uiEvent interface{}
 				switch e := event.(type) {
 				case archon.RealtimeTaskCreateMsg:
-					uiEvent = RealtimeTaskCreateMsg{Task: e.Task}
+					uiEvent = realtime.RealtimeTaskCreateMsg{Task: e.Task}
 				case archon.RealtimeTaskUpdateMsg:
-					uiEvent = RealtimeTaskUpdateMsg{
+					uiEvent = realtime.RealtimeTaskUpdateMsg{
 						TaskID: e.TaskID,
 						Task:   e.Task,
 						Old:    e.Old,
 					}
 				case archon.RealtimeTaskDeleteMsg:
-					uiEvent = RealtimeTaskDeleteMsg{
+					uiEvent = realtime.RealtimeTaskDeleteMsg{
 						TaskID: e.TaskID,
 						Task:   e.Task,
 					}
 				case archon.RealtimeConnectedMsg:
-					uiEvent = RealtimeConnectedMsg{}
+					uiEvent = realtime.RealtimeConnectedMsg{}
 				case archon.RealtimeDisconnectedMsg:
-					uiEvent = RealtimeDisconnectedMsg{Error: e.Error}
+					uiEvent = realtime.RealtimeDisconnectedMsg{Error: e.Error}
 				default:
 					continue // Skip unknown event types
 				}
 
 				// Process event through model
 				updatedModel, _ := model.Update(uiEvent)
-				model = updatedModel.(Model)
+				model = *updatedModel.(*MainModel)
 
 				// Track processed event (use UI event type for counting)
 				eventsMu.Lock()
@@ -431,15 +418,15 @@ func TestWebSocketIntegration_ConcurrentEvents(t *testing.T) {
 	var taskCreateCount, taskUpdateCount, taskDeleteCount, connectCount, disconnectCount int
 	for _, event := range processedEvents {
 		switch event.(type) {
-		case RealtimeTaskCreateMsg:
+		case realtime.RealtimeTaskCreateMsg:
 			taskCreateCount++
-		case RealtimeTaskUpdateMsg:
+		case realtime.RealtimeTaskUpdateMsg:
 			taskUpdateCount++
-		case RealtimeTaskDeleteMsg:
+		case realtime.RealtimeTaskDeleteMsg:
 			taskDeleteCount++
-		case RealtimeConnectedMsg:
+		case realtime.RealtimeConnectedMsg:
 			connectCount++
-		case RealtimeDisconnectedMsg:
+		case realtime.RealtimeDisconnectedMsg:
 			disconnectCount++
 		}
 	}
@@ -467,10 +454,10 @@ func TestWebSocketIntegration_MessageTypeConversion(t *testing.T) {
 	}
 	mockWS.SimulateTaskUpdate(testTask)
 
-	cmd := ListenForRealtimeEvents(mockWS)
+	cmd := realtime.ListenForRealtimeEvents(mockWS)
 	result := cmd()
 
-	if updateMsg, ok := result.(RealtimeTaskUpdateMsg); ok {
+	if updateMsg, ok := result.(realtime.RealtimeTaskUpdateMsg); ok {
 		// Verify field conversion
 		if updateMsg.TaskID != testTask.ID {
 			t.Errorf("TaskID conversion failed: expected %s, got %s", testTask.ID, updateMsg.TaskID)
@@ -485,24 +472,23 @@ func TestWebSocketIntegration_MessageTypeConversion(t *testing.T) {
 			t.Errorf("Task.Status conversion failed: expected %s, got %s", testTask.Status, updateMsg.Task.Status)
 		}
 	} else {
-		t.Errorf("Expected RealtimeTaskUpdateMsg, got %T", result)
+		t.Errorf("Expected realtime.RealtimeTaskUpdateMsg, got %T", result)
 	}
 
 	// Test connection status conversion
 	mockWS.SimulateConnect()
-	cmd = ListenForRealtimeEvents(mockWS)
+	cmd = realtime.ListenForRealtimeEvents(mockWS)
 	result = cmd()
 
-	if _, ok := result.(RealtimeConnectedMsg); !ok {
-		t.Errorf("Expected RealtimeConnectedMsg, got %T", result)
+	if _, ok := result.(realtime.RealtimeConnectedMsg); !ok {
+		t.Errorf("Expected realtime.RealtimeConnectedMsg, got %T", result)
 	}
 }
 
 // BenchmarkWebSocketIntegration_EventProcessing benchmarks event processing performance
 func BenchmarkWebSocketIntegration_EventProcessing(b *testing.B) {
 	model := NewModel(createTestConfig())
-	model.Window.width = 120
-	model.Window.height = 40
+	model.programContext.UpdateScreenDimensions(120, 40)
 	mockWS := NewMockWebSocketClient()
 	model.wsClient = mockWS
 

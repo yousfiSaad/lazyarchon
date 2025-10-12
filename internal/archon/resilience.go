@@ -63,9 +63,9 @@ func DefaultResilienceConfig() ResilienceConfig {
 type CircuitState int
 
 const (
-	CircuitClosed CircuitState = iota // Normal operation
-	CircuitOpen                       // Failing fast, not allowing requests
-	CircuitHalfOpen                   // Testing if service has recovered
+	CircuitClosed   CircuitState = iota // Normal operation
+	CircuitOpen                         // Failing fast, not allowing requests
+	CircuitHalfOpen                     // Testing if service has recovered
 )
 
 func (s CircuitState) String() string {
@@ -83,14 +83,14 @@ func (s CircuitState) String() string {
 
 // CircuitBreaker implements the circuit breaker pattern
 type CircuitBreaker struct {
-	mu               sync.RWMutex
-	config           CircuitBreakerConfig
-	state            CircuitState
-	failureCount     int
-	successCount     int
-	lastFailureTime  time.Time
-	lastAttemptTime  time.Time
-	nextRetryTime    time.Time
+	mu              sync.RWMutex
+	config          CircuitBreakerConfig
+	state           CircuitState
+	failureCount    int
+	successCount    int
+	lastFailureTime time.Time
+	lastAttemptTime time.Time
+	nextRetryTime   time.Time
 }
 
 // NewCircuitBreaker creates a new circuit breaker with the given configuration
@@ -232,7 +232,7 @@ func (re *RetryableExecutor) Execute(ctx context.Context, fn func() error) error
 	var lastErr error
 
 	for attempt := 0; attempt < re.config.MaxAttempts; attempt++ {
-		// Check if context is cancelled
+		// Check if context is canceled
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
@@ -260,7 +260,7 @@ func (re *RetryableExecutor) Execute(ctx context.Context, fn func() error) error
 		// Calculate delay for next attempt
 		delay := re.calculateDelay(attempt)
 
-		// Wait for the delay period (or until context is cancelled)
+		// Wait for the delay period (or until context is canceled)
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
@@ -364,11 +364,11 @@ func NewResilientClientFromBase(baseClient *Client) *ResilientClient {
 
 // ResilienceMetrics tracks resilience operation metrics
 type ResilienceMetrics struct {
-	mu                sync.RWMutex
-	TotalRequests     int64
-	SuccessfulRequests int64
-	FailedRequests    int64
-	RetriedRequests   int64
+	mu                  sync.RWMutex
+	TotalRequests       int64
+	SuccessfulRequests  int64
+	FailedRequests      int64
+	RetriedRequests     int64
 	CircuitBreakerTrips int64
 }
 

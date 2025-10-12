@@ -181,13 +181,13 @@ func (t Task) GetStatusSymbol() string {
 	// so we keep the logic here but use the updated symbols
 	switch t.Status {
 	case TaskStatusTodo:
-		return "○" // StatusSymbolTodo
+		return "○" // StatusSymbolTodo - Empty circle (clear starting state)
 	case TaskStatusDoing:
-		return "◐" // StatusSymbolDoing
+		return "◐" // StatusSymbolDoing - Half-filled circle (work in progress)
 	case TaskStatusReview:
-		return "◈" // StatusSymbolReview - Updated!
+		return "◈" // StatusSymbolReview - Diamond with center dot (under review)
 	case TaskStatusDone:
-		return "✓" // StatusSymbolDone - Updated!
+		return "✓" // StatusSymbolDone - Checkmark (completed)
 	default:
 		return "○" // Default to todo symbol
 	}

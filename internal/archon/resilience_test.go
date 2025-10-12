@@ -137,11 +137,11 @@ func TestCircuitBreaker_HalfOpenFailure(t *testing.T) {
 
 func TestRetryableExecutor_Success(t *testing.T) {
 	config := RetryConfig{
-		MaxAttempts: 3,
-		BaseDelay:   10 * time.Millisecond,
-		MaxDelay:    100 * time.Millisecond,
-		Multiplier:  2.0,
-		Jitter:      false,
+		MaxAttempts:     3,
+		BaseDelay:       10 * time.Millisecond,
+		MaxDelay:        100 * time.Millisecond,
+		Multiplier:      2.0,
+		Jitter:          false,
 		RetryableErrors: []string{"retryable"},
 	}
 
@@ -166,11 +166,11 @@ func TestRetryableExecutor_Success(t *testing.T) {
 
 func TestRetryableExecutor_RetrySuccess(t *testing.T) {
 	config := RetryConfig{
-		MaxAttempts: 3,
-		BaseDelay:   10 * time.Millisecond,
-		MaxDelay:    100 * time.Millisecond,
-		Multiplier:  2.0,
-		Jitter:      false,
+		MaxAttempts:     3,
+		BaseDelay:       10 * time.Millisecond,
+		MaxDelay:        100 * time.Millisecond,
+		Multiplier:      2.0,
+		Jitter:          false,
 		RetryableErrors: []string{"retryable"},
 	}
 
@@ -198,11 +198,11 @@ func TestRetryableExecutor_RetrySuccess(t *testing.T) {
 
 func TestRetryableExecutor_NonRetryableError(t *testing.T) {
 	config := RetryConfig{
-		MaxAttempts: 3,
-		BaseDelay:   10 * time.Millisecond,
-		MaxDelay:    100 * time.Millisecond,
-		Multiplier:  2.0,
-		Jitter:      false,
+		MaxAttempts:     3,
+		BaseDelay:       10 * time.Millisecond,
+		MaxDelay:        100 * time.Millisecond,
+		Multiplier:      2.0,
+		Jitter:          false,
 		RetryableErrors: []string{"retryable"},
 	}
 
@@ -231,11 +231,11 @@ func TestRetryableExecutor_NonRetryableError(t *testing.T) {
 
 func TestRetryableExecutor_ExhaustedRetries(t *testing.T) {
 	config := RetryConfig{
-		MaxAttempts: 2,
-		BaseDelay:   10 * time.Millisecond,
-		MaxDelay:    100 * time.Millisecond,
-		Multiplier:  2.0,
-		Jitter:      false,
+		MaxAttempts:     2,
+		BaseDelay:       10 * time.Millisecond,
+		MaxDelay:        100 * time.Millisecond,
+		Multiplier:      2.0,
+		Jitter:          false,
 		RetryableErrors: []string{"retryable"},
 	}
 
@@ -264,11 +264,11 @@ func TestRetryableExecutor_ExhaustedRetries(t *testing.T) {
 
 func TestRetryableExecutor_ContextCancellation(t *testing.T) {
 	config := RetryConfig{
-		MaxAttempts: 5,
-		BaseDelay:   100 * time.Millisecond,
-		MaxDelay:    1 * time.Second,
-		Multiplier:  2.0,
-		Jitter:      false,
+		MaxAttempts:     5,
+		BaseDelay:       100 * time.Millisecond,
+		MaxDelay:        1 * time.Second,
+		Multiplier:      2.0,
+		Jitter:          false,
 		RetryableErrors: []string{"retryable"},
 	}
 
@@ -303,11 +303,11 @@ func TestRetryableExecutor_ContextCancellation(t *testing.T) {
 
 func TestRetryableExecutor_DelayCalculation(t *testing.T) {
 	config := RetryConfig{
-		MaxAttempts: 4,
-		BaseDelay:   100 * time.Millisecond,
-		MaxDelay:    500 * time.Millisecond,
-		Multiplier:  2.0,
-		Jitter:      false,
+		MaxAttempts:     4,
+		BaseDelay:       100 * time.Millisecond,
+		MaxDelay:        500 * time.Millisecond,
+		Multiplier:      2.0,
+		Jitter:          false,
 		RetryableErrors: []string{"retryable"},
 	}
 
@@ -333,11 +333,11 @@ func TestRetryableExecutor_DelayCalculation(t *testing.T) {
 
 func TestRetryableExecutor_NetworkErrorRetryable(t *testing.T) {
 	config := RetryConfig{
-		MaxAttempts: 3,
-		BaseDelay:   10 * time.Millisecond,
-		MaxDelay:    100 * time.Millisecond,
-		Multiplier:  2.0,
-		Jitter:      false,
+		MaxAttempts:     3,
+		BaseDelay:       10 * time.Millisecond,
+		MaxDelay:        100 * time.Millisecond,
+		Multiplier:      2.0,
+		Jitter:          false,
 		RetryableErrors: []string{},
 	}
 
@@ -372,11 +372,11 @@ func TestResilientClient_Integration(t *testing.T) {
 	config := ResilienceConfig{
 		Enabled: true,
 		Retry: RetryConfig{
-			MaxAttempts: 2,
-			BaseDelay:   10 * time.Millisecond,
-			MaxDelay:    50 * time.Millisecond,
-			Multiplier:  2.0,
-			Jitter:      false,
+			MaxAttempts:     2,
+			BaseDelay:       10 * time.Millisecond,
+			MaxDelay:        50 * time.Millisecond,
+			Multiplier:      2.0,
+			Jitter:          false,
 			RetryableErrors: []string{"connection", "timeout"},
 		},
 		CircuitBreaker: CircuitBreakerConfig{
@@ -422,11 +422,11 @@ func TestResilientClient_CircuitBreakerTrip(t *testing.T) {
 	config := ResilienceConfig{
 		Enabled: true,
 		Retry: RetryConfig{
-			MaxAttempts: 1, // No retries for faster testing
-			BaseDelay:   10 * time.Millisecond,
-			MaxDelay:    50 * time.Millisecond,
-			Multiplier:  2.0,
-			Jitter:      false,
+			MaxAttempts:     1, // No retries for faster testing
+			BaseDelay:       10 * time.Millisecond,
+			MaxDelay:        50 * time.Millisecond,
+			Multiplier:      2.0,
+			Jitter:          false,
 			RetryableErrors: []string{},
 		},
 		CircuitBreaker: CircuitBreakerConfig{

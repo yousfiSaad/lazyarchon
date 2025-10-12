@@ -22,11 +22,11 @@ type MockServer struct {
 	requests []RecordedRequest
 
 	// Behavior configuration
-	simulateErrors   map[string]error // endpoint -> error mapping
-	responseDelays   map[string]int   // endpoint -> delay in milliseconds
-	healthStatus     int              // HTTP status for health endpoint
-	nextTaskID       int
-	nextProjectID    int
+	simulateErrors map[string]error // endpoint -> error mapping
+	responseDelays map[string]int   // endpoint -> delay in milliseconds
+	healthStatus   int              // HTTP status for health endpoint
+	nextTaskID     int
+	nextProjectID  int
 }
 
 // RecordedRequest captures details about requests made to the mock server
@@ -61,6 +61,13 @@ func NewMockServer() *MockServer {
 
 	server.Server = httptest.NewServer(mux)
 	return server
+}
+
+// writeJSONResponse writes a JSON response with error handling
+func (s *MockServer) writeJSONResponse(w http.ResponseWriter, data interface{}) {
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+	}
 }
 
 // recordRequest captures request details for test verification
@@ -99,7 +106,7 @@ func (s *MockServer) handleHealth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(s.healthStatus)
-	json.NewEncoder(w).Encode(map[string]string{"status": "healthy"})
+	s.writeJSONResponse(w, map[string]string{"status": "healthy"})
 }
 
 // Tasks endpoint handler
@@ -225,7 +232,7 @@ func (s *MockServer) handleListTasks(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	s.writeJSONResponse(w, response)
 }
 
 // Get task implementation
@@ -241,7 +248,7 @@ func (s *MockServer) handleGetTask(w http.ResponseWriter, r *http.Request, taskI
 
 	response := TaskResponse{Task: task}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	s.writeJSONResponse(w, response)
 }
 
 // Update task implementation
@@ -276,7 +283,7 @@ func (s *MockServer) handleUpdateTask(w http.ResponseWriter, r *http.Request, ta
 
 	response := TaskResponse{Task: task}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	s.writeJSONResponse(w, response)
 }
 
 // Create task implementation
@@ -299,7 +306,7 @@ func (s *MockServer) handleCreateTask(w http.ResponseWriter, r *http.Request) {
 	response := TaskResponse{Task: task}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
+	s.writeJSONResponse(w, response)
 }
 
 // Delete task implementation
@@ -331,7 +338,7 @@ func (s *MockServer) handleListProjects(w http.ResponseWriter, r *http.Request) 
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	s.writeJSONResponse(w, response)
 }
 
 // Get project implementation
@@ -347,7 +354,7 @@ func (s *MockServer) handleGetProject(w http.ResponseWriter, r *http.Request, pr
 
 	response := ProjectResponse{Project: project}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	s.writeJSONResponse(w, response)
 }
 
 // Create project implementation
@@ -370,7 +377,7 @@ func (s *MockServer) handleCreateProject(w http.ResponseWriter, r *http.Request)
 	response := ProjectResponse{Project: project}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
+	s.writeJSONResponse(w, response)
 }
 
 // Update project implementation
@@ -399,7 +406,7 @@ func (s *MockServer) handleUpdateProject(w http.ResponseWriter, r *http.Request,
 
 	response := ProjectResponse{Project: project}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	s.writeJSONResponse(w, response)
 }
 
 // Delete project implementation

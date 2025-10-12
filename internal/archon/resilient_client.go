@@ -124,6 +124,30 @@ func (rc *ResilientClient) UpdateTask(taskID string, updates UpdateTaskRequest) 
 	return result, nil
 }
 
+// DeleteTask deletes/archives a task with resilience
+func (rc *ResilientClient) DeleteTask(taskID string) error {
+	var lastErr error
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	operation := func() error {
+		err := rc.client.DeleteTask(taskID)
+		lastErr = err
+		return err
+	}
+
+	err := rc.executeWithResilience(ctx, operation)
+	if err != nil {
+		if lastErr != nil {
+			return lastErr
+		}
+		return err
+	}
+
+	return nil
+}
+
 // ListProjects retrieves all projects with resilience
 func (rc *ResilientClient) ListProjects() (*ProjectsResponse, error) {
 	var result *ProjectsResponse
@@ -228,10 +252,10 @@ func NewResilientClientWithDefaults(baseURL, apiKey string) *ResilientClient {
 
 // ClientFactory provides a way to create clients with different configurations
 type ClientFactory struct {
-	baseURL           string
-	apiKey            string
-	resilienceConfig  ResilienceConfig
-	enableResilience  bool
+	baseURL          string
+	apiKey           string
+	resilienceConfig ResilienceConfig
+	enableResilience bool
 }
 
 // NewClientFactory creates a new client factory

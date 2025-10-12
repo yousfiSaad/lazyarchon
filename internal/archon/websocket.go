@@ -12,24 +12,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// Ensure WebSocketClient implements RealtimeClient interface
-var _ RealtimeClientInterface = (*WebSocketClient)(nil)
-
-// Define interface locally to avoid import cycles
-type RealtimeClientInterface interface {
-	Connect() error
-	Disconnect() error
-	IsConnected() bool
-	SetEventHandlers(
-		onTaskUpdate func(TaskUpdateEvent),
-		onTaskCreate func(TaskCreateEvent),
-		onTaskDelete func(TaskDeleteEvent),
-		onProjectUpdate func(ProjectUpdateEvent),
-		onConnect func(),
-		onDisconnect func(error),
-	)
-}
-
 // WebSocketClient handles real-time communication with Archon's Supabase backend
 type WebSocketClient struct {
 	conn           *websocket.Conn
@@ -42,22 +24,15 @@ type WebSocketClient struct {
 	reconnectDelay time.Duration
 	maxReconnects  int
 	reconnectCount int
-
-	// Event handlers
-	onTaskUpdate    func(TaskUpdateEvent)
-	onTaskCreate    func(TaskCreateEvent)
-	onTaskDelete    func(TaskDeleteEvent)
-	onProjectUpdate func(ProjectUpdateEvent)
-	onConnect       func()
-	onDisconnect    func(error)
+	logger         Logger // Optional logger for debug mode
 
 	// Internal channels
-	sendCh    chan []byte
-	closeCh   chan struct{}
-	reconnCh  chan struct{}
+	sendCh   chan []byte
+	closeCh  chan struct{}
+	reconnCh chan struct{}
 
 	// Bubble Tea message channel for real-time events
-	eventCh   chan interface{}
+	eventCh chan interface{}
 }
 
 // Real-time event types matching Supabase realtime format
@@ -93,8 +68,8 @@ type TaskDeleteEvent struct {
 }
 
 type ProjectUpdateEvent struct {
-	ProjectID string  `json:"project_id"`
-	Project   Project `json:"project"`
+	ProjectID string   `json:"project_id"`
+	Project   Project  `json:"project"`
 	Old       *Project `json:"old,omitempty"`
 }
 
@@ -116,8 +91,8 @@ type RealtimeTaskDeleteMsg struct {
 }
 
 type RealtimeProjectUpdateMsg struct {
-	ProjectID string  `json:"project_id"`
-	Project   Project `json:"project"`
+	ProjectID string   `json:"project_id"`
+	Project   Project  `json:"project"`
 	Old       *Project `json:"old,omitempty"`
 }
 
@@ -145,7 +120,13 @@ func NewWebSocketClient(baseURL, apiKey string) *WebSocketClient {
 		closeCh:        make(chan struct{}),
 		reconnCh:       make(chan struct{}, 1),
 		eventCh:        make(chan interface{}, 100),
+		logger:         nil, // No logger by default
 	}
+}
+
+// SetLogger sets the optional logger for the WebSocket client
+func (ws *WebSocketClient) SetLogger(logger Logger) {
+	ws.logger = logger
 }
 
 // convertToWebSocketURL converts HTTP/HTTPS URL to WebSocket URL
@@ -169,26 +150,6 @@ func convertToWebSocketURL(httpURL string) string {
 	return u.String()
 }
 
-// SetEventHandlers configures the event handlers for different types of updates
-func (ws *WebSocketClient) SetEventHandlers(
-	onTaskUpdate func(TaskUpdateEvent),
-	onTaskCreate func(TaskCreateEvent),
-	onTaskDelete func(TaskDeleteEvent),
-	onProjectUpdate func(ProjectUpdateEvent),
-	onConnect func(),
-	onDisconnect func(error),
-) {
-	ws.mu.Lock()
-	defer ws.mu.Unlock()
-
-	ws.onTaskUpdate = onTaskUpdate
-	ws.onTaskCreate = onTaskCreate
-	ws.onTaskDelete = onTaskDelete
-	ws.onProjectUpdate = onProjectUpdate
-	ws.onConnect = onConnect
-	ws.onDisconnect = onDisconnect
-}
-
 // Connect establishes the WebSocket connection
 func (ws *WebSocketClient) Connect() error {
 	ws.mu.Lock()
@@ -206,14 +167,25 @@ func (ws *WebSocketClient) Connect() error {
 	u.RawQuery = q.Encode()
 
 	// Establish WebSocket connection
+	if ws.logger != nil {
+		ws.logger.LogWebSocketEvent("connecting", "url", ws.url)
+	}
+
 	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
+		if ws.logger != nil {
+			ws.logger.Error("Failed to connect to WebSocket", "error", err, "url", ws.url)
+		}
 		return fmt.Errorf("failed to connect to WebSocket: %w", err)
 	}
 
 	ws.conn = conn
 	ws.connected = true
 	ws.reconnectCount = 0
+
+	if ws.logger != nil {
+		ws.logger.LogWebSocketEvent("connected", "url", ws.url)
+	}
 
 	// Start goroutines for handling messages
 	go ws.readPump()
@@ -222,24 +194,33 @@ func (ws *WebSocketClient) Connect() error {
 
 	// Send initial join message for tasks channel
 	if err := ws.joinChannel("realtime:public:tasks"); err != nil {
-		log.Printf("Failed to join tasks channel: %v", err)
+		if ws.logger != nil {
+			ws.logger.Error("Failed to join tasks channel", "error", err)
+		} else {
+			log.Printf("Failed to join tasks channel: %v", err)
+		}
 	}
 
 	// Send initial join message for projects channel
 	if err := ws.joinChannel("realtime:public:projects"); err != nil {
-		log.Printf("Failed to join projects channel: %v", err)
+		if ws.logger != nil {
+			ws.logger.Error("Failed to join projects channel", "error", err)
+		} else {
+			log.Printf("Failed to join projects channel: %v", err)
+		}
 	}
 
-	// Notify connection established
-	if ws.onConnect != nil {
-		go ws.onConnect()
-	}
+	// Notify connection established via channel only
 
 	// Send connection event to channel
 	select {
 	case ws.eventCh <- RealtimeConnectedMsg{}:
 	default:
-		log.Printf("Event channel full, dropping connection event")
+		if ws.logger != nil {
+			ws.logger.Error("Event channel full, dropping connection event")
+		} else {
+			log.Printf("Event channel full, dropping connection event")
+		}
 	}
 
 	return nil
@@ -254,6 +235,10 @@ func (ws *WebSocketClient) Disconnect() error {
 		return nil
 	}
 
+	if ws.logger != nil {
+		ws.logger.LogWebSocketEvent("disconnecting", "url", ws.url)
+	}
+
 	ws.cancel()
 	close(ws.closeCh)
 
@@ -261,6 +246,14 @@ func (ws *WebSocketClient) Disconnect() error {
 		err := ws.conn.Close()
 		ws.conn = nil
 		ws.connected = false
+
+		if ws.logger != nil {
+			if err != nil {
+				ws.logger.Error("Error during WebSocket disconnect", "error", err)
+			} else {
+				ws.logger.LogWebSocketEvent("disconnected", "url", ws.url)
+			}
+		}
 		return err
 	}
 
@@ -282,8 +275,8 @@ func (ws *WebSocketClient) GetEventChannel() <-chan interface{} {
 // joinChannel sends a join message for a specific channel
 func (ws *WebSocketClient) joinChannel(topic string) error {
 	joinMsg := map[string]interface{}{
-		"topic": topic,
-		"event": "phx_join",
+		"topic":   topic,
+		"event":   "phx_join",
 		"payload": map[string]interface{}{},
 		"ref":     fmt.Sprintf("%d", time.Now().UnixNano()),
 	}
@@ -312,9 +305,7 @@ func (ws *WebSocketClient) readPump() {
 
 		disconnectError := fmt.Errorf("read pump closed")
 
-		if ws.onDisconnect != nil {
-			go ws.onDisconnect(disconnectError)
-		}
+		// Notify disconnection via channel only
 
 		// Send disconnection event to channel
 		select {
@@ -428,13 +419,24 @@ func (ws *WebSocketClient) reconnect() {
 	delay := time.Duration(ws.reconnectCount) * ws.reconnectDelay
 	ws.mu.Unlock()
 
-	log.Printf("Attempting to reconnect WebSocket (attempt %d/%d) in %v",
-		ws.reconnectCount, ws.maxReconnects, delay)
+	if ws.logger != nil {
+		ws.logger.LogWebSocketEvent("reconnecting",
+			"attempt", ws.reconnectCount,
+			"max_attempts", ws.maxReconnects,
+			"delay", delay)
+	} else {
+		log.Printf("Attempting to reconnect WebSocket (attempt %d/%d) in %v",
+			ws.reconnectCount, ws.maxReconnects, delay)
+	}
 
 	time.Sleep(delay)
 
 	if err := ws.Connect(); err != nil {
-		log.Printf("Reconnection failed: %v", err)
+		if ws.logger != nil {
+			ws.logger.Error("Reconnection failed", "error", err, "attempt", ws.reconnectCount)
+		} else {
+			log.Printf("Reconnection failed: %v", err)
+		}
 
 		// Trigger another reconnection attempt
 		go func() {
@@ -488,9 +490,8 @@ func (ws *WebSocketClient) handleTaskChange(payload RealtimePayload) {
 	case "INSERT":
 		task := ws.mapToTask(payload.Record)
 
-		// Call legacy handler if set
-		if ws.onTaskCreate != nil {
-			ws.onTaskCreate(TaskCreateEvent{Task: task})
+		if ws.logger != nil {
+			ws.logger.Debug("Task created via realtime", "task_id", task.ID, "title", task.Title)
 		}
 
 		// Send to event channel for Bubble Tea integration
@@ -498,7 +499,11 @@ func (ws *WebSocketClient) handleTaskChange(payload RealtimePayload) {
 		case ws.eventCh <- RealtimeTaskCreateMsg{Task: task}:
 		default:
 			// Channel full, log and drop event
-			log.Printf("Event channel full, dropping task create event for task %s", task.ID)
+			if ws.logger != nil {
+				ws.logger.Error("Event channel full, dropping task create event", "task_id", task.ID)
+			} else {
+				log.Printf("Event channel full, dropping task create event for task %s", task.ID)
+			}
 		}
 
 	case "UPDATE":
@@ -509,13 +514,8 @@ func (ws *WebSocketClient) handleTaskChange(payload RealtimePayload) {
 			oldTask = &old
 		}
 
-		// Call legacy handler if set
-		if ws.onTaskUpdate != nil {
-			ws.onTaskUpdate(TaskUpdateEvent{
-				TaskID: task.ID,
-				Task:   task,
-				Old:    oldTask,
-			})
+		if ws.logger != nil {
+			ws.logger.Debug("Task updated via realtime", "task_id", task.ID, "status", task.Status)
 		}
 
 		// Send to event channel for Bubble Tea integration
@@ -526,18 +526,18 @@ func (ws *WebSocketClient) handleTaskChange(payload RealtimePayload) {
 			Old:    oldTask,
 		}:
 		default:
-			log.Printf("Event channel full, dropping task update event for task %s", task.ID)
+			if ws.logger != nil {
+				ws.logger.Error("Event channel full, dropping task update event", "task_id", task.ID)
+			} else {
+				log.Printf("Event channel full, dropping task update event for task %s", task.ID)
+			}
 		}
 
 	case "DELETE":
 		task := ws.mapToTask(payload.Record)
 
-		// Call legacy handler if set
-		if ws.onTaskDelete != nil {
-			ws.onTaskDelete(TaskDeleteEvent{
-				TaskID: task.ID,
-				Task:   task,
-			})
+		if ws.logger != nil {
+			ws.logger.Debug("Task deleted via realtime", "task_id", task.ID)
 		}
 
 		// Send to event channel for Bubble Tea integration
@@ -547,7 +547,11 @@ func (ws *WebSocketClient) handleTaskChange(payload RealtimePayload) {
 			Task:   task,
 		}:
 		default:
-			log.Printf("Event channel full, dropping task delete event for task %s", task.ID)
+			if ws.logger != nil {
+				ws.logger.Error("Event channel full, dropping task delete event", "task_id", task.ID)
+			} else {
+				log.Printf("Event channel full, dropping task delete event for task %s", task.ID)
+			}
 		}
 	}
 }
@@ -563,14 +567,7 @@ func (ws *WebSocketClient) handleProjectChange(payload RealtimePayload) {
 			oldProject = &old
 		}
 
-		// Call legacy handler if set
-		if ws.onProjectUpdate != nil {
-			ws.onProjectUpdate(ProjectUpdateEvent{
-				ProjectID: project.ID,
-				Project:   project,
-				Old:       oldProject,
-			})
-		}
+		// Project update handled via channel only
 
 		// Send to event channel for Bubble Tea integration
 		select {

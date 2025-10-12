@@ -55,7 +55,9 @@ func SortTasks(tasks []archon.Task, sortMode int) []archon.Task {
 	return sortedTasks
 }
 
-// sortByStatusPriority sorts tasks by status first, then by priority
+// sortByStatusPriority sorts tasks by status first, then by priority or edit time
+// - todo/review/doing tasks: sorted by priority (TaskOrder, higher first)
+// - done tasks: sorted by edit time (UpdatedAt, most recent first)
 func sortByStatusPriority(tasks []archon.Task) {
 	sort.Slice(tasks, func(i, j int) bool {
 		// First, sort by status priority
@@ -64,7 +66,13 @@ func sortByStatusPriority(tasks []archon.Task) {
 		if statusI != statusJ {
 			return statusI < statusJ
 		}
-		// Then by task order (higher = more priority)
+
+		// Within same status:
+		// - For 'done' tasks: sort by UpdatedAt (most recent first)
+		// - For all other statuses: sort by priority (TaskOrder, higher first)
+		if tasks[i].Status == archon.TaskStatusDone {
+			return tasks[i].UpdatedAt.After(tasks[j].UpdatedAt.Time)
+		}
 		return tasks[i].TaskOrder > tasks[j].TaskOrder
 	})
 }
@@ -105,47 +113,4 @@ func getStatusWeight(status string) int {
 	default:
 		return 4 // Unknown status goes to end
 	}
-}
-
-// TaskSorter provides a cached sorting interface for better performance
-type TaskSorter struct {
-	tasks        []archon.Task
-	sortMode     int
-	cachedResult []archon.Task
-	cacheValid   bool
-}
-
-// NewTaskSorter creates a new TaskSorter
-func NewTaskSorter(tasks []archon.Task, sortMode int) *TaskSorter {
-	return &TaskSorter{
-		tasks:      tasks,
-		sortMode:   sortMode,
-		cacheValid: false,
-	}
-}
-
-// GetSorted returns the sorted tasks, using cache if valid
-func (ts *TaskSorter) GetSorted() []archon.Task {
-	if !ts.cacheValid {
-		ts.cachedResult = SortTasks(ts.tasks, ts.sortMode)
-		ts.cacheValid = true
-	}
-	return ts.cachedResult
-}
-
-// UpdateTasks updates the tasks and invalidates the cache
-func (ts *TaskSorter) UpdateTasks(tasks []archon.Task) {
-	ts.tasks = tasks
-	ts.cacheValid = false
-}
-
-// UpdateSortMode updates the sort mode and invalidates the cache
-func (ts *TaskSorter) UpdateSortMode(sortMode int) {
-	ts.sortMode = sortMode
-	ts.cacheValid = false
-}
-
-// InvalidateCache forces a re-sort on the next GetSorted call
-func (ts *TaskSorter) InvalidateCache() {
-	ts.cacheValid = false
 }

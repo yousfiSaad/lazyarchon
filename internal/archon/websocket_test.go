@@ -22,9 +22,9 @@ type MockWebSocketServer struct {
 	mu       sync.RWMutex
 
 	// Event simulation
-	sendTaskUpdate func(task Task)
-	sendTaskCreate func(task Task)
-	sendTaskDelete func(taskID string, task Task)
+	sendTaskUpdate    func(task Task)
+	sendTaskCreate    func(task Task)
+	sendTaskDelete    func(taskID string, task Task)
 	sendProjectUpdate func(project Project)
 
 	// Message tracking

@@ -335,7 +335,9 @@ func SetupMockServerWithData() *MockServer {
 // Test assertion helpers
 
 // AssertNoError fails the test if err is not nil
-func AssertNoError(t interface{ Fatalf(format string, args ...interface{}) }, err error) {
+func AssertNoError(t interface {
+	Fatalf(format string, args ...interface{})
+}, err error) {
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
 	}
@@ -349,7 +351,9 @@ func AssertError(t interface{ Fatal(args ...interface{}) }, err error) {
 }
 
 // AssertErrorContains fails the test if err is nil or doesn't contain the expected text
-func AssertErrorContains(t interface{ Errorf(format string, args ...interface{}) }, err error, expected string) {
+func AssertErrorContains(t interface {
+	Errorf(format string, args ...interface{})
+}, err error, expected string) {
 	if err == nil {
 		t.Errorf("Expected an error containing '%s', got nil", expected)
 		return
@@ -360,7 +364,9 @@ func AssertErrorContains(t interface{ Errorf(format string, args ...interface{})
 }
 
 // AssertTaskEqual compares two tasks for equality
-func AssertTaskEqual(t interface{ Errorf(format string, args ...interface{}) }, expected, actual Task) {
+func AssertTaskEqual(t interface {
+	Errorf(format string, args ...interface{})
+}, expected, actual Task) {
 	if expected.ID != actual.ID {
 		t.Errorf("Task ID: expected %s, got %s", expected.ID, actual.ID)
 	}
@@ -383,7 +389,9 @@ func AssertTaskEqual(t interface{ Errorf(format string, args ...interface{}) }, 
 }
 
 // AssertProjectEqual compares two projects for equality
-func AssertProjectEqual(t interface{ Errorf(format string, args ...interface{}) }, expected, actual Project) {
+func AssertProjectEqual(t interface {
+	Errorf(format string, args ...interface{})
+}, expected, actual Project) {
 	if expected.ID != actual.ID {
 		t.Errorf("Project ID: expected %s, got %s", expected.ID, actual.ID)
 	}

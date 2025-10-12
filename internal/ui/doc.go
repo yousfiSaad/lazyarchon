@@ -16,15 +16,34 @@
 //
 // # Model Structure
 //
-// The main Model struct uses composition to organize state into logical groups:
+// The Model struct uses modern component-based architecture with coordinators
+// and managers for separation of concerns:
 //
 //	type Model struct {
-//		Window     WindowState     // UI dimensions and view state
-//		Modals     ModalState      // All modal-related state
-//		Navigation NavigationState // Movement and scrolling
-//		Data       DataState       // API data and loading state
-//		// ... UI components and dependencies
+//		// Core infrastructure
+//		wsClient       interfaces.RealtimeClient
+//		programContext *context.ProgramContext
+//
+//		// Component-based UI (8 modal/layout components)
+//		helpModalComponent         base.Component
+//		statusModalComponent       base.Component
+//		confirmationModalComponent base.Component
+//		taskEditModalComponent     base.Component
+//		featureModalComponent      base.Component
+//		headerComponent            base.Component
+//		statusBarComponent         base.Component
+//		layoutViewComponent        base.Component
+//
+//		// Coordinators - embedded as values for compile-time safety
+//		coordinators factories.CoordinatorSet  // Layout, Navigation, Sorting, Search, Feature, CoreState
+//
+//		// Managers - embedded as values for compile-time safety
+//		managers factories.ManagerSet          // Task, Project, UIUtilities
 //	}
+//
+// The coordinators handle UI state (navigation, layout, search, features),
+// while managers handle business logic (tasks, projects) and UI utilities.
+// All shared state and dependencies are centralized in ProgramContext.
 //
 // # Key Features
 //
@@ -80,11 +99,28 @@
 //
 // The application follows the Elm architecture with unidirectional data flow:
 //
-//	1. User Input -> Update function
-//	2. Update function -> New state + Commands
-//	3. Commands -> Async operations (API calls, WebSocket events)
-//	4. Command results -> Update function (via messages)
-//	5. New state -> View function -> Terminal output
+//  1. User Input -> Update function
+//  2. Update function -> New state + Commands
+//  3. Commands -> Async operations (API calls, WebSocket events)
+//  4. Command results -> Update function (via messages)
+//  5. New state -> View function -> Terminal output
+//
+// # Architecture Pattern
+//
+// The UI follows a coordinator-based architecture:
+//
+//   - ProgramContext: Centralized shared state and dependencies
+//   - Coordinators: UI state management (navigation, layout, search, sorting, features, core state)
+//   - Managers: Business logic (tasks, projects) and UI utilities (spinner, scrolling)
+//   - Components: Self-contained UI elements with Update/View/Init methods
+//   - Message Router: Routes messages between components and coordinators
+//
+// This architecture provides:
+//
+//   - Compile-time nil safety (coordinators/managers embedded as values)
+//   - Clear separation of concerns (UI state vs business logic)
+//   - Single source of truth (ProgramContext for shared state)
+//   - Testability (components and coordinators can be tested independently)
 //
 // # Styling and Theming
 //
