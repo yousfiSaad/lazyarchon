@@ -6,10 +6,15 @@ server:
   timeout: 30s
   api_key: ""
 
+  # Real-time updates configuration
+  # NOTE: WebSocket is not supported by the backend - use HTTP polling instead
+  enable_realtime: false # Enable WebSocket (currently not supported)
+  polling_interval: 10   # Polling interval in seconds when enable_realtime is false
+
 ui:
   theme:
     # Choose your theme: "default", "monokai", "gruvbox", "dracula"
-    name: "monokai"
+    name: "default"
 
     # Uncomment to override specific colors:
     # selected_bg: "237"      # Background for selected items
@@ -30,6 +35,12 @@ ui:
 
     # Status color scheme - affects task status indicator colors
     status_color_scheme: "gray" # Options: blue, gray, warm_gray, cool_gray
+
+    # Startup behavior - default project to select on launch
+    # Use project UUID from your Archon server (leave empty for "All Tasks" view)
+    # Can be overridden with LAZYARCHON_DEFAULT_PROJECT_ID environment variable
+    # default_project_id: "550e8400-e29b-41d4-a716-446655440000"
+    default_project_id: "e954db38-3fe8-4ae3-b411-97407ef195e7"
 
 development:
   debug: false

@@ -14,7 +14,7 @@ type FlexibleTime struct {
 // UnmarshalJSON implements custom JSON unmarshaling for flexible timestamp parsing
 func (ft *FlexibleTime) UnmarshalJSON(data []byte) error {
 	// Remove quotes from the JSON string
-	s := strings.Trim(string(data), `"`)
+	trimmed := strings.Trim(string(data), `"`)
 
 	// Try multiple timestamp formats that the API might return
 	formats := []string{
@@ -27,13 +27,13 @@ func (ft *FlexibleTime) UnmarshalJSON(data []byte) error {
 	}
 
 	for _, format := range formats {
-		if t, err := time.Parse(format, s); err == nil {
+		if t, err := time.Parse(format, trimmed); err == nil {
 			ft.Time = t
 			return nil
 		}
 	}
 
-	return fmt.Errorf("unable to parse timestamp: %s", s)
+	return fmt.Errorf("unable to parse timestamp: %s", trimmed)
 }
 
 // MarshalJSON implements custom JSON marshaling (returns RFC3339 format)
@@ -181,13 +181,13 @@ func (t Task) GetStatusSymbol() string {
 	// so we keep the logic here but use the updated symbols
 	switch t.Status {
 	case TaskStatusTodo:
-		return "○" // StatusSymbolTodo
+		return "○" // StatusSymbolTodo - Empty circle (clear starting state)
 	case TaskStatusDoing:
-		return "◐" // StatusSymbolDoing
+		return "◐" // StatusSymbolDoing - Half-filled circle (work in progress)
 	case TaskStatusReview:
-		return "◈" // StatusSymbolReview - Updated!
+		return "◈" // StatusSymbolReview - Diamond with center dot (under review)
 	case TaskStatusDone:
-		return "✓" // StatusSymbolDone - Updated!
+		return "✓" // StatusSymbolDone - Checkmark (completed)
 	default:
 		return "○" // Default to todo symbol
 	}

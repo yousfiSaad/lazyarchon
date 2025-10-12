@@ -1,3 +1,4 @@
+//nolint:varnamelen // Short names (w, r) are idiomatic for HTTP handlers
 package archon
 
 import (
@@ -22,11 +23,11 @@ type MockServer struct {
 	requests []RecordedRequest
 
 	// Behavior configuration
-	simulateErrors   map[string]error // endpoint -> error mapping
-	responseDelays   map[string]int   // endpoint -> delay in milliseconds
-	healthStatus     int              // HTTP status for health endpoint
-	nextTaskID       int
-	nextProjectID    int
+	simulateErrors map[string]error // endpoint -> error mapping
+	responseDelays map[string]int   // endpoint -> delay in milliseconds
+	healthStatus   int              // HTTP status for health endpoint
+	nextTaskID     int
+	nextProjectID  int
 }
 
 // RecordedRequest captures details about requests made to the mock server
@@ -61,6 +62,13 @@ func NewMockServer() *MockServer {
 
 	server.Server = httptest.NewServer(mux)
 	return server
+}
+
+// writeJSONResponse writes a JSON response with error handling
+func (s *MockServer) writeJSONResponse(w http.ResponseWriter, data interface{}) {
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+	}
 }
 
 // recordRequest captures request details for test verification
@@ -99,7 +107,7 @@ func (s *MockServer) handleHealth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(s.healthStatus)
-	json.NewEncoder(w).Encode(map[string]string{"status": "healthy"})
+	s.writeJSONResponse(w, map[string]string{"status": "healthy"})
 }
 
 // Tasks endpoint handler
@@ -193,31 +201,34 @@ func (s *MockServer) handleProjectByID(w http.ResponseWriter, r *http.Request) {
 // List tasks implementation
 func (s *MockServer) handleListTasks(w http.ResponseWriter, r *http.Request) {
 	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	// Parse query parameters for filtering
+	query := r.URL.Query()
+	filterStatus := query.Get("status")
+	filterProjectID := query.Get("project_id")
+	includeClosed := query.Get("include_closed") == "true"
+
+	// Filter tasks based on query parameters
 	tasks := make([]Task, 0, len(s.tasks))
 	for _, task := range s.tasks {
-		// Apply filters based on query parameters
-		projectID := r.URL.Query().Get("project_id")
-		status := r.URL.Query().Get("status")
-		includeClosed := r.URL.Query().Get("include_closed") == "true"
-
-		// Filter by project ID
-		if projectID != "" && task.ProjectID != projectID {
-			continue
-		}
-
 		// Filter by status
-		if status != "" && task.Status != status {
+		if filterStatus != "" && task.Status != filterStatus {
 			continue
 		}
 
-		// Filter out closed tasks if not included
-		if !includeClosed && task.Status == "done" {
+		// Filter by project_id
+		if filterProjectID != "" && task.ProjectID != filterProjectID {
+			continue
+		}
+
+		// Filter out closed tasks if includeClosed is false
+		if !includeClosed && task.Status == TaskStatusDone {
 			continue
 		}
 
 		tasks = append(tasks, task)
 	}
-	s.mu.RUnlock()
 
 	response := TasksResponse{
 		Tasks: tasks,
@@ -225,11 +236,11 @@ func (s *MockServer) handleListTasks(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	s.writeJSONResponse(w, response)
 }
 
 // Get task implementation
-func (s *MockServer) handleGetTask(w http.ResponseWriter, r *http.Request, taskID string) {
+func (s *MockServer) handleGetTask(w http.ResponseWriter, _ /* r */ *http.Request, taskID string) {
 	s.mu.RLock()
 	task, exists := s.tasks[taskID]
 	s.mu.RUnlock()
@@ -241,7 +252,7 @@ func (s *MockServer) handleGetTask(w http.ResponseWriter, r *http.Request, taskI
 
 	response := TaskResponse{Task: task}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	s.writeJSONResponse(w, response)
 }
 
 // Update task implementation
@@ -276,7 +287,7 @@ func (s *MockServer) handleUpdateTask(w http.ResponseWriter, r *http.Request, ta
 
 	response := TaskResponse{Task: task}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	s.writeJSONResponse(w, response)
 }
 
 // Create task implementation
@@ -299,11 +310,11 @@ func (s *MockServer) handleCreateTask(w http.ResponseWriter, r *http.Request) {
 	response := TaskResponse{Task: task}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
+	s.writeJSONResponse(w, response)
 }
 
 // Delete task implementation
-func (s *MockServer) handleDeleteTask(w http.ResponseWriter, r *http.Request, taskID string) {
+func (s *MockServer) handleDeleteTask(w http.ResponseWriter, _ /* r */ *http.Request, taskID string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -317,7 +328,7 @@ func (s *MockServer) handleDeleteTask(w http.ResponseWriter, r *http.Request, ta
 }
 
 // List projects implementation
-func (s *MockServer) handleListProjects(w http.ResponseWriter, r *http.Request) {
+func (s *MockServer) handleListProjects(w http.ResponseWriter, _ /* r */ *http.Request) {
 	s.mu.RLock()
 	projects := make([]Project, 0, len(s.projects))
 	for _, project := range s.projects {
@@ -331,11 +342,11 @@ func (s *MockServer) handleListProjects(w http.ResponseWriter, r *http.Request) 
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	s.writeJSONResponse(w, response)
 }
 
 // Get project implementation
-func (s *MockServer) handleGetProject(w http.ResponseWriter, r *http.Request, projectID string) {
+func (s *MockServer) handleGetProject(w http.ResponseWriter, _ /* r */ *http.Request, projectID string) {
 	s.mu.RLock()
 	project, exists := s.projects[projectID]
 	s.mu.RUnlock()
@@ -347,7 +358,7 @@ func (s *MockServer) handleGetProject(w http.ResponseWriter, r *http.Request, pr
 
 	response := ProjectResponse{Project: project}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	s.writeJSONResponse(w, response)
 }
 
 // Create project implementation
@@ -370,7 +381,7 @@ func (s *MockServer) handleCreateProject(w http.ResponseWriter, r *http.Request)
 	response := ProjectResponse{Project: project}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
+	s.writeJSONResponse(w, response)
 }
 
 // Update project implementation
@@ -399,11 +410,11 @@ func (s *MockServer) handleUpdateProject(w http.ResponseWriter, r *http.Request,
 
 	response := ProjectResponse{Project: project}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	s.writeJSONResponse(w, response)
 }
 
 // Delete project implementation
-func (s *MockServer) handleDeleteProject(w http.ResponseWriter, r *http.Request, projectID string) {
+func (s *MockServer) handleDeleteProject(w http.ResponseWriter, _ /* r */ *http.Request, projectID string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

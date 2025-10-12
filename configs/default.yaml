@@ -9,25 +9,71 @@ server:
 # UI configuration
 ui:
   theme:
-    # Color scheme
+    # Predefined theme name: default, monokai, gruvbox, dracula
+    name: "default"
+    # Color scheme (optional - theme provides defaults)
     selected_bg: "237"
     border_color: "62"
     status_color: "205"
     header_color: "39"
     error_color: "196"
-    
+
   # Display settings
   display:
     show_completed_tasks: true
     default_sort_mode: "status+priority"  # status+priority, priority, time, alphabetical
     auto_refresh_interval: 0  # 0 = disabled, value in seconds
-    
-  # Keybindings (future enhancement)
+
+    # Color enhancement options
+    feature_colors: true       # Enable vibrant feature tag colors
+    feature_backgrounds: false # Enable subtle background tints for feature groups
+    priority_indicators: true  # Show priority symbols and colors
+    status_color_scheme: "blue" # Task status color hierarchy: blue, gray, warm_gray, cool_gray
+
+    # Startup behavior
+    default_project_id: ""  # Default project UUID to select on startup (empty = "All Tasks")
+
+  # Keybindings customization (all optional - defaults will be used if not specified)
   keybindings:
-    quit: ["q", "ctrl+c"]
-    refresh: ["r", "F5"]
-    projects: ["p"]
-    all_tasks: ["a"]
+    # Application-level shortcuts
+    application:
+      quit: ["q"]              # Smart quit (close modal or show quit confirmation)
+      force_quit: ["ctrl+c"]   # Emergency quit (bypass all modals)
+      refresh: ["r", "F5"]     # Refresh data or retry failed operations
+      project_mode: ["p"]      # Activate project selection mode
+      show_all_tasks: ["a"]    # Show all tasks (exit project filtering)
+      toggle_help: ["?"]       # Toggle help modal
+
+    # Navigation shortcuts
+    navigation:
+      up: ["k", "up"]          # Move up
+      down: ["j", "down"]      # Move down
+      left: ["h", "left"]      # Move left/back
+      right: ["l", "right"]    # Move right/forward
+      jump_first: ["gg", "home"]    # Jump to first item
+      jump_last: ["G", "end"]       # Jump to last item
+      fast_scroll_up: ["K"]         # Fast scroll up (4 lines)
+      fast_scroll_down: ["J"]       # Fast scroll down (4 lines)
+      half_page_up: ["ctrl+u", "pgup"]     # Half page up
+      half_page_down: ["ctrl+d", "pgdown"] # Half page down
+
+    # Search shortcuts
+    search:
+      activate: ["/", "ctrl+f"]  # Activate inline search
+      clear: ["ctrl+x", "ctrl+l"] # Clear current search
+      next_match: ["n"]          # Next search match
+      prev_match: ["N"]          # Previous search match
+
+    # Task operation shortcuts
+    task:
+      change_status: ["t"]    # Open task status change modal
+      edit: ["e"]             # Open task edit modal
+      delete: ["d"]           # Delete/archive task (with confirmation)
+      copy_id: ["y"]          # Copy task ID to clipboard (yank)
+      copy_title: ["Y"]       # Copy task title to clipboard (yank title)
+      select_feature: ["f"]   # Open feature selection modal
+      sort_forward: ["s"]     # Cycle sort mode forward
+      sort_backward: ["S"]    # Cycle sort mode backward
 
 # Development settings
 development:

@@ -326,6 +326,12 @@ go run ./cmd/lazyarchon
 
 ## 📖 Usage
 
+Get started quickly with LazyArchon! For detailed documentation, see our comprehensive [User Guide](docs/user-guide/README.md).
+
+### Quick Start
+
+**New to LazyArchon?** Check out our **[Quick Start Guide](docs/getting-started/quick-start.md)** to get up and running in 5 minutes.
+
 ### Main Interface
 
 ```
@@ -343,182 +349,92 @@ LazyArchon - Project Name • 🔍 "api" (15)
 [Tasks] Connected • Match 2/3 • Sort: Status | /: search | n/N: next/prev match | Ctrl+L: clear search | ?: help
 ```
 
-### Task Status Indicators
-- `○` **Todo** - Not started
-- `◐` **Doing** - In progress  
-- `◉` **Review** - Under review
-- `●` **Done** - Completed
+### Essential Navigation
+- **Get Help**: Press `?` for complete keyboard shortcuts
+- **Switch Panels**: `h` (tasks) / `l` (details)
+- **Navigate**: `j/k` (precise) / `J/K` (fast) / `Ctrl+u/d` (jump)
+- **Task Management**: `t` (change status) / `e` (edit features) / `f` (filter)
+- **Search**: `/` (search) / `n/N` (navigate results)
 
-### Basic Navigation
-1. **Launch** LazyArchon in your terminal
-2. **Get help** with `?` key - shows all available shortcuts
-3. **Browse** tasks with `j/k` or arrow keys (left panel active by default)
-4. **Switch panels** with `h` (left/tasks) and `l` (right/details)
-5. **Navigate active panel** - all movement keys work on highlighted panel
-6. **Select projects** with `p` key for filtering
-7. **Edit task features** with `e` key - assign or create features
-8. **Filter by features** with `f` key - multi-select filtering
-9. **Search tasks** with `/` key - inline search with highlighting and n/N navigation
-10. **Change task status** with `t` key - todo/doing/review/done
-11. **Scroll at different speeds**: `j/k` (line), `J/K` (fast), `Ctrl+u/d` (half-page)
+**For complete navigation details, see [Key Bindings](docs/user-guide/key-bindings.md).**
 
 ## ⌨️ Keyboard Shortcuts
 
-### Panel Navigation & Movement
+LazyArchon provides comprehensive keyboard shortcuts for efficient navigation. Here are the most essential ones:
+
+### Quick Reference
 | Key | Action |
 |-----|--------|
-| `h` | Switch to left panel (Tasks) |
-| `l` | Switch to right panel (Details) |
-| `↑/↓` or `j/k` | Navigate/scroll in active panel (1 line) |
-| `J/K` | Fast scroll in active panel (4 lines) |
-| `Ctrl+u/Ctrl+d` | Half-page scroll in active panel |
-| `gg` | Jump to first item in active panel |
-| `G` | Jump to last item in active panel |
-| `Home/End` | Jump to start/end in active panel |
+| `?` | **Show complete help** (all shortcuts) |
+| `h/l` | Switch between panels (Tasks/Details) |
+| `j/k` | Navigate up/down (1 line) |
+| `J/K` | Fast scroll (4 lines) |
+| `t` | Change task status |
+| `f` | Filter by features |
+| `/` | Search tasks |
+| `p` | Select project |
+| `r` | Refresh data |
+| `q` | Quit |
 
-### Project Management
-| Key | Action |
-|-----|--------|
-| `p` | Enter project selection mode |
-| `a` | Show all tasks (exit project filter) |
-| `Enter` | Select project in project mode |
-| `Esc` | Exit project mode |
-
-### Task Management
-| Key | Action |
-|-----|--------|
-| `s` | **Change sorting criteria** (cycle through sort modes) |
-| `t` | **Change task status** (Todo/Doing/Review/Done) |
-| `e` | **Edit task features** (assign/create features) |
-| `f` | **Filter by features** (multi-select modal) |
-
-### Search & Navigation
-| Key | Action |
-|-----|--------|
-| `/` or `Ctrl+f` | **Start inline search** (search in task titles) |
-| `Enter` | **Apply search** and exit search mode |
-| `Esc` | **Cancel search** and exit search mode |
-| `Ctrl+L` or `Ctrl+X` | **Clear search** when search is active |
-| `n` | **Next match** - jump to next search result |
-| `N` | **Previous match** - jump to previous search result |
-
-### Feature Modal Navigation (when f is pressed)
-| Key | Action |
-|-----|--------|
-| `j/k` or `↑/↓` | Navigate feature list (1 item) |
-| `J/K` | Fast scroll feature list (5 items) |
-| `Ctrl+u/Ctrl+d` | Half-page scroll feature list |
-| `gg` | Jump to first feature |
-| `G` | Jump to last feature |
-| `Home/End` | Jump to first/last feature |
-| `Space` | Toggle feature selection |
-| `a` | Select all features |
-| `n` | Select no features |
-| `Enter` | Apply filter and close modal |
-| `Esc/q` | Cancel and close modal |
-
-### Help & Application Controls
-| Key | Action |
-|-----|--------|
-| `?` | **Toggle help modal** with all shortcuts |
-| `r` or `F5` | Refresh data from API |
-| `q` | Quit application |
-
-### Help Modal Navigation (when ? is pressed)
-| Key | Action |
-|-----|--------|
-| `j/k` or `↑/↓` | Scroll help content (1 line) |
-| `J/K` | Fast scroll help (4 lines) |
-| `Ctrl+u/d` | Half-page scroll help |
-| `gg/G` | Jump to help top/bottom |
-| `?` or `Esc` | Close help modal |
-
-### Progressive Scrolling System
-
-LazyArchon features a three-tier scrolling system for precise navigation:
-
-| Speed | Keys | Movement | Best For |
-|-------|------|----------|----------|
-| **Precise** | `j/k` or `↑/↓` | 1 line | Fine positioning and reading |
-| **Fast** | `J/K` (Shift+j/k) | 4 lines | Quick browsing through lists |  
-| **Jump** | `Ctrl+u/Ctrl+d` | Half-page | Rapid navigation in long content |
-
-**Key Benefits:**
-- **No Key Conflicts**: Each key has a distinct, useful purpose
-- **Natural Progression**: Intuitive speed scaling with familiar vim patterns
-- **Active Panel Aware**: All scrolling works on the highlighted panel
-- **Consistent Behavior**: Same speeds work in both task list and details
-
-### Visual Indicators
-| Element | Meaning |
-|---------|---------|
-| **Bright cyan border** | Active panel (receives input) |
-| **Dim gray border** | Inactive panel |
-| **[Tasks]** / **[Details]** | Active panel name in status bar |
-| **▓░** scroll bar | Position indicator with thumb (▓) and track (░) |
+**For the complete keyboard reference with all shortcuts, navigation patterns, and modal controls, see [Key Bindings Documentation](docs/user-guide/key-bindings.md).**
 
 ## ⚙️ Configuration
 
-### API Connection
-LazyArchon connects to your Archon API server at `http://localhost:8181` by default.
+LazyArchon supports comprehensive configuration through YAML files and environment variables.
 
-**Future Configuration Options:**
-- Environment variables for API endpoint
-- Configuration file support
-- Custom keybindings
-- Theme customization
+### Quick Setup
 
-### Environment Variables (Future)
+**Default Connection:** LazyArchon connects to `http://localhost:8181` by default.
+
+**Basic Configuration:**
 ```bash
-export ARCHON_API_URL="http://localhost:8181"
-export ARCHON_API_KEY="your-api-key"
+# Create config directory
+mkdir -p ~/.config/lazyarchon
+
+# Create basic config
+cat > ~/.config/lazyarchon/config.yaml << EOF
+archon:
+  url: "http://localhost:8181"
+  api_key: ""
+
+ui:
+  theme:
+    name: "default"
+  display:
+    status_color_scheme: "blue"
+EOF
 ```
+
+**Environment Override:**
+```bash
+export LAZYARCHON_API_URL="http://localhost:8181"
+export LAZYARCHON_API_KEY="your-api-key"
+```
+
+**For complete configuration options including themes, performance tuning, and advanced settings, see [Configuration Guide](docs/getting-started/configuration.md).**
 
 ## 🏗️ Development
 
-### Project Structure
-```
-lazyarchon/
-├── cmd/lazyarchon/          # Application entry point
-│   └── main.go
-├── internal/
-│   ├── ui/                  # TUI interface logic
-│   │   └── app.go
-│   └── archon/              # API client and models
-│       ├── client.go
-│       └── models.go
-├── go.mod                   # Go module definition
-└── README.md
-```
+Contributing to LazyArchon? Check out our comprehensive development documentation!
 
-### Key Dependencies
-- **[Bubble Tea](https://github.com/charmbracelet/bubbletea)** - TUI framework
-- **[Lip Gloss](https://github.com/charmbracelet/lipgloss)** - Styling and layout
-- **[Glamour](https://github.com/charmbracelet/glamour)** - Markdown rendering
-
-### Building for Development
+### Quick Start for Developers
 ```bash
-# Install dependencies
-go mod download
+# Clone and setup
+git clone https://github.com/yousfisaad/lazyarchon
+cd lazyarchon
+make setup && make build
 
-# Development build
-make build
-
-# Run tests
-make test
-
-# Run linting
-make lint
-
-# Clean build artifacts
-make clean
-
-# Run with live reload (using air)
-air
-
-# Generate test coverage
-make test-coverage
+# Run tests and start developing
+make test && make dev
 ```
+
+### Key Information
+- **Built with:** Go 1.24+, [Bubble Tea](https://github.com/charmbracelet/bubbletea), [Lip Gloss](https://github.com/charmbracelet/lipgloss)
+- **Architecture:** Terminal UI with API integration
+- **Testing:** Comprehensive test suite with coverage reporting
+- **Building:** Make-based build system with GoReleaser
+
+**For complete development information including architecture, testing, contribution guidelines, and build processes, see [Development Documentation](docs/development/README.md).**
 
 ### Release Management
 
@@ -597,72 +513,28 @@ For automated Homebrew tap updates, configure these repository secrets:
 
 ## 🔧 Troubleshooting
 
-### Installation Issues
+### Quick Fixes for Common Issues
 
-**Homebrew: Tap not found**
-```
-Error: No available formula with name "yousfisaad/lazyarchon/lazyarchon"
-```
-- Add the tap first: `brew tap yousfisaad/lazyarchon`
-- Update Homebrew: `brew update`
-- Check tap status: `brew tap-info yousfisaad/lazyarchon`
+| Problem | Quick Solution |
+|---------|----------------|
+| `command not found: lazyarchon` | Check PATH, reinstall |
+| `connection refused` | Start Archon API server |
+| `permission denied` | Fix file permissions |
+| Display corruption | Try different terminal |
 
-**Go Install: Command not found after installation**
+### Installation Help
 ```bash
-lazyarchon: command not found
+# Verify installation
+lazyarchon --version
+
+# Test API connectivity
+curl http://localhost:8181/health
+
+# Reinstall if needed
+curl -sSL https://raw.githubusercontent.com/yousfisaad/lazyarchon/main/scripts/install.sh | bash
 ```
-- Check if `$GOPATH/bin` is in PATH: `echo $PATH | grep $(go env GOPATH)/bin`
-- Add to PATH: `export PATH="$(go env GOPATH)/bin:$PATH"`
-- Add to shell profile: `echo 'export PATH="$(go env GOPATH)/bin:$PATH"' >> ~/.bashrc`
 
-**Script Install: Permission denied**
-```
-Permission denied (creating directory)
-```
-- Use system-wide install: `curl -sSL ... | bash -s -- --dir /usr/local/bin`
-- Or install to user directory: `curl -sSL ... | bash -s -- --dir ~/.local/bin`
-- Ensure ~/.local/bin is in PATH: `export PATH="$HOME/.local/bin:$PATH"`
-
-**Platform-Specific Issues:**
-- **macOS**: If Homebrew not working, try script install or Go install
-- **Linux ARM64**: All methods supported, Homebrew recommended
-- **Windows**: Use script install (WSL) or download binary directly
-- **Older systems**: May need Go 1.24+ for go install method
-
-### Common Issues
-
-**Connection refused / API not available**
-```
-Error: Failed to load tasks: dial tcp [::1]:8181: connect: connection refused
-```
-- Ensure Archon API server is running on localhost:8181
-- Check if the server is accessible: `curl http://localhost:8181/health`
-
-**Build failures**
-```
-go: module requires Go 1.24 or later
-```
-- Update Go to version 1.24 or later
-- Check version: `go version`
-
-**Terminal display issues**
-- Ensure terminal supports ANSI colors
-- Try running in a different terminal emulator
-- Check terminal size: LazyArchon adapts to screen size
-
-**Performance issues**
-- Large task lists may cause slower rendering
-- Use project filtering (`p` key) to reduce displayed items
-- Refresh data (`r` key) if UI becomes unresponsive
-
-### Debug Mode *(Planned Feature)*
-```bash
-# Debug mode not yet implemented - planned for future release
-# ./bin/lazyarchon --debug
-
-# Check API connectivity manually
-curl -v http://localhost:8181/api/tasks
-```
+**For comprehensive troubleshooting including detailed solutions, debug techniques, and platform-specific fixes, see [Troubleshooting Guide](docs/user-guide/troubleshooting.md).**
 
 ## 🎯 Roadmap
 
@@ -705,11 +577,29 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **[lazygit](https://github.com/jesseduffield/lazygit)/[lazydocker](https://github.com/jesseduffield/lazydocker)** - For UI/UX inspiration
 - **Go Community** - For the robust tooling and ecosystem
 
+## 📚 Documentation
+
+### Complete Documentation
+- **[📖 Documentation Home](docs/README.md)** - Complete documentation index
+- **[🚀 Getting Started](docs/getting-started/README.md)** - Installation, quick start, configuration
+- **[👤 User Guide](docs/user-guide/README.md)** - Features, key bindings, troubleshooting
+- **[🛠️ Development](docs/development/README.md)** - Contributing, testing, build system
+- **[🏗️ Architecture](docs/architecture/README.md)** - Design, patterns, evolution plans
+- **[📋 Reference](docs/reference/README.md)** - API, CLI options, configuration schema
+
+### Quick Links
+- **[Installation Guide](docs/getting-started/installation.md)** - Get LazyArchon installed
+- **[Quick Start](docs/getting-started/quick-start.md)** - 5-minute getting started guide
+- **[Key Bindings](docs/user-guide/key-bindings.md)** - Complete keyboard shortcuts
+- **[Configuration](docs/getting-started/configuration.md)** - Customize your setup
+- **[Features](docs/user-guide/features.md)** - All current and planned features
+- **[Troubleshooting](docs/user-guide/troubleshooting.md)** - Solve common issues
+
 ## 📞 Support
 
 - **Issues**: [GitHub Issues](https://github.com/yousfisaad/lazyarchon/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/yousfisaad/lazyarchon/discussions)
-- **Documentation**: [Wiki](https://github.com/yousfisaad/lazyarchon/wiki)
+- **Documentation**: [Complete Docs](docs/README.md)
 
 ---
 
