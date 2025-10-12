@@ -48,7 +48,8 @@ LazyArchon is a powerful terminal user interface (TUI) for managing [Archon](htt
 
 **Data Integration**
 - **API Connectivity**: Fetches current data from Archon API server
-- **Manual Refresh**: Press `r` to reload data from server
+- **Auto-Refresh**: Automatic data refresh via HTTP polling (configurable interval, default 10s)
+- **Manual Refresh**: Press `r` to reload data from server immediately
 - **Project Filtering**: View tasks filtered by specific projects
 - **Real-time Updates**: Task changes reflect immediately after editing
 - **Feature Management**: Create new features or assign existing ones to tasks
@@ -58,18 +59,13 @@ LazyArchon is a powerful terminal user interface (TUI) for managing [Archon](htt
 **Task Management**
 - Task creation (forms and workflows)
 - Advanced task editing (title, description, sources, code examples)
-- Project management operations  
+- Project management operations
 - Bulk task operations
 
-**Real-time Features**
-- WebSocket-based live updates
-- Automatic refresh when data changes
-- Real-time collaboration indicators
-
 **Advanced Features**
-- Configuration files and themes
+- Enhanced configuration and theme customization
 - Offline mode and caching
-- Enhanced task editing and creation forms
+- Bulk operations and multi-task editing
 
 ## 🚀 Installation
 
@@ -90,12 +86,12 @@ curl -sSL https://raw.githubusercontent.com/yousfisaad/lazyarchon/main/scripts/i
 The following features are **not yet available**:
 
 - ❌ **Task Creation**: Cannot create new tasks (forms not yet implemented)
-- ❌ **Advanced Task Editing**: Cannot modify task titles, descriptions, sources, or code examples  
+- ❌ **Advanced Task Editing**: Cannot modify task titles, descriptions, sources, or code examples
 - ❌ **Project Management**: Cannot create or edit projects
-- ❌ **Real-time Updates**: No WebSocket connection (manual refresh required for external changes)
 - ❌ **User Authentication**: No login/auth system (uses anonymous API access)
 - ❌ **Offline Mode**: Requires active API connection
 - ✅ **Configuration**: Config files and customization options available
+- ✅ **Auto-Refresh**: Automatic data updates via HTTP polling
 - ✅ **Text Search**: Enhanced inline search with real-time highlighting and n/N navigation
 
 **What LazyArchon IS good for:**
@@ -547,13 +543,13 @@ curl -sSL https://raw.githubusercontent.com/yousfisaad/lazyarchon/main/scripts/i
 - [x] **Responsive Design**: Real-time window resize with content reflow ✅
 - [x] **High-contrast UI**: Improved checkbox styling and visual feedback ✅
 - [x] **Enhanced Text Search**: Inline search with real-time highlighting and n/N navigation ✅
+- [x] **Auto-Refresh**: HTTP polling for automatic data updates ✅
 - [ ] **Configuration System**: Config files for API endpoint and preferences
 - [x] **Help System**: Built-in help with `?` key ✅
 - [x] **Build System**: GoReleaser automation + minimal dev Makefile ✅
 - [ ] **Debug Mode**: Verbose logging and troubleshooting options
 
 ### 🚀 Medium Priority
-- [ ] **Real-time Updates**: WebSocket connection for live data
 - [ ] **Advanced Task Editing**: Modify titles, descriptions, sources, code examples
 - [ ] **Themes & Customization**: Color schemes and layout options
 - [ ] **Project Management**: Create and edit projects
