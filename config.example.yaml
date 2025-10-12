@@ -30,6 +30,7 @@ ui:
     feature_colors: true       # Enable vibrant colors for feature tags (#feature-name)
     feature_backgrounds: false # Enable subtle background tints for entire task rows
     priority_indicators: true  # Show priority symbols (⬆⬇➡) with colors based on task_order
+    status_color_scheme: "blue"  # Status color scheme: blue, gray, warm_gray, cool_gray
 
 development:
   debug: false
@@ -79,6 +80,32 @@ development:
 #   - ➡ Medium priority (task_order >= 50) - yellow color
 #   - ⬇ Low priority (task_order < 50) - gray color
 #   - Helps quickly identify important tasks that need attention
+#
+# status_color_scheme: Choose how task status colors are displayed
+#   - "blue" (default): Vibrant, colorful scheme with high contrast
+#     * Review: Purple/violet (highest attention)
+#     * Doing: Amber/yellow (active work)
+#     * Todo: Gray (neutral)
+#     * Done: Green (completed)
+#     * Best for: Users who prefer colorful, attention-grabbing interfaces
+#
+#   - "gray": Neutral, productivity-focused grayscale
+#     * Review: Brightest gray (highest attention)
+#     * Doing: Medium-light gray
+#     * Todo: Medium-dark gray
+#     * Done: Darkest gray (lowest attention)
+#     * Best for: Reduced eye strain, professional environments, long coding sessions
+#
+#   - "warm_gray": Gentle grayscale with warm undertones
+#     * Same hierarchy as gray, but with subtle warm (yellowish) tones
+#     * Best for: Comfortable for extended use, less fatiguing than pure gray
+#
+#   - "cool_gray": Modern grayscale with cool undertones
+#     * Same hierarchy as gray, but with subtle cool (bluish) tones
+#     * Best for: Modern, professional appearance, clean aesthetic
+#
+# All color schemes maintain the same visual hierarchy:
+#   Review (highest attention) > Doing > Todo > Done (lowest attention)
 #
 # Smart Layout Features:
 # - Adaptive text width calculation accounts for all visual indicators

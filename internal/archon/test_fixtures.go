@@ -5,6 +5,8 @@ import (
 )
 
 // TaskBuilder provides a fluent interface for creating test tasks
+//
+//nolint:varnamelen // Short variable names are idiomatic in test code
 type TaskBuilder struct {
 	task Task
 }
@@ -86,6 +88,8 @@ func (b *TaskBuilder) Build() Task {
 }
 
 // ProjectBuilder provides a fluent interface for creating test projects
+//
+//nolint:varnamelen // Short variable names are idiomatic in test code
 type ProjectBuilder struct {
 	project Project
 }
@@ -335,13 +339,19 @@ func SetupMockServerWithData() *MockServer {
 // Test assertion helpers
 
 // AssertNoError fails the test if err is not nil
-func AssertNoError(t interface{ Fatalf(format string, args ...interface{}) }, err error) {
+//
+//nolint:varnamelen // Short variable names (t) are idiomatic in test code
+func AssertNoError(t interface {
+	Fatalf(format string, args ...interface{})
+}, err error) {
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
 	}
 }
 
 // AssertError fails the test if err is nil
+//
+//nolint:varnamelen // Short variable names (t) are idiomatic in test code
 func AssertError(t interface{ Fatal(args ...interface{}) }, err error) {
 	if err == nil {
 		t.Fatal("Expected an error, got nil")
@@ -349,7 +359,11 @@ func AssertError(t interface{ Fatal(args ...interface{}) }, err error) {
 }
 
 // AssertErrorContains fails the test if err is nil or doesn't contain the expected text
-func AssertErrorContains(t interface{ Errorf(format string, args ...interface{}) }, err error, expected string) {
+//
+//nolint:varnamelen // Short variable names (t) are idiomatic in test code
+func AssertErrorContains(t interface {
+	Errorf(format string, args ...interface{})
+}, err error, expected string) {
 	if err == nil {
 		t.Errorf("Expected an error containing '%s', got nil", expected)
 		return
@@ -360,7 +374,11 @@ func AssertErrorContains(t interface{ Errorf(format string, args ...interface{})
 }
 
 // AssertTaskEqual compares two tasks for equality
-func AssertTaskEqual(t interface{ Errorf(format string, args ...interface{}) }, expected, actual Task) {
+//
+//nolint:varnamelen // Short variable names (t) are idiomatic in test code
+func AssertTaskEqual(t interface {
+	Errorf(format string, args ...interface{})
+}, expected, actual Task) {
 	if expected.ID != actual.ID {
 		t.Errorf("Task ID: expected %s, got %s", expected.ID, actual.ID)
 	}
@@ -383,7 +401,11 @@ func AssertTaskEqual(t interface{ Errorf(format string, args ...interface{}) }, 
 }
 
 // AssertProjectEqual compares two projects for equality
-func AssertProjectEqual(t interface{ Errorf(format string, args ...interface{}) }, expected, actual Project) {
+//
+//nolint:varnamelen // Short variable names (t) are idiomatic in test code
+func AssertProjectEqual(t interface {
+	Errorf(format string, args ...interface{})
+}, expected, actual Project) {
 	if expected.ID != actual.ID {
 		t.Errorf("Project ID: expected %s, got %s", expected.ID, actual.ID)
 	}
@@ -396,6 +418,8 @@ func AssertProjectEqual(t interface{ Errorf(format string, args ...interface{}) 
 }
 
 // contains checks if a string contains a substring
+//
+//nolint:varnamelen // Short variable names are acceptable for simple utility functions
 func contains(s, substr string) bool {
 	if len(substr) == 0 {
 		return true
@@ -412,6 +436,8 @@ func contains(s, substr string) bool {
 }
 
 // Helper function
+//
+//nolint:varnamelen // Short variable names are acceptable for simple utility functions
 func stringPtr(s string) *string {
 	return &s
 }

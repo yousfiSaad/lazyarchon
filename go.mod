@@ -1,4 +1,4 @@
-module github.com/yousfisaad/lazyarchon
+module github.com/yousfisaad/lazyarchon/v2
 
 go 1.24.0
 
@@ -12,7 +12,6 @@ require (
 	github.com/charmbracelet/lipgloss v1.1.1-0.20250404203927-76690c660834
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/gorilla/websocket v1.5.3
-	go.uber.org/dig v1.17.1
 	gopkg.in/yaml.v3 v3.0.1
 )
 

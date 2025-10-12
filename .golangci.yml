@@ -1,0 +1,183 @@
+# golangci-lint configuration for LazyArchon
+# Comprehensive Go linting setup optimized for TUI applications with Bubble Tea
+
+run:
+  timeout: 5m
+  tests: true
+  build-tags: []
+
+linters:
+  enable:
+    # Essential static analysis
+    - govet          # Go vet static analysis
+    - errcheck       # Check for unchecked errors
+    - staticcheck    # Advanced static analysis (SA*)
+    - gosimple       # Simplify code suggestions (S*)
+    - ineffassign    # Detect ineffectual assignments
+    - unused         # Find unused constants, variables, functions and types
+
+    # Code quality and maintainability
+    - gofmt          # Check gofmt formatting
+    - goimports      # Check import organization
+    - misspell       # Fix spelling mistakes
+    - goconst        # Find repeated strings that could be constants
+    - gocyclo        # Check cyclomatic complexity
+    - dupl           # Code duplication detection
+    - gocritic       # Comprehensive Go source code linter
+
+    # Security
+    - gosec          # Security-focused linting
+
+    # Performance
+    - prealloc       # Find slice declarations with non-zero initial length
+
+    # Style and conventions
+    - stylecheck     # Stylecheck is a replacement for golint
+    - unconvert      # Remove unnecessary type conversions
+    - unparam        # Report unused function parameters (like the one we just fixed!)
+    - varnamelen     # Check variable name length
+
+    # Interface and type safety
+    - interfacebloat # Check for interfaces with too many methods
+    - ireturn        # Accept interfaces, return concrete types
+
+  disable:
+    - typecheck      # Handled by go build
+
+linters-settings:
+  gocyclo:
+    # Higher limit for coordinators and complex UI logic
+    min-complexity: 15
+
+  gosec:
+    # Configure security linting for TUI applications
+    excludes:
+      - G104  # Audit errors not checked (too noisy for TUI input handling)
+      - G304  # File path join (acceptable for config file handling)
+
+  misspell:
+    locale: US
+
+  goconst:
+    # Minimum length of string constant
+    min-len: 3
+    # Minimum occurrences count to trigger
+    min-occurrences: 3
+    # Ignore test files for string constants
+    ignore-tests: true
+
+  varnamelen:
+    # Check variable name length
+    min-name-length: 2
+    ignore-type-assert-ok: true
+    ignore-map-index-ok: true
+    ignore-chan-recv-ok: true
+    ignore-decls:
+      - c echo.Context     # Common in web frameworks
+      - t testing.T        # Standard in tests
+      - i int              # Common loop counters
+      - j int
+      - k int
+      - w io.Writer
+      - r io.Reader
+
+  gocritic:
+    # Most checks are enabled by default, so we'll just disable problematic ones
+    disabled-checks:
+      - commentedOutCode  # Too noisy for development
+
+  dupl:
+    # Higher threshold for UI components which may have similar patterns
+    threshold: 150
+
+  interfacebloat:
+    # Max number of methods in an interface
+    max: 7
+
+issues:
+  # Maximum issues count per one linter
+  max-issues-per-linter: 0
+  # Maximum count of issues with the same text
+  max-same-issues: 0
+
+  # Directory and file exclusions (replaces deprecated run.skip-dirs/skip-files)
+  exclude-dirs:
+    - vendor
+    - bin
+    - dist
+    - build
+    - .git
+  exclude-files:
+    - ".*\\.pb\\.go$"  # Skip protobuf generated files
+    - ".*_mock\\.go$"  # Skip mock files
+    - "internal/ui/input_test\\.go$"  # Legacy test requiring architectural migration
+
+  # Make issues output unique by line (replaces deprecated output.uniq-by-line)
+  uniq-by-line: true
+
+  # Exclude specific issues or patterns
+  exclude-rules:
+    # Exclude certain linters for test files
+    - path: _test\.go
+      linters:
+        - gosec        # Security less critical in tests
+        - gocyclo      # Tests can be complex
+        - dupl         # Test duplication is often acceptable
+        - goconst      # Test constants are often duplicated
+        - varnamelen   # Short test variable names are fine
+
+    # Exclude specific patterns for UI test files
+    - path: internal/ui/.*_test\.go
+      linters:
+        - dupl         # UI test patterns often similar
+        - goconst      # UI test strings often repeated
+
+    # Allow longer functions in main.go for initialization
+    - path: cmd/lazyarchon/main\.go
+      linters:
+        - gocyclo
+
+    # Allow complex initialization in model creation
+    - path: internal/ui/model_init\.go
+      linters:
+        - gocyclo
+
+    # Exclude certain checks for mock files
+    - path: .*mock.*\.go
+      linters:
+        - gocritic
+        - gocyclo
+        - dupl
+        - gosec
+
+    # Allow unused parameters in interface implementations
+    - text: "parameter .* seems to be unused"
+      linters:
+        - unparam
+      path: internal/ui/components/.*\.go
+
+    # Allow some complexity in coordinator components (business logic)
+    - path: internal/ui/components/coordinators/.*component\.go
+      text: "cyclomatic complexity .* of func .* is high"
+      linters:
+        - gocyclo
+
+  # List of regexps for issues to exclude
+  exclude:
+    # Exclude issues about missing comments for exported functions in test files
+    - "exported .* should have comment or be unexported"
+    # Exclude issues about package comments
+    - "package comment should be of the form"
+    # Exclude certain staticcheck issues that are acceptable in TUI apps
+    - "SA1029: should not use built-in type string as key for value"
+
+output:
+  # Colored output
+  color: true
+  # Output formats (replaces deprecated format)
+  formats:
+    - format: colored-line-number
+  # Print lines of code with issue
+  print-issued-lines: true
+  # Print linter name in the end of issue text
+  print-linter-name: true
