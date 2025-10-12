@@ -68,3 +68,14 @@ coverage.txt
 
 # Air live reload tool
 tmp/
+
+# Linting and code quality outputs
+.golangci-lint-cache/
+lint-results.xml
+lint-results.json
+golangci-lint-report.html
+
+# VS Code settings (if they contain personal preferences)
+# Uncomment if you want to ignore personal VS Code settings
+# .vscode/settings.json
+cmd/lazyarchon/lazyarchon

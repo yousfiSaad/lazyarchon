@@ -17,11 +17,23 @@ var (
 	ErrProjectNotFound = errors.New("project not found")
 )
 
+// Logger interface for optional logging in Client
+type Logger interface {
+	Debug(msg string, args ...interface{})
+	Info(msg string, args ...interface{})
+	Error(msg string, args ...interface{})
+	LogHTTPRequest(method, url string, args ...interface{})
+	LogHTTPResponse(method, url string, statusCode int, duration time.Duration, args ...interface{})
+	LogStateChange(component, field string, oldValue, newValue interface{}, args ...interface{})
+	LogPerformance(operation string, startTime time.Time, args ...interface{})
+}
+
 // Client represents an Archon API client
 type Client struct {
 	baseURL    string
 	httpClient *http.Client
 	apiKey     string
+	logger     Logger // Optional logger for debug mode
 }
 
 // NewClient creates a new Archon API client
@@ -32,22 +44,50 @@ func NewClient(baseURL, apiKey string) *Client {
 			Timeout: 30 * time.Second,
 		},
 		apiKey: apiKey,
+		logger: nil, // No logger by default
 	}
+}
+
+// SetLogger sets the optional logger for the client
+func (c *Client) SetLogger(logger Logger) {
+	c.logger = logger
 }
 
 // makeRequest makes an HTTP request to the Archon API
 func (c *Client) makeRequest(method, path string, body interface{}) (*http.Response, error) {
+	startTime := time.Now()
+	fullURL := c.baseURL + path
+
 	var reqBody io.Reader
+	var bodyBytes []byte
 	if body != nil {
-		jsonBody, err := json.Marshal(body)
+		var err error
+		bodyBytes, err = json.Marshal(body)
 		if err != nil {
+			if c.logger != nil {
+				c.logger.Error("Failed to marshal request body", "error", err, "method", method, "url", fullURL)
+			}
 			return nil, fmt.Errorf("error marshaling request body: %w", err)
 		}
-		reqBody = bytes.NewBuffer(jsonBody)
+		reqBody = bytes.NewBuffer(bodyBytes)
 	}
 
-	req, err := http.NewRequest(method, c.baseURL+path, reqBody)
+	// Log the outgoing request
+	if c.logger != nil {
+		logArgs := []interface{}{}
+		if len(bodyBytes) > 0 && len(bodyBytes) < 1000 { // Only log body if reasonable size
+			logArgs = append(logArgs, "body", string(bodyBytes))
+		} else if len(bodyBytes) >= 1000 {
+			logArgs = append(logArgs, "body_size", len(bodyBytes))
+		}
+		c.logger.LogHTTPRequest(method, fullURL, logArgs...)
+	}
+
+	req, err := http.NewRequest(method, fullURL, reqBody)
 	if err != nil {
+		if c.logger != nil {
+			c.logger.Error("Failed to create HTTP request", "error", err, "method", method, "url", fullURL)
+		}
 		return nil, fmt.Errorf("error creating request: %w", err)
 	}
 
@@ -58,15 +98,25 @@ func (c *Client) makeRequest(method, path string, body interface{}) (*http.Respo
 	}
 
 	resp, err := c.httpClient.Do(req)
+	duration := time.Since(startTime)
+
 	if err != nil {
+		if c.logger != nil {
+			c.logger.Error("HTTP request failed", "error", err, "method", method, "url", fullURL, "duration_ms", duration.Milliseconds())
+		}
 		return nil, fmt.Errorf("error making request: %w", err)
+	}
+
+	// Log the response
+	if c.logger != nil {
+		c.logger.LogHTTPResponse(method, fullURL, resp.StatusCode, duration)
 	}
 
 	return resp, nil
 }
 
 // parseResponse parses the HTTP response into the given structure
-func (c *Client) parseResponse(resp *http.Response, v interface{}) error {
+func (c *Client) parseResponse(resp *http.Response, v interface{}) error { //nolint:varnamelen // v is idiomatic for interface{} values
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
@@ -152,6 +202,27 @@ func (c *Client) UpdateTask(taskID string, updates UpdateTaskRequest) (*TaskResp
 	}
 
 	return &taskResp, nil
+}
+
+// DeleteTask deletes/archives a task
+func (c *Client) DeleteTask(taskID string) error {
+	path := "/api/tasks/" + taskID
+
+	resp, err := c.makeRequest("DELETE", path, nil)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return ErrTaskNotFound
+	}
+
+	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to delete task: status %d", resp.StatusCode)
+	}
+
+	return nil
 }
 
 // ListProjects retrieves all projects from the API
