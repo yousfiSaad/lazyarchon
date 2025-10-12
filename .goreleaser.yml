@@ -90,7 +90,7 @@ release:
 
     ### Go Install
     ```bash
-    go install github.com/yousfisaad/lazyarchon/cmd/lazyarchon@{{ .Tag }}
+    go install github.com/yousfisaad/lazyarchon/v2/cmd/lazyarchon@{{ .Tag }}
     ```
 
     ### Homebrew
