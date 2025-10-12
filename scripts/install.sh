@@ -17,22 +17,23 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Helper functions
+# Helper functions for colored output
+# All output goes to stderr to avoid interfering with command substitution
 error() {
     echo -e "${RED}Error: $1${NC}" >&2
     exit 1
 }
 
 info() {
-    echo -e "${BLUE}Info: $1${NC}"
+    echo -e "${BLUE}Info: $1${NC}" >&2
 }
 
 success() {
-    echo -e "${GREEN}Success: $1${NC}"
+    echo -e "${GREEN}Success: $1${NC}" >&2
 }
 
 warn() {
-    echo -e "${YELLOW}Warning: $1${NC}"
+    echo -e "${YELLOW}Warning: $1${NC}" >&2
 }
 
 # Check if a command exists
@@ -40,135 +41,132 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
-# Detect platform
+# Download a file using curl or wget
+# Args: url, output_path
+download_file() {
+    local url=$1
+    local output=$2
+
+    if command_exists curl; then
+        curl -fsSL -o "$output" "$url"
+    elif command_exists wget; then
+        wget -q -O "$output" "$url"
+    else
+        error "Neither curl nor wget is available. Please install one of them."
+    fi
+}
+
+# Detect platform (OS and architecture)
+# Returns: platform string in format "os-arch" (e.g., "linux-amd64")
 detect_platform() {
-    local os arch
-    
-    # Detect OS
-    case "$(uname -s)" in
-        Linux*)     os="linux";;
-        Darwin*)    os="darwin";;
-        CYGWIN*|MINGW*|MSYS*) os="windows";;
-        *)          error "Unsupported operating system: $(uname -s)";;
+    local os=$(uname -s | tr '[:upper:]' '[:lower:]')
+    local arch=$(uname -m)
+
+    # Normalize OS names
+    case "$os" in
+        linux|darwin) ;;  # Keep as-is
+        cygwin*|mingw*|msys*) os="windows" ;;
+        *) error "Unsupported operating system: $os" ;;
     esac
-    
-    # Detect architecture
-    case "$(uname -m)" in
-        x86_64|amd64)   arch="amd64";;
-        arm64|aarch64)  arch="arm64";;
-        *)              error "Unsupported architecture: $(uname -m)";;
+
+    # Normalize architecture names
+    case "$arch" in
+        x86_64|amd64) arch="amd64" ;;
+        arm64|aarch64) arch="arm64" ;;
+        *) error "Unsupported architecture: $arch" ;;
     esac
-    
+
     echo "${os}-${arch}"
 }
 
-# Get latest release version
+# Get latest release version from GitHub
+# Returns: version tag (e.g., "v1.0.0")
 get_latest_version() {
+    local api_url="https://api.github.com/repos/${REPO}/releases/latest"
+
     if command_exists curl; then
-        curl -s "https://api.github.com/repos/${REPO}/releases/latest" | \
-            grep '"tag_name":' | \
-            sed -E 's/.*"tag_name": "([^"]+)".*/\1/'
+        curl -fsSL "$api_url" | grep '"tag_name":' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/'
     elif command_exists wget; then
-        wget -qO- "https://api.github.com/repos/${REPO}/releases/latest" | \
-            grep '"tag_name":' | \
-            sed -E 's/.*"tag_name": "([^"]+)".*/\1/'
+        wget -qO- "$api_url" | grep '"tag_name":' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/'
     else
         error "Neither curl nor wget is available. Please install one of them."
     fi
 }
 
 # Download and extract binary
+# Args: version, platform
+# Returns: path to extracted binary
 download_and_extract() {
     local version=$1
     local platform=$2
-    local filename
-    local download_url
-    local temp_dir
+    local temp_dir=$(mktemp -d)
 
-    # Determine filename based on GoReleaser naming convention
-    # Format: lazyarchon-{os}-{arch}.{ext}
+    # Determine archive filename based on platform
+    local filename
     if [[ $platform == *"windows"* ]]; then
         filename="${BINARY_NAME}-${platform}.zip"
     else
         filename="${BINARY_NAME}-${platform}.tar.gz"
     fi
 
-    download_url="https://github.com/${REPO}/releases/download/${version}/${filename}"
-    temp_dir=$(mktemp -d)
+    # Construct download URL
+    local download_url="https://github.com/${REPO}/releases/download/${version}/${filename}"
+    local archive_path="${temp_dir}/${filename}"
 
+    # Download the release archive
     info "Downloading ${filename}..."
-
-    # Download the file
-    if command_exists curl; then
-        if ! curl -L -o "${temp_dir}/${filename}" "$download_url"; then
-            error "Failed to download ${filename}"
-        fi
-    elif command_exists wget; then
-        if ! wget -O "${temp_dir}/${filename}" "$download_url"; then
-            error "Failed to download ${filename}"
-        fi
-    else
-        error "Neither curl nor wget is available."
-    fi
-
-    info "Extracting binary..."
+    download_file "$download_url" "$archive_path"
 
     # Extract the binary
-    cd "$temp_dir"
+    info "Extracting binary..."
+    cd "$temp_dir" || error "Failed to change to temp directory"
+
     if [[ $filename == *.zip ]]; then
-        if command_exists unzip; then
-            unzip -q "$filename"
-        else
-            error "unzip is required to extract Windows binaries"
-        fi
+        command_exists unzip || error "unzip is required to extract Windows binaries"
+        unzip -q "$filename"
     else
-        if command_exists tar; then
-            tar -xzf "$filename"
-        else
-            error "tar is required to extract the binary"
-        fi
+        command_exists tar || error "tar is required to extract the binary"
+        tar -xzf "$filename"
     fi
 
-    # Find the extracted binary (GoReleaser puts it directly in archive)
-    local binary_path
+    # Determine binary filename
+    local binary_name
     if [[ $platform == *"windows"* ]]; then
-        binary_path="${BINARY_NAME}.exe"
+        binary_name="${BINARY_NAME}.exe"
     else
-        binary_path="${BINARY_NAME}"
+        binary_name="${BINARY_NAME}"
     fi
 
-    if [[ ! -f "$binary_path" ]]; then
-        error "Binary not found after extraction: $binary_path"
-    fi
+    # Verify binary was extracted
+    [[ -f "$binary_name" ]] || error "Binary not found after extraction: $binary_name"
 
-    echo "$temp_dir/$binary_path"
+    # Return full path to binary
+    echo "$temp_dir/$binary_name"
 }
 
-# Install binary
+# Install binary to installation directory
+# Args: binary_path
 install_binary() {
     local binary_path=$1
     local install_path="${INSTALL_DIR}/${BINARY_NAME}"
-    local use_sudo=false
 
-    # Check if we need sudo for installation directory
+    # Determine if sudo is needed
+    local use_sudo=false
     if [[ ! -w "$INSTALL_DIR" ]] && [[ "$INSTALL_DIR" == /usr/* || "$INSTALL_DIR" == /opt/* ]]; then
-        if command_exists sudo; then
-            use_sudo=true
-            warn "Installation directory requires root privileges"
-            info "Using sudo for installation..."
-        else
-            error "Installation directory ${INSTALL_DIR} requires root privileges, but sudo is not available"
-        fi
+        command_exists sudo || error "Installation directory ${INSTALL_DIR} requires sudo, but sudo is not available"
+        use_sudo=true
+        warn "Installation directory requires root privileges"
+        info "Using sudo for installation..."
     fi
 
-    # Create install directory if it doesn't exist
+    # Create install directory
     if [[ "$use_sudo" == "true" ]]; then
         sudo mkdir -p "$INSTALL_DIR"
     else
         mkdir -p "$INSTALL_DIR"
     fi
 
-    # Copy binary to install directory
+    # Copy and make executable
     info "Installing to ${install_path}..."
     if [[ "$use_sudo" == "true" ]]; then
         sudo cp "$binary_path" "$install_path"
@@ -179,16 +177,13 @@ install_binary() {
     fi
 
     # Verify installation
-    if "$install_path" --version >/dev/null 2>&1; then
-        success "LazyArchon installed successfully!"
-    else
-        error "Installation verification failed"
-    fi
+    "$install_path" --version >/dev/null 2>&1 || error "Installation verification failed"
+    success "LazyArchon installed successfully!"
 
-    # Check if install directory is in PATH
+    # Warn if not in PATH
     if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
         warn "Install directory ${INSTALL_DIR} is not in your PATH"
-        info "Add the following line to your shell profile (.bashrc, .zshrc, etc.):"
+        info "Add this line to your shell profile (.bashrc, .zshrc, etc.):"
         echo "export PATH=\"\$PATH:${INSTALL_DIR}\""
     fi
 }
