@@ -176,7 +176,7 @@ which lazyarchon  # Should show: /opt/homebrew/bin/lazyarchon (Apple Silicon) or
 
 ```bash
 # Install latest version
-go install github.com/yousfisaad/lazyarchon/cmd/lazyarchon@latest
+go install github.com/yousfisaad/lazyarchon/v2/cmd/lazyarchon@latest
 ```
 
 **Verification:**
@@ -303,7 +303,7 @@ brew install yousfisaad/lazyarchon/lazyarchon && lazyarchon
 **For Go Developers:**
 ```bash
 # Install and run in one command
-go install github.com/yousfisaad/lazyarchon/cmd/lazyarchon@latest && lazyarchon
+go install github.com/yousfisaad/lazyarchon/v2/cmd/lazyarchon@latest && lazyarchon
 ```
 
 **For Everyone Else:**
