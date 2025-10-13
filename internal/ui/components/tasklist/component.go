@@ -197,8 +197,6 @@ func (m *TaskListModel) handleDataMessages(msg tea.Msg) tea.Cmd {
 		m.filterFeature = msg.Feature
 		m.filterStatus = msg.Status
 		return nil
-
-		// NOTE: TaskListSetActiveMsg handler removed - components read active state from UIState directly
 	}
 	return nil
 }

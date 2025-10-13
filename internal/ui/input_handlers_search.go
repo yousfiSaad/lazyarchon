@@ -26,8 +26,8 @@ func (m *MainModel) handleActivateSearchKey(key string) (tea.Cmd, bool) {
 func (m *MainModel) handleClearSearchKey(key string) (tea.Cmd, bool) {
 	// Direct state access (coordinators removed)
 	if m.uiState.IsTaskView() && m.uiState.SearchActive {
-		m.clearSearch()
-		return nil, true
+		cmd := m.clearSearch()
+		return cmd, true
 	}
 	return nil, false
 }
