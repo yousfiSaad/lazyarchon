@@ -1,0 +1,78 @@
+# LazyArchon Configuration
+# Simple configuration file - modify as needed
+
+server:
+  url: "http://localhost:8181"
+  timeout: 30s
+  api_key: ""
+
+  # Real-time updates configuration
+  # NOTE: WebSocket is not supported by the backend - use HTTP polling instead
+  enable_realtime: false # Enable WebSocket (currently not supported)
+  polling_interval: 10   # Polling interval in seconds when enable_realtime is false
+
+ui:
+  theme:
+    # Choose your theme: "default", "monokai", "gruvbox", "dracula"
+    name: "default"
+
+    # Uncomment to override specific colors:
+    # selected_bg: "237"      # Background for selected items
+    # border_color: "62"      # Border color for panels
+    # status_color: "205"     # Status text color
+    # header_color: "39"      # Header text color
+    # error_color: "196"      # Error message color
+
+  display:
+    show_completed_tasks: true
+    default_sort_mode: "status+priority" # Options: status+priority, priority, time, alphabetical
+    auto_refresh_interval: 0 # Auto refresh in seconds (0 = disabled)
+
+    # Color enhancement options
+    feature_colors: true # Enable vibrant colors for feature tags
+    feature_backgrounds: false # Enable subtle background tints for feature groups
+    priority_indicators: true # Show priority symbols and colors
+
+    # Status color scheme - affects task status indicator colors
+    status_color_scheme: "gray" # Options: blue, gray, warm_gray, cool_gray
+
+    # Startup behavior - default project to select on launch
+    # Use project UUID from your Archon server (leave empty for "All Tasks" view)
+    # Can be overridden with LAZYARCHON_DEFAULT_PROJECT_ID environment variable
+    # default_project_id: "550e8400-e29b-41d4-a716-446655440000"
+    default_project_id: "e954db38-3fe8-4ae3-b411-97407ef195e7"
+
+development:
+  debug: false
+  log_level: "info" # Options: debug, info, warn, error
+  enable_profiling: false
+# Quick Theme Guide:
+# - default: Blue/cyan modern theme
+# - monokai: Pink/green retro theme
+# - gruvbox: Orange/yellow warm theme
+# - dracula: Purple/pink dark theme
+#
+# To switch themes, just change the 'name' value above!
+
+# Status Color Scheme Guide:
+# The status_color_scheme setting controls how task status indicators are colored
+# while maintaining the same UX hierarchy (todo > doing > review > done):
+#
+# - blue: Vibrant blue scheme (default)
+#   * High contrast, attention-grabbing
+#   * Good for users who prefer colorful interfaces
+#
+# - gray: Neutral gray scheme
+#   * Reduces eye strain during long work sessions
+#   * Professional appearance, recommended for extended use
+#
+# - warm_gray: Gentle warm tones
+#   * Easy on eyes with subtle warmth
+#   * Comfortable for long coding sessions
+#
+# - cool_gray: Modern professional tones
+#   * Clean, contemporary appearance
+#   * Excellent for professional environments
+#
+# All schemes maintain the same attention hierarchy:
+# Review (most attention) > Doing > Todo > Done (least attention)
