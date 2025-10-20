@@ -1435,6 +1435,12 @@ func (m MainModel) GetUniqueFeatures() []string {
 	return helpers.GetUniqueFeatures(m.programContext.Tasks)
 }
 
+// GetVisibleFeatures returns a sorted list of unique features from currently visible/filtered tasks
+// Respects project selection, status filters, feature filters, and show completed setting
+func (m MainModel) GetVisibleFeatures() []string {
+	return helpers.GetUniqueFeatures(m.GetSortedTasks())
+}
+
 // GetFeatureFilterSummary returns a summary of active feature filters
 func (m MainModel) GetFeatureFilterSummary() string {
 	// Delegate to ProgramContext which now owns FeatureFilters
