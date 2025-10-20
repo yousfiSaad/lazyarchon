@@ -437,6 +437,7 @@ func (m *MainModel) handleComponentMessages(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case messages.SearchStateChangedMsg:
 		// Update UIState's search state from broadcast (SINGLE SOURCE OF TRUTH)
 		m.uiState.SetSearchQuery(msg.Query)
+		m.uiState.SearchActive = msg.Active // Override derived value with explicit message value
 
 		// Forward search state change to all interested components
 		searchMsg := tasklist.TaskListSearchMsg{
