@@ -671,24 +671,37 @@ func (m *MainModel) updateTasks(tasks []archon.Task) {
 	m.programContext.Logger.LogStateChange("Model", "Tasks", oldTaskCount, len(tasks),
 		"selected_task_id", selectedTaskID)
 
-	// TaskManager is now stateless - operates on tasks directly from ProgramContext
+	// Refresh UI with new data (reuses common filter refresh logic)
+	m.refreshUIAfterFilterChange()
+
+	// Log performance
+	m.programContext.Logger.LogPerformance("UpdateTasks", startTime, "task_count", len(tasks))
+}
+
+// refreshUIAfterFilterChange refreshes the UI based on current data with new filters applied
+// Used when filters change but data hasn't (client-side filtering: feature filter, status filter)
+// This eliminates unnecessary HTTP requests for operations that only need UI refresh
+func (m *MainModel) refreshUIAfterFilterChange() {
+	// Preserve selected task ID before re-filtering
+	var selectedTaskID string
+	if selectedTask := m.GetSelectedTask(); selectedTask != nil {
+		selectedTaskID = selectedTask.ID
+	}
+
+	// Re-filter with new filter settings (GetSortedTasks reads current filter state from ProgramContext)
 	sortedTasks := m.GetSortedTasks()
 
-	// Restore selection by finding task ID in new sorted list
+	// Restore selection in new filtered list
 	if selectedTaskID != "" {
 		m.findAndSelectTask(selectedTaskID)
 	}
 
+	// Update UI components with new filtered list
 	m.adjustTaskSelection(sortedTasks)
 	_ = m.updateTaskListComponents(sortedTasks)
 	_ = m.updateTaskDetailsComponent()
 	m.updateSearchMatches()
-
-	// Broadcast all state to StatusBar
 	_ = m.broadcastStatusBarState()
-
-	// Log performance
-	m.programContext.Logger.LogPerformance("UpdateTasks", startTime, "task_count", len(tasks))
 }
 
 // broadcastStatusBarState is deprecated and no longer needed.
