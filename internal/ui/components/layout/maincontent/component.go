@@ -161,13 +161,11 @@ func (m *MainContentModel) Update(msg tea.Msg) tea.Cmd {
 		// Get the newly selected task from task list component
 		selectedTask := m.taskListComponent.GetSelectedTask()
 
-		// Send update message to task details with new task
-		// Note: Search highlighting state is managed separately through TaskListSearchMsg
-		// which is sent when search is performed/cleared
+		// Send update message with current search state from UIState (single source of truth)
 		updateMsg := taskdetails.TaskDetailsUpdateMsg{
 			SelectedTask: selectedTask,
-			SearchQuery:  "", // Search state managed separately
-			SearchActive: false,
+			SearchQuery:  m.GetContext().UIState.SearchQuery,
+			SearchActive: m.GetContext().UIState.SearchActive,
 		}
 		return m.taskDetailsComponent.Update(updateMsg)
 
