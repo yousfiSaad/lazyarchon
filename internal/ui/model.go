@@ -1442,6 +1442,22 @@ func (m MainModel) GetVisibleFeatures() []string {
 	return helpers.GetUniqueFeatures(m.GetSortedTasks())
 }
 
+// GetFeaturesForProjectSelection returns features from current project without feature filter
+// Used for feature selection modal to show all available features, not just filtered ones
+// Respects: project selection, status filters, show completed setting
+// Ignores: feature filters (intentionally, so user can see all options to select/deselect)
+func (m MainModel) GetFeaturesForProjectSelection() []string {
+	filters := helpers.TaskFilters{
+		ProjectID:          m.programContext.SelectedProjectID,
+		StatusFilters:      m.programContext.StatusFilters,
+		StatusFilterActive: m.programContext.StatusFilterActive,
+		FeatureFilters:     nil, // Ignore feature filters for modal - show all project features
+		ShowCompletedTasks: m.programContext.ShowCompletedTasks,
+	}
+	tasksWithoutFeatureFilter := helpers.FilterAndSortTasks(m.programContext.Tasks, m.programContext.SortMode, filters)
+	return helpers.GetUniqueFeatures(tasksWithoutFeatureFilter)
+}
+
 // GetFeatureFilterSummary returns a summary of active feature filters
 func (m MainModel) GetFeatureFilterSummary() string {
 	// Delegate to ProgramContext which now owns FeatureFilters
