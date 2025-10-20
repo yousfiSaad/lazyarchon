@@ -118,7 +118,7 @@ func (m *MainModel) handleTaskTitleCopyKey(key string) (tea.Cmd, bool) {
 func (m *MainModel) handleFeatureSelectionKey(key string) (tea.Cmd, bool) {
 	if key == keys.KeyF && !m.uiState.IsProjectView() {
 		// Use the new component-based approach
-		// Note: Modal can display "No features available" if GetUniqueFeatures() returns empty
+		// Note: Modal can display "No features available" if GetVisibleFeatures() returns empty
 
 		// Transform featureFilters for modal display:
 		// - empty map: No filter active (show all) → display as all features selected
@@ -128,13 +128,13 @@ func (m *MainModel) handleFeatureSelectionKey(key string) (tea.Cmd, bool) {
 		if len(selectedFeatures) == 0 {
 			// Empty map means "no filter, show all" - represent in UI as all features selected
 			selectedFeatures = make(map[string]bool)
-			for _, feature := range m.GetUniqueFeatures() {
+			for _, feature := range m.GetVisibleFeatures() {
 				selectedFeatures[feature] = true
 			}
 		}
 
 		showMsg := feature.ShowFeatureModalMsg{
-			AllFeatures:          m.GetUniqueFeatures(),
+			AllFeatures:          m.GetVisibleFeatures(),
 			SelectedFeatures:     selectedFeatures, // Never nil - always explicit selection state
 			FeatureColorsEnabled: true,             // Enable feature colors
 		}
