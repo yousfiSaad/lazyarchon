@@ -120,6 +120,10 @@ func (m *MainModel) handleFeatureSelectionKey(key string) (tea.Cmd, bool) {
 		// Use the new component-based approach
 		// Note: Modal can display "No features available" if GetVisibleFeatures() returns empty
 
+		// Get all features from current project (without feature filter applied)
+		// so user can see all available options to select/deselect
+		allProjectFeatures := m.GetFeaturesForProjectSelection()
+
 		// Transform featureFilters for modal display:
 		// - empty map: No filter active (show all) → display as all features selected
 		// - {}: Filter active, nothing selected (show none) → display as nothing selected
@@ -128,15 +132,15 @@ func (m *MainModel) handleFeatureSelectionKey(key string) (tea.Cmd, bool) {
 		if len(selectedFeatures) == 0 {
 			// Empty map means "no filter, show all" - represent in UI as all features selected
 			selectedFeatures = make(map[string]bool)
-			for _, feature := range m.GetVisibleFeatures() {
+			for _, feature := range allProjectFeatures {
 				selectedFeatures[feature] = true
 			}
 		}
 
 		showMsg := feature.ShowFeatureModalMsg{
-			AllFeatures:          m.GetVisibleFeatures(),
-			SelectedFeatures:     selectedFeatures, // Never nil - always explicit selection state
-			FeatureColorsEnabled: true,             // Enable feature colors
+			AllFeatures:          allProjectFeatures, // All project features (ignore current feature filter)
+			SelectedFeatures:     selectedFeatures,   // Never nil - always explicit selection state
+			FeatureColorsEnabled: true,               // Enable feature colors
 		}
 		return func() tea.Msg { return showMsg }, true
 	}
