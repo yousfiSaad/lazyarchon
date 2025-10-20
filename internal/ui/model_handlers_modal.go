@@ -6,7 +6,6 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/yousfisaad/lazyarchon/v2/internal/archon"
-	"github.com/yousfisaad/lazyarchon/v2/internal/domain/projects"
 	"github.com/yousfisaad/lazyarchon/v2/internal/domain/tasks"
 	"github.com/yousfisaad/lazyarchon/v2/internal/ui/components/modals/confirmation"
 	"github.com/yousfisaad/lazyarchon/v2/internal/ui/components/modals/feature"
@@ -101,18 +100,21 @@ func (m *MainModel) handleModalActions(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case feature.FeatureSelectionAppliedMsg:
 		// Handle feature selection application - update task filtering in ProgramContext
-		// Clear existing filters and apply new selection
+		// This is a client-side filter change - no server fetch needed, just refresh UI
 		m.programContext.FeatureFilters = msg.SelectedFeatures
 		m.programContext.FeatureFilterActive = len(msg.SelectedFeatures) > 0
-		return m, projects.RefreshDataInterface(m.programContext.ArchonClient, m.programContext.SelectedProjectID)
+		m.refreshUIAfterFilterChange() // Refresh UI immediately with current data
+		return m, nil
 
 	case statusfilter.StatusFilterAppliedMsg:
 		// Handle status filter application - update task filtering in ProgramContext
+		// This is a client-side filter change - no server fetch needed, just refresh UI
 		for status := range m.programContext.StatusFilters {
 			_, selected := msg.SelectedStatuses[status]
 			m.programContext.SetStatusFilter(status, selected)
 		}
-		return m, projects.RefreshDataInterface(m.programContext.ArchonClient, m.programContext.SelectedProjectID)
+		m.refreshUIAfterFilterChange() // Refresh UI immediately with current data
+		return m, nil
 	}
 	return m, nil
 }
