@@ -50,6 +50,8 @@ echo ""
 echo "Press ENTER to start recording (Ctrl+D to stop when done)..."
 read
 
+cd
+
 # Start recording
 echo "🎬 Recording started..."
 asciinema rec --overwrite --idle-time-limit 2 "$CAST_FILE"
