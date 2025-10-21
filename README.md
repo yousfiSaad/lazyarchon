@@ -32,12 +32,7 @@ See LazyArchon in action:
 
 ## 🚀 Quick Install
 
-**One-line install (macOS/Linux):**
-```bash
-curl -sSL https://raw.githubusercontent.com/yousfisaad/lazyarchon/main/scripts/install.sh | bash
-```
-
-**Homebrew (macOS/Linux):**
+**Homebrew (recommended, macOS/Linux):**
 ```bash
 brew install yousfisaad/lazyarchon/lazyarchon
 ```
@@ -47,16 +42,25 @@ brew install yousfisaad/lazyarchon/lazyarchon
 go install github.com/yousfisaad/lazyarchon/cmd/lazyarchon@latest
 ```
 
-**Verification:**
+**Direct download:**
+Download from [Latest Release](https://github.com/yousfisaad/lazyarchon/releases/latest), then:
 ```bash
+tar -xzf lazyarchon-*.tar.gz
+sudo mv lazyarchon /usr/local/bin/
 lazyarchon --version
-lazyarchon --help
+```
+
+**Build from source:**
+```bash
+git clone https://github.com/yousfisaad/lazyarchon
+cd lazyarchon && make build
+./bin/lazyarchon
 ```
 
 ### Prerequisites
 
-- **Go 1.24+** (only for go install method)
 - **Running [Archon](https://github.com/coleam00/Archon) API** on `localhost:8181`
+- **Go 1.24+** (only for go install or build from source)
 
 ## ⌨️ Essential Keyboard Shortcuts
 
