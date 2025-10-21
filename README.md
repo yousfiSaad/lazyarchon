@@ -324,6 +324,14 @@ cd lazyarchon
 go run ./cmd/lazyarchon
 ```
 
+## 🎥 Demo
+
+See LazyArchon in action! Here's a quick preview of the interface and key features:
+
+![LazyArchon Demo](assets/demo/lazyarchon-demo.gif)
+
+For a detailed walkthrough, view the [full asciinema recording](https://asciinema.org/a/YOUR_ID_HERE) or check out the [Quick Start Guide](docs/getting-started/quick-start.md).
+
 ## 📖 Usage
 
 Get started quickly with LazyArchon! For detailed documentation, see our comprehensive [User Guide](docs/user-guide/README.md).
