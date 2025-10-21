@@ -93,7 +93,6 @@ cd lazyarchon && make build
 **Not yet available:**
 - ❌ Task creation and advanced editing
 - ❌ Project management operations
-- ❌ User authentication
 
 ## 📚 Documentation
 
@@ -133,7 +132,6 @@ make help
 
 - [ ] Task creation forms
 - [ ] Advanced task editing (title, description, sources)
-- [ ] WebSocket-based real-time updates
 - [ ] Configuration files and themes
 - [ ] Offline mode and caching
 
