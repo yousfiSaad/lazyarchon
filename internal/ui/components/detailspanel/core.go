@@ -69,9 +69,11 @@ func (c *DetailsPanelCore) UpdateDimensions(width, height int) {
 	c.viewport.Height = dims.ViewportHeight
 }
 
-// SetContent updates the viewport content
+// SetContent updates the viewport content and resets scroll position to top
+// This ensures that when switching to new content, the user sees it from the beginning
 func (c *DetailsPanelCore) SetContent(content string) {
 	c.viewport.SetContent(content)
+	c.viewport.GotoTop()
 }
 
 // GetContentWidth returns the calculated content width (accounting for scrollbar)
