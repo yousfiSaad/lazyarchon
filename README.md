@@ -93,7 +93,6 @@ cd lazyarchon && make build
 **Not yet available:**
 - ❌ Task creation and advanced editing
 - ❌ Project management operations
-- ❌ Real-time WebSocket updates (manual refresh required)
 - ❌ User authentication
 
 ## 📚 Documentation
