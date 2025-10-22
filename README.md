@@ -94,15 +94,6 @@ cd lazyarchon && make build
 - ❌ Task creation and advanced editing
 - ❌ Project management operations
 
-## 📚 Documentation
-
-- **[📖 Full Documentation](docs/README.md)** - Complete documentation index
-- **[🚀 Getting Started](docs/getting-started/README.md)** - Installation, configuration, quick start
-- **[👤 User Guide](docs/user-guide/README.md)** - Features, troubleshooting, advanced usage
-- **[🛠️ Development](docs/development/README.md)** - Contributing, testing, build system
-- **[⚙️ Configuration](docs/getting-started/configuration.md)** - Customize API endpoint and preferences
-- **[🔧 Troubleshooting](docs/user-guide/troubleshooting.md)** - Common issues and solutions
-
 ## 🛠️ Development
 
 ```bash
