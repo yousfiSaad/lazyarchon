@@ -176,8 +176,7 @@ func (cb *CircuitBreaker) recordFailure() {
 func (cb *CircuitBreaker) recordSuccess() {
 	cb.failureCount = 0
 
-	switch cb.state {
-	case CircuitHalfOpen:
+	if cb.state == CircuitHalfOpen {
 		cb.successCount++
 		if cb.successCount >= cb.config.SuccessThreshold {
 			cb.state = CircuitClosed
@@ -314,8 +313,8 @@ func (re *RetryableExecutor) calculateDelay(attempt int) time.Duration {
 
 	// Add jitter if enabled
 	if re.config.Jitter {
-		jitterAmount := float64(delay) * 0.1 // 10% jitter
-		jitter := time.Duration(rand.Float64() * jitterAmount)
+		jitterAmount := float64(delay) * 0.1                   // 10% jitter
+		jitter := time.Duration(rand.Float64() * jitterAmount) //nolint:gosec // G404: math/rand is sufficient for retry jitter
 		delay += jitter
 	}
 
@@ -418,7 +417,15 @@ func (m *ResilienceMetrics) RecordCircuitBreakerTrip() {
 func (m *ResilienceMetrics) GetSnapshot() ResilienceMetrics {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	return *m
+
+	// Return copy without mutex to avoid copylocks
+	return ResilienceMetrics{
+		TotalRequests:       m.TotalRequests,
+		SuccessfulRequests:  m.SuccessfulRequests,
+		FailedRequests:      m.FailedRequests,
+		RetriedRequests:     m.RetriedRequests,
+		CircuitBreakerTrips: m.CircuitBreakerTrips,
+	}
 }
 
 // Error types for resilience patterns

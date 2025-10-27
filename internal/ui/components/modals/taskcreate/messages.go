@@ -20,12 +20,12 @@ type TaskCreateModalHiddenMsg struct{}
 
 // TaskCreatedMsg is sent when a new task has been created successfully
 type TaskCreatedMsg struct {
-	Title        string  // Task title
-	Description  string  // Task description
-	ProjectID    string  // Project ID
-	Feature      *string // Feature tag (optional)
-	Priority     int     // Task priority
-	Status       string  // Task status (defaults to "todo")
+	Title       string  // Task title
+	Description string  // Task description
+	ProjectID   string  // Project ID
+	Feature     *string // Feature tag (optional)
+	Priority    int     // Task priority
+	Status      string  // Task status (defaults to "todo")
 }
 
 // Ensure all message types implement tea.Msg

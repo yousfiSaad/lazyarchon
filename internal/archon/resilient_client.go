@@ -309,6 +309,8 @@ func (cf *ClientFactory) WithoutResilience() *ClientFactory {
 }
 
 // CreateClient creates a client based on the factory configuration
+//
+//nolint:ireturn // Factory pattern intentionally returns interface for dependency injection
 func (cf *ClientFactory) CreateClient() ClientInterface {
 	if cf.enableResilience {
 		return NewResilientClient(cf.baseURL, cf.apiKey, cf.timeout, cf.resilienceConfig)

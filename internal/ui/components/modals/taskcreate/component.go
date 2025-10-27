@@ -35,11 +35,11 @@ type TaskCreateModel struct {
 	activeField FieldType // Currently focused field
 
 	// Field values (working state - what user is entering)
-	titleValue       string  // Task title (required)
-	descriptionValue string  // Task description (optional)
-	featureValue     string  // Feature assignment (optional)
-	priorityValue    int     // Task priority (defaults to 50)
-	statusValue      string  // Task status (defaults to "todo")
+	titleValue       string // Task title (required)
+	descriptionValue string // Task description (optional)
+	featureValue     string // Feature assignment (optional)
+	priorityValue    int    // Task priority (defaults to 50)
+	statusValue      string // Task status (defaults to "todo")
 
 	// Title field state (text input)
 	titleCursorPos int // Cursor position in title field
@@ -69,8 +69,8 @@ func NewModel(context *base.ComponentContext) *TaskCreateModel {
 
 	model := &TaskCreateModel{
 		BaseModal:            baseModal,
-		activeField:          FieldTitle, // Start on title field
-		priorityValue:        50,         // Default medium priority
+		activeField:          FieldTitle,            // Start on title field
+		priorityValue:        50,                    // Default medium priority
 		statusValue:          archon.TaskStatusTodo, // Default to todo
 		titleCursorPos:       0,
 		descriptionCursorPos: 0,
@@ -242,6 +242,8 @@ func (m *TaskCreateModel) handleKeyPress(key tea.KeyMsg) tea.Cmd {
 // =============================================================================
 
 // handleTitleField handles input when title field is focused
+//
+//nolint:dupl // Similar structure to handleDescriptionField but operates on different fields with different limits
 func (m *TaskCreateModel) handleTitleField(keyString string) tea.Cmd {
 	switch keyString {
 	case keys.KeyEnter:
@@ -290,6 +292,8 @@ func (m *TaskCreateModel) handleTitleField(keyString string) tea.Cmd {
 }
 
 // handleDescriptionField handles input when description field is focused
+//
+//nolint:dupl // Similar structure to handleTitleField but operates on different fields with different limits
 func (m *TaskCreateModel) handleDescriptionField(keyString string) tea.Cmd {
 	switch keyString {
 	case keys.KeyEnter:
@@ -486,6 +490,8 @@ func (m *TaskCreateModel) handleFeatureField(keyString string) tea.Cmd {
 }
 
 // handleFeatureTextInput handles input when creating a new feature
+//
+//nolint:gocyclo // Complexity unavoidable - handles multiple key types and character validation
 func (m *TaskCreateModel) handleFeatureTextInput(keyString string) tea.Cmd {
 	switch keyString {
 	case keys.KeyEscape:
@@ -695,6 +701,8 @@ func (m *TaskCreateModel) renderContent() string {
 // =============================================================================
 
 // renderTitleField renders the title input field
+//
+//nolint:dupl // Similar structure to renderDescriptionField but renders different field with different placeholder
 func (m *TaskCreateModel) renderTitleField() string {
 	var content strings.Builder
 
@@ -752,6 +760,8 @@ func (m *TaskCreateModel) renderTitleField() string {
 }
 
 // renderDescriptionField renders the description input field
+//
+//nolint:dupl // Similar structure to renderTitleField but renders different field with different placeholder
 func (m *TaskCreateModel) renderDescriptionField() string {
 	var content strings.Builder
 
@@ -988,6 +998,7 @@ func min(a, b int) int {
 	return b
 }
 
+//nolint:unparam // Used with various values throughout the file, not just constant 0
 func max(a, b int) int {
 	if a > b {
 		return a
@@ -1021,17 +1032,17 @@ func getPriorityText(priority styling.PriorityLevel) string {
 }
 
 // itoa converts an integer to a string (simple implementation for priority display)
-func itoa(n int) string {
-	if n == 0 {
+func itoa(num int) string {
+	if num == 0 {
 		return "0"
 	}
-	if n < 0 {
-		return "-" + itoa(-n)
+	if num < 0 {
+		return "-" + itoa(-num)
 	}
 	digits := ""
-	for n > 0 {
-		digits = string('0'+byte(n%10)) + digits
-		n /= 10
+	for num > 0 {
+		digits = string('0'+byte(num%10)) + digits
+		num /= 10
 	}
 	return digits
 }

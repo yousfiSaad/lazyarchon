@@ -110,7 +110,7 @@ func TestCircuitBreaker_HalfOpenFailure(t *testing.T) {
 	cb := NewCircuitBreaker(config)
 
 	// Force circuit open
-	cb.Execute(func() error {
+	_ = cb.Execute(func() error {
 		return errors.New("failure")
 	})
 

@@ -10,6 +10,8 @@ import (
 
 // ArchonClient defines the interface for Archon API operations
 // This allows us to inject different implementations (basic, resilient, mock)
+//
+//nolint:interfacebloat // This interface intentionally includes all API operations for complete client abstraction
 type ArchonClient interface {
 	// Task operations
 	ListTasks(projectID *string, status *string, includeClosed bool) (*archon.TasksResponse, error)

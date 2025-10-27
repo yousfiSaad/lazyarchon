@@ -213,7 +213,7 @@ func (c *Client) ListTasks(projectID *string, status *string, includeClosed bool
 		Tasks:      allTasks,
 		Count:      len(allTasks),
 		TotalCount: totalCount,
-		Page:       1,     // Return 1 since we're combining all pages
+		Page:       1, // Return 1 since we're combining all pages
 		PerPage:    perPage,
 	}, nil
 }
