@@ -5,14 +5,23 @@ BINARY_NAME=lazyarchon
 BUILD_DIR=bin
 CMD_DIR=./cmd/lazyarchon
 
+# Version information (injected at build time)
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+BUILD_TIME ?= $(shell date -u '+%Y-%m-%d_%H:%M:%S')
+
 .PHONY: build run test lint lint-install lint-full lint-fix check clean deps sbom sbom-validate help
 
 # Build for current platform (development only)
 build:
 	@echo "Building $(BINARY_NAME) for development..."
+	@echo "Version: $(VERSION) | Commit: $(COMMIT) | Build Time: $(BUILD_TIME)"
 	@mkdir -p $(BUILD_DIR)
-	# TODO: add build-time variables
-	@go build -o $(BUILD_DIR)/$(BINARY_NAME) $(CMD_DIR)
+	@go build -ldflags="\
+		-X main.Version=$(VERSION) \
+		-X main.Commit=$(COMMIT) \
+		-X main.BuildTime=$(BUILD_TIME)" \
+		-o $(BUILD_DIR)/$(BINARY_NAME) $(CMD_DIR)
 	@echo "✓ Built: $(BUILD_DIR)/$(BINARY_NAME)"
 
 # Build and run (quick development cycle)
