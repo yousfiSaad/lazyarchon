@@ -39,6 +39,11 @@ jobs:
       - name: Run tests before release
         run: go test ./...
 
+      - name: Install Syft for SBOM generation
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          syft version
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
