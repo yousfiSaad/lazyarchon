@@ -22,8 +22,8 @@ func TestLoad(t *testing.T) {
 		t.Errorf("Expected default URL, got %s", config.Server.URL)
 	}
 
-	if config.Server.Timeout != 30*time.Second {
-		t.Errorf("Expected 30s timeout, got %v", config.Server.Timeout)
+	if config.Server.Timeout != 90*time.Second {
+		t.Errorf("Expected 90s timeout, got %v", config.Server.Timeout)
 	}
 
 	if !config.UI.Display.ShowCompletedTasks {

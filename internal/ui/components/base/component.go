@@ -12,6 +12,7 @@ type ComponentType string
 const (
 	HelpModalComponent             ComponentType = "help_modal"
 	StatusModalComponent           ComponentType = "status_modal"
+	StatusFilterModalComponent     ComponentType = "status_filter_modal"
 	FeatureModalComponent          ComponentType = "feature_modal"
 	TaskEditModalComponent         ComponentType = "task_edit_modal"
 	TaskCreateModalComponent       ComponentType = "task_create_modal"
@@ -32,13 +33,14 @@ const (
 type ModalType string
 
 const (
-	ModalTypeNone         ModalType = ""             // No modal active
-	ModalTypeHelp         ModalType = "help"         // Help modal
-	ModalTypeFeature      ModalType = "feature"      // Feature selection modal
-	ModalTypeStatus       ModalType = "status"       // Status change modal
-	ModalTypeTaskEdit     ModalType = "task_edit"    // Task edit modal
-	ModalTypeTaskCreate   ModalType = "task_create"  // Task create modal
-	ModalTypeConfirmation ModalType = "confirmation" // Confirmation modal
+	ModalTypeNone         ModalType = ""              // No modal active
+	ModalTypeHelp         ModalType = "help"          // Help modal
+	ModalTypeFeature      ModalType = "feature"       // Feature selection modal
+	ModalTypeStatus       ModalType = "status"        // Status change modal
+	ModalTypeStatusFilter ModalType = "status_filter" // Status filter modal
+	ModalTypeTaskEdit     ModalType = "task_edit"     // Task edit modal
+	ModalTypeTaskCreate   ModalType = "task_create"   // Task create modal
+	ModalTypeConfirmation ModalType = "confirmation"  // Confirmation modal
 )
 
 // Layout constants for component rendering
