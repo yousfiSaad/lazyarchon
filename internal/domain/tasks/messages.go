@@ -16,6 +16,12 @@ type TasksLoadedMsg struct {
 	Error error
 }
 
+// TaskCreateMsg is sent when a task is created
+type TaskCreateMsg struct {
+	Task  *archon.Task
+	Error error
+}
+
 // TaskUpdateMsg is sent when a task is updated
 type TaskUpdateMsg struct {
 	Task  *archon.Task
@@ -31,6 +37,7 @@ type TaskDeleteMsg struct {
 // Ensure all message types implement tea.Msg
 var (
 	_ tea.Msg = TasksLoadedMsg{}
+	_ tea.Msg = TaskCreateMsg{}
 	_ tea.Msg = TaskUpdateMsg{}
 	_ tea.Msg = TaskDeleteMsg{}
 )

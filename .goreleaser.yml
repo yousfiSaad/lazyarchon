@@ -67,6 +67,13 @@ archives:
       - LICENSE
       - configs/default.yaml
 
+# SBOM (Software Bill of Materials) generation
+sboms:
+  - id: archive
+    artifacts: archive
+    documents:
+      - "${artifact}.sbom.cyclonedx.json"
+
 # Checksum generation
 checksum:
   name_template: "checksums.txt"

@@ -44,7 +44,7 @@ import (
 //   handleProjectModeKeys (line 108) - Project mode routing
 //   handleTaskModeKeys (line 173) - Task mode routing
 //   handleInlineSearchInput (line 196) - Search input capture
-//   handleMultiKeySequence (line 918) - Multi-key sequences (gg)
+//   handleMultiKeySequence - Special key combinations (g for jump to first)
 //
 // Routing Dispatchers (5 methods):
 //   handleApplicationKey (line 240) - Application-level routing
@@ -372,6 +372,8 @@ func (m *MainModel) handleSearchKey(key string) (tea.Cmd, bool) {
 // handleTaskKey routes task operation keys to their specific handlers
 func (m *MainModel) handleTaskKey(key string) (tea.Cmd, bool) {
 	switch key {
+	case keys.KeyC:
+		return m.handleTaskCreateKey(key)
 	case keys.KeyT:
 		return m.handleTaskStatusChangeKey(key)
 	case keys.KeyE:
@@ -555,22 +557,15 @@ func (m *MainModel) handleToggleHelpKey(key string) (tea.Cmd, bool) {
 // MULTI-KEY SEQUENCES
 // =============================================================================
 
-// handleMultiKeySequence handles multi-key sequences like 'gg'
-// NOTE: This is legacy implementation. NavigationCoordinator should handle this in the future.
+// handleMultiKeySequence handles special key combinations
 func (m *MainModel) handleMultiKeySequence(key string) (tea.Cmd, bool) {
-	// TODO: Migrate to NavigationCoordinator when it's fully implemented
-	// For now, we'll disable multi-key sequences since the state was removed
-	// This simplifies the cleanup while maintaining basic functionality
-
+	// Handle 'g' to jump to first task
 	if key == keys.KeyG {
-		// Since we removed the key sequence state, we'll just handle single 'g' as jump to first
-		// Users can press 'g' twice quickly for the same effect
+		// Skip if modals are active - they handle their own navigation
 		switch {
 		case m.components.Modals.HelpModel.IsActive():
-			// Help modal navigation is handled by the component
 			return nil, true
 		case m.components.Modals.FeatureModel.IsActive():
-			// Feature modal - handled by component system
 			return nil, true
 		default:
 			cmd := m.handleJumpToFirst()

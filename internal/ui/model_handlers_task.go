@@ -15,7 +15,7 @@ import (
 // =============================================================================
 // This file contains handlers for task-related and project-related messages
 
-// handleTaskMessages processes task-related messages (loaded, updated, deleted)
+// handleTaskMessages processes task-related messages (loaded, created, updated, deleted)
 //
 //nolint:ireturn // Required by Bubble Tea framework - must return tea.Model interface
 func (m *MainModel) handleTaskMessages(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -28,6 +28,16 @@ func (m *MainModel) handleTaskMessages(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.updateTasks(msg.Tasks)
 		return m, nil
+
+	case tasks.TaskCreateMsg:
+		if msg.Error != nil {
+			m.setError(msg.Error.Error())
+			m.setLoading(false)
+			return m, nil
+		}
+		// Task created successfully, refresh tasks to show the new task
+		m.setLoadingWithMessage(true, "Refreshing tasks...")
+		return m, tasks.LoadTasksInterface(m.programContext.ArchonClient, m.programContext.SelectedProjectID)
 
 	case tasks.TaskUpdateMsg:
 		if msg.Error != nil {

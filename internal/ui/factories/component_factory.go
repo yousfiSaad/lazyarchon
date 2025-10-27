@@ -10,6 +10,7 @@ import (
 	"github.com/yousfisaad/lazyarchon/v2/internal/ui/components/modals/feature"
 	"github.com/yousfisaad/lazyarchon/v2/internal/ui/components/modals/help"
 	"github.com/yousfisaad/lazyarchon/v2/internal/ui/components/modals/status"
+	"github.com/yousfisaad/lazyarchon/v2/internal/ui/components/modals/taskcreate"
 	"github.com/yousfisaad/lazyarchon/v2/internal/ui/components/modals/taskedit"
 )
 
@@ -19,11 +20,12 @@ type ModalComponents struct {
 	StatusModel       *status.StatusModel
 	ConfirmationModel *confirmation.ConfirmationModel
 	TaskEditModel     *taskedit.TaskEditModel
+	TaskCreateModel   *taskcreate.TaskCreateModel
 	FeatureModel      *feature.FeatureModel
 }
 
 // Update broadcasts messages to all modal components (hierarchical pattern)
-// TODO: the command shouldn't be updated
+// Commands from all modals are batched together for concurrent execution
 func (mc *ModalComponents) Update(msg tea.Msg) tea.Cmd {
 	var cmds []tea.Cmd
 
@@ -40,11 +42,38 @@ func (mc *ModalComponents) Update(msg tea.Msg) tea.Cmd {
 	if mc.TaskEditModel != nil {
 		cmds = append(cmds, mc.TaskEditModel.Update(msg))
 	}
+	if mc.TaskCreateModel != nil {
+		cmds = append(cmds, mc.TaskCreateModel.Update(msg))
+	}
 	if mc.FeatureModel != nil {
 		cmds = append(cmds, mc.FeatureModel.Update(msg))
 	}
 
 	return tea.Batch(cmds...)
+}
+
+// HasActiveModal returns true if any modal is currently active
+// This method ensures all modals are checked without MainModel needing to know modal details
+func (mc *ModalComponents) HasActiveModal() bool {
+	if mc.HelpModel != nil && mc.HelpModel.IsActive() {
+		return true
+	}
+	if mc.StatusModel != nil && mc.StatusModel.IsActive() {
+		return true
+	}
+	if mc.ConfirmationModel != nil && mc.ConfirmationModel.IsActive() {
+		return true
+	}
+	if mc.TaskEditModel != nil && mc.TaskEditModel.IsActive() {
+		return true
+	}
+	if mc.TaskCreateModel != nil && mc.TaskCreateModel.IsActive() {
+		return true
+	}
+	if mc.FeatureModel != nil && mc.FeatureModel.IsActive() {
+		return true
+	}
+	return false
 }
 
 // LayoutComponents contains all layout components
@@ -103,6 +132,7 @@ func CreateComponents(config ComponentConfig) *UIComponentSet {
 	statusModal := status.NewModel(config.ComponentContext)
 	confirmationModal := confirmation.NewModel(config.ComponentContext)
 	taskEditModal := taskedit.NewModel(config.ComponentContext)
+	taskCreateModal := taskcreate.NewModel(config.ComponentContext)
 	featureModal := feature.NewModel(config.ComponentContext)
 
 	return &UIComponentSet{
@@ -111,6 +141,7 @@ func CreateComponents(config ComponentConfig) *UIComponentSet {
 			StatusModel:       statusModal,
 			ConfirmationModel: confirmationModal,
 			TaskEditModel:     taskEditModal,
+			TaskCreateModel:   taskCreateModal,
 			FeatureModel:      featureModal,
 		},
 		Layout: LayoutComponents{

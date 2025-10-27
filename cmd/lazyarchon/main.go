@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log/slog"
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -45,8 +46,7 @@ func main() {
 	// Load configuration
 	cfg, err := config.Load()
 	if err != nil {
-		// TODO: use slog instead of print
-		fmt.Println("error while loading configs -> using default configs")
+		slog.Warn("error while loading configs", "error", err.Error(), "fallback", "using default configs")
 	}
 
 	// Override config with CLI flags

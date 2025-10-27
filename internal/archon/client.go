@@ -36,12 +36,12 @@ type Client struct {
 	logger     Logger // Optional logger for debug mode
 }
 
-// NewClient creates a new Archon API client
-func NewClient(baseURL, apiKey string) *Client {
+// NewClient creates a new Archon API client with specified timeout
+func NewClient(baseURL, apiKey string, timeout time.Duration) *Client {
 	return &Client{
 		baseURL: baseURL,
 		httpClient: &http.Client{
-			Timeout: 30 * time.Second,
+			Timeout: timeout,
 		},
 		apiKey: apiKey,
 		logger: nil, // No logger by default
@@ -135,39 +135,87 @@ func (c *Client) parseResponse(resp *http.Response, v interface{}) error { //nol
 	return nil
 }
 
-// ListTasks retrieves all tasks from the API
+// ListTasks retrieves all tasks from the API with automatic pagination
+// This method will fetch all pages if the total count exceeds the per_page limit
 func (c *Client) ListTasks(projectID *string, status *string, includeClosed bool) (*TasksResponse, error) {
-	path := "/api/tasks"
+	const perPage = 500 // Increased from 100 to reduce API calls
+	var allTasks []Task
+	page := 1
+	var totalCount int
 
-	// Add query parameters for filtering
-	params := url.Values{}
-	if projectID != nil {
-		params.Add("project_id", *projectID)
-	}
-	if status != nil {
-		params.Add("status", *status)
-	}
-	if includeClosed {
-		params.Add("include_closed", "true")
-	}
-	params.Add("per_page", "100")
+	for {
+		path := "/api/tasks"
 
-	if len(params) > 0 {
-		path += "?" + params.Encode()
+		// Add query parameters for filtering
+		params := url.Values{}
+		if projectID != nil {
+			params.Add("project_id", *projectID)
+		}
+		if status != nil {
+			params.Add("status", *status)
+		}
+		if includeClosed {
+			params.Add("include_closed", "true")
+		}
+		params.Add("per_page", fmt.Sprintf("%d", perPage))
+		params.Add("page", fmt.Sprintf("%d", page))
+
+		if len(params) > 0 {
+			path += "?" + params.Encode()
+		}
+
+		resp, err := c.makeRequest("GET", path, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		// Parse the API response which contains tasks in a "tasks" field
+		var tasksResp TasksResponse
+		if err := c.parseResponse(resp, &tasksResp); err != nil {
+			return nil, err
+		}
+
+		// Accumulate tasks from this page
+		allTasks = append(allTasks, tasksResp.Tasks...)
+		totalCount = tasksResp.TotalCount
+
+		// Log this page for debugging
+		if c.logger != nil {
+			c.logger.Debug("ListTasks page response",
+				"page", page,
+				"page_task_count", len(tasksResp.Tasks),
+				"accumulated_tasks", len(allTasks),
+				"total_count", tasksResp.TotalCount,
+				"project_id", projectID,
+			)
+		}
+
+		// Check if we've fetched all tasks
+		if len(allTasks) >= totalCount || len(tasksResp.Tasks) == 0 {
+			break
+		}
+
+		page++
 	}
 
-	resp, err := c.makeRequest("GET", path, nil)
-	if err != nil {
-		return nil, err
+	// Log final result
+	if c.logger != nil {
+		c.logger.Debug("ListTasks complete",
+			"total_fetched", len(allTasks),
+			"expected_total", totalCount,
+			"pages_fetched", page,
+		)
 	}
 
-	// Parse the API response which contains tasks in a "tasks" field
-	var tasksResp TasksResponse
-	if err := c.parseResponse(resp, &tasksResp); err != nil {
-		return nil, err
-	}
-
-	return &tasksResp, nil
+	// Return combined response
+	return &TasksResponse{
+		Success:    true,
+		Tasks:      allTasks,
+		Count:      len(allTasks),
+		TotalCount: totalCount,
+		Page:       1,     // Return 1 since we're combining all pages
+		PerPage:    perPage,
+	}, nil
 }
 
 // GetTask retrieves a specific task by ID
@@ -175,6 +223,23 @@ func (c *Client) GetTask(taskID string) (*TaskResponse, error) {
 	path := "/api/tasks/" + taskID
 
 	resp, err := c.makeRequest("GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var taskResp TaskResponse
+	if err := c.parseResponse(resp, &taskResp); err != nil {
+		return nil, err
+	}
+
+	return &taskResp, nil
+}
+
+// CreateTask creates a new task
+func (c *Client) CreateTask(request CreateTaskRequest) (*TaskResponse, error) {
+	path := "/api/tasks"
+
+	resp, err := c.makeRequest("POST", path, request)
 	if err != nil {
 		return nil, err
 	}

@@ -33,9 +33,9 @@ Root (Model)
     ├── Help (keyboard shortcuts)
     ├── Confirmation (yes/no dialogs)
     ├── TaskEdit (edit task properties)
+    ├── TaskCreate (create new tasks)
     ├── Feature (filter by features)
-    ├── Status (change task status)
-    └── StatusFilter (filter by status)
+    └── Status (change task status)
 ```
 
 ## Core Components

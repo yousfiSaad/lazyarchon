@@ -8,6 +8,7 @@ import (
 	"github.com/yousfisaad/lazyarchon/v2/internal/shared/utils/keys"
 	"github.com/yousfisaad/lazyarchon/v2/internal/ui/components/modals/confirmation"
 	"github.com/yousfisaad/lazyarchon/v2/internal/ui/components/modals/feature"
+	"github.com/yousfisaad/lazyarchon/v2/internal/ui/components/modals/taskcreate"
 	"github.com/yousfisaad/lazyarchon/v2/internal/ui/components/modals/taskedit"
 	"github.com/yousfisaad/lazyarchon/v2/internal/ui/messages"
 )
@@ -16,6 +17,41 @@ import (
 // TASK OPERATION KEY HANDLERS
 // =============================================================================
 // This file contains all task operation keyboard handlers
+
+// HandleTaskCreateKey handles 'c' key - open task creation modal
+func (m *MainModel) handleTaskCreateKey(key string) (tea.Cmd, bool) {
+	if key == keys.KeyC && !m.uiState.IsProjectView() {
+		// Get default project ID (TUI App project or currently selected project)
+		defaultProjectID := "e954db38-3fe8-4ae3-b411-97407ef195e7" // TUI App project ID
+		if m.programContext.SelectedProjectID != nil {
+			defaultProjectID = *m.programContext.SelectedProjectID
+		}
+
+		// Get available features
+		availableFeatures := m.GetUniqueFeatures()
+
+		// Get default feature from current context if any
+		defaultFeature := ""
+		if len(m.programContext.FeatureFilters) == 1 {
+			// If exactly one feature filter is active, use it as default
+			for feature := range m.programContext.FeatureFilters {
+				defaultFeature = feature
+				break
+			}
+		}
+
+		// Show task creation modal
+		showMsg := func() tea.Msg {
+			return taskcreate.ShowTaskCreateModalMsg{
+				DefaultProjectID:  defaultProjectID,
+				AvailableFeatures: availableFeatures,
+				DefaultFeature:    defaultFeature,
+			}
+		}
+		return showMsg, true
+	}
+	return nil, false
+}
 
 // HandleTaskStatusChangeKey handles 't' key - open task properties modal (focused on status)
 func (m *MainModel) handleTaskStatusChangeKey(key string) (tea.Cmd, bool) {

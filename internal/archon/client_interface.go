@@ -6,6 +6,7 @@ type ClientInterface interface {
 	// Task operations
 	ListTasks(projectID *string, status *string, includeClosed bool) (*TasksResponse, error)
 	GetTask(taskID string) (*TaskResponse, error)
+	CreateTask(request CreateTaskRequest) (*TaskResponse, error)
 	UpdateTask(taskID string, updates UpdateTaskRequest) (*TaskResponse, error)
 
 	// Project operations

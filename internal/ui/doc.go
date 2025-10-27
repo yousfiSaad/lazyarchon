@@ -21,7 +21,6 @@
 //
 //	type Model struct {
 //		// Core infrastructure
-//		wsClient       interfaces.RealtimeClient
 //		programContext *context.ProgramContext
 //
 //		// Component-based UI (8 modal/layout components)
@@ -51,7 +50,6 @@
 //   - View tasks filtered by project or show all tasks
 //   - Sort by status+priority, priority, creation time, or alphabetical
 //   - Task detail view with scrolling support
-//   - Real-time status updates via WebSocket
 //   - Task status changes and feature assignment
 //
 // ## Navigation
@@ -65,11 +63,9 @@
 //   - Filter tasks by specific projects
 //   - Project-aware task loading and display
 //
-// ## Real-time Features
-//   - WebSocket connection for live updates
-//   - Connection status indicator
-//   - Automatic UI refresh on remote changes
-//   - Graceful fallback to HTTP polling if WebSocket fails
+// ## Auto-Refresh Features
+//   - HTTP polling for automatic UI refresh
+//   - Configurable polling interval
 //
 // # Usage Example
 //
@@ -101,7 +97,7 @@
 //
 //  1. User Input -> Update function
 //  2. Update function -> New state + Commands
-//  3. Commands -> Async operations (API calls, WebSocket events)
+//  3. Commands -> Async operations (API calls, polling events)
 //  4. Command results -> Update function (via messages)
 //  5. New state -> View function -> Terminal output
 //

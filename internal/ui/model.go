@@ -25,7 +25,7 @@ import (
 	"github.com/yousfisaad/lazyarchon/v2/internal/ui/components/modals/feature"
 	"github.com/yousfisaad/lazyarchon/v2/internal/ui/components/modals/help"
 	"github.com/yousfisaad/lazyarchon/v2/internal/ui/components/modals/status"
-	"github.com/yousfisaad/lazyarchon/v2/internal/ui/components/modals/statusfilter"
+	"github.com/yousfisaad/lazyarchon/v2/internal/ui/components/modals/taskcreate"
 	"github.com/yousfisaad/lazyarchon/v2/internal/ui/components/modals/taskedit"
 	"github.com/yousfisaad/lazyarchon/v2/internal/ui/components/projectlist"
 	"github.com/yousfisaad/lazyarchon/v2/internal/ui/components/taskdetails"
@@ -124,7 +124,7 @@ func NewModel(cfg *configpkg.Config) MainModel {
 	styleContextProvider, logger := createServices(cfg)
 
 	// Create concrete implementations for interface dependencies
-	client := archon.NewClient(cfg.GetServerURL(), cfg.GetAPIKey())
+	client := archon.NewClient(cfg.GetServerURL(), cfg.GetAPIKey(), cfg.Server.Timeout)
 	client.SetLogger(logger) // Inject logger for HTTP request/response logging
 
 	// Delegate to shared model creation logic
@@ -312,10 +312,11 @@ func (m *MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		status.ShowStatusModalMsg, status.HideStatusModalMsg, status.StatusModalShownMsg, status.StatusModalHiddenMsg,
 		confirmation.ShowConfirmationModalMsg, confirmation.HideConfirmationModalMsg, confirmation.ConfirmationModalShownMsg, confirmation.ConfirmationModalHiddenMsg,
 		taskedit.ShowTaskEditModalMsg, taskedit.HideTaskEditModalMsg, taskedit.TaskEditModalShownMsg, taskedit.TaskEditModalHiddenMsg,
+		taskcreate.ShowTaskCreateModalMsg, taskcreate.HideTaskCreateModalMsg, taskcreate.TaskCreateModalShownMsg, taskcreate.TaskCreateModalHiddenMsg,
 		feature.ShowFeatureModalMsg, feature.HideFeatureModalMsg, feature.FeatureModalShownMsg, feature.FeatureModalHiddenMsg:
 		return m.handleModalLifecycle(msg)
-	case status.StatusSelectedMsg, taskedit.TaskPropertiesUpdatedMsg, confirmation.ConfirmationSelectedMsg,
-		taskedit.FeatureSelectedMsg, feature.FeatureSelectionAppliedMsg, statusfilter.StatusFilterAppliedMsg:
+	case status.StatusSelectedMsg, taskedit.TaskPropertiesUpdatedMsg, taskcreate.TaskCreatedMsg, confirmation.ConfirmationSelectedMsg,
+		taskedit.FeatureSelectedMsg, feature.FeatureSelectionAppliedMsg:
 		return m.handleModalActions(msg)
 	case projectlist.ProjectListUpdateMsg, projectlist.ProjectListSelectMsg, projectlist.ProjectListScrollMsg,
 		projectlist.ProjectListSelectionChangedMsg, tasklist.TaskListSelectionChangedMsg,
@@ -548,6 +549,14 @@ func (m MainModel) View() string {
 		taskEditModalView := m.components.Modals.TaskEditModel.View()
 		if taskEditModalView != "" {
 			activeModal = taskEditModalView
+		}
+	}
+
+	// Task create modal
+	if activeModal == "" && m.components.Modals.TaskCreateModel.IsActive() {
+		taskCreateModalView := m.components.Modals.TaskCreateModel.View()
+		if taskCreateModalView != "" {
+			activeModal = taskCreateModalView
 		}
 	}
 
@@ -934,11 +943,7 @@ func (m *MainModel) showQuitConfirmation() tea.Cmd {
 // Note: View modes (like Project Mode) are NOT modals - they are full-screen
 // views that need normal key routing through HandleKeyPress().
 func (m MainModel) HasActiveModal() bool {
-	return m.components.Modals.HelpModel.IsActive() ||
-		m.components.Modals.StatusModel.IsActive() ||
-		m.components.Modals.ConfirmationModel.IsActive() ||
-		m.components.Modals.FeatureModel.IsActive() ||
-		m.components.Modals.TaskEditModel.IsActive()
+	return m.components.Modals.HasActiveModal()
 }
 
 // =============================================================================
@@ -1486,26 +1491,10 @@ func max(a, b int) int {
 }
 
 // =============================================================================
-// CONFIGURATION HELPERS
-// =============================================================================
-
-// isRealtimeEnabled returns whether WebSocket realtime updates are enabled
-// Note: Currently WebSocket is disabled as backend doesn't support it
-//
-//nolint:unused // Reserved for future WebSocket realtime functionality
-func (m MainModel) isRealtimeEnabled() bool {
-	if cfg, ok := m.programContext.ConfigProvider.(*configpkg.Config); ok {
-		return cfg.IsRealtimeEnabled()
-	}
-	return false
-}
-
-// =============================================================================
 // HTTP POLLING FOR AUTO-REFRESH
 // =============================================================================
 
 // startPolling starts the HTTP polling loop for auto-refresh
-// This is used when WebSocket is disabled (backend doesn't support it)
 func (m MainModel) startPolling() tea.Cmd {
 	// Get polling interval from config (default: 10 seconds)
 	interval := 10 * time.Second

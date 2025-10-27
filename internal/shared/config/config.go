@@ -30,7 +30,6 @@ type ServerConfig struct {
 	URL             string        `yaml:"url" validate:"required,url"`
 	Timeout         time.Duration `yaml:"timeout" validate:"min=1s,max=300s"`
 	APIKey          string        `yaml:"api_key" validate:"omitempty,min=10"`
-	EnableRealtime  bool          `yaml:"enable_realtime"`                           // Enable HTTP polling for auto-refresh (WebSocket not supported by backend)
 	PollingInterval int           `yaml:"polling_interval" validate:"min=0,max=300"` // Polling interval in seconds (0 = disabled, default: 10)
 }
 
@@ -141,10 +140,9 @@ var defaultConfig = Config{
 	Profile: defaultProfileName,
 	Server: ServerConfig{
 		URL:             defaultServerURL,
-		Timeout:         30 * time.Second,
+		Timeout:         90 * time.Second,
 		APIKey:          "",
-		EnableRealtime:  false, // Disabled by default - backend doesn't support WebSocket
-		PollingInterval: 10,    // Default 10 seconds for HTTP polling
+		PollingInterval: 10, // Default 10 seconds for HTTP polling
 	},
 	UI: UIConfig{
 		Theme: ThemeConfig{
@@ -373,11 +371,6 @@ func (c *Config) IsDarkModeEnabled() bool {
 // IsCompletedTasksVisible returns whether completed tasks should be shown
 func (c *Config) IsCompletedTasksVisible() bool {
 	return c.UI.Display.ShowCompletedTasks
-}
-
-// IsRealtimeEnabled returns whether HTTP polling is enabled for auto-refresh
-func (c *Config) IsRealtimeEnabled() bool {
-	return c.Server.EnableRealtime
 }
 
 // GetPollingInterval returns the polling interval in seconds (default: 10)

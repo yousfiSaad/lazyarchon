@@ -10,7 +10,7 @@ import (
 	"github.com/yousfisaad/lazyarchon/v2/internal/ui/components/modals/confirmation"
 	"github.com/yousfisaad/lazyarchon/v2/internal/ui/components/modals/feature"
 	"github.com/yousfisaad/lazyarchon/v2/internal/ui/components/modals/status"
-	"github.com/yousfisaad/lazyarchon/v2/internal/ui/components/modals/statusfilter"
+	"github.com/yousfisaad/lazyarchon/v2/internal/ui/components/modals/taskcreate"
 	"github.com/yousfisaad/lazyarchon/v2/internal/ui/components/modals/taskedit"
 )
 
@@ -93,6 +93,25 @@ func (m *MainModel) handleModalActions(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case taskcreate.TaskCreatedMsg:
+		// Handle task creation from task create modal
+		// Build CreateTaskRequest and send to API
+		createRequest := archon.CreateTaskRequest{
+			ProjectID:   msg.ProjectID,
+			Title:       msg.Title,
+			Description: msg.Description,
+			Status:      msg.Status,
+			TaskOrder:   msg.Priority,
+			Feature:     msg.Feature,
+		}
+
+		// DEBUG: Log task creation
+		fmt.Fprintf(os.Stderr, "[DEBUG] Creating new task: title=%s, projectID=%s, feature=%v, priority=%d\n",
+			msg.Title, msg.ProjectID, msg.Feature, msg.Priority)
+
+		// Send create command
+		return m, tasks.CreateTaskInterface(m.programContext.ArchonClient, createRequest)
+
 	case taskedit.FeatureSelectedMsg:
 		// Legacy feature selection handler - kept for backwards compatibility
 		// New code should use TaskPropertiesUpdatedMsg instead
@@ -103,16 +122,6 @@ func (m *MainModel) handleModalActions(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// This is a client-side filter change - no server fetch needed, just refresh UI
 		m.programContext.FeatureFilters = msg.SelectedFeatures
 		m.programContext.FeatureFilterActive = len(msg.SelectedFeatures) > 0
-		m.refreshUIAfterFilterChange() // Refresh UI immediately with current data
-		return m, nil
-
-	case statusfilter.StatusFilterAppliedMsg:
-		// Handle status filter application - update task filtering in ProgramContext
-		// This is a client-side filter change - no server fetch needed, just refresh UI
-		for status := range m.programContext.StatusFilters {
-			_, selected := msg.SelectedStatuses[status]
-			m.programContext.SetStatusFilter(status, selected)
-		}
 		m.refreshUIAfterFilterChange() // Refresh UI immediately with current data
 		return m, nil
 	}

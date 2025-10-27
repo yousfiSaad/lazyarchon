@@ -104,12 +104,13 @@ type CodeExample struct {
 
 // TasksResponse represents the API response for listing tasks
 type TasksResponse struct {
-	Success bool   `json:"success"`
-	Tasks   []Task `json:"tasks"`
-	Count   int    `json:"count"`
-	Page    int    `json:"page"`
-	PerPage int    `json:"per_page"`
-	Error   string `json:"error,omitempty"`
+	Success    bool   `json:"success"`
+	Tasks      []Task `json:"tasks"`
+	Count      int    `json:"count"`       // Number of tasks in this response
+	TotalCount int    `json:"total_count"` // Total number of tasks matching the query
+	Page       int    `json:"page"`
+	PerPage    int    `json:"per_page"`
+	Error      string `json:"error,omitempty"`
 }
 
 // TaskResponse represents the API response for a single task
@@ -136,6 +137,19 @@ type ProjectResponse struct {
 	ProjectID string  `json:"project_id"`
 	Message   string  `json:"message"`
 	Error     string  `json:"error,omitempty"`
+}
+
+// CreateTaskRequest represents a request to create a new task
+type CreateTaskRequest struct {
+	ProjectID    string        `json:"project_id"`              // Required: Project to create task in
+	Title        string        `json:"title"`                   // Required: Task title
+	Description  string        `json:"description,omitempty"`   // Optional: Task description
+	Status       string        `json:"status,omitempty"`        // Optional: Task status (defaults to "todo")
+	Assignee     string        `json:"assignee,omitempty"`      // Optional: Task assignee
+	TaskOrder    int           `json:"task_order,omitempty"`    // Optional: Task priority (defaults to 50)
+	Feature      *string       `json:"feature,omitempty"`       // Optional: Feature tag
+	Sources      []Source      `json:"sources,omitempty"`       // Optional: Source references
+	CodeExamples []CodeExample `json:"code_examples,omitempty"` // Optional: Code example references
 }
 
 // UpdateTaskRequest represents a request to update a task

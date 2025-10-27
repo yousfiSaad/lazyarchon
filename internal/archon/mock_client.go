@@ -13,6 +13,7 @@ type MockClient struct {
 	// Method call recording
 	ListTasksCalls    []ListTasksCall
 	GetTaskCalls      []GetTaskCall
+	CreateTaskCalls   []CreateTaskCall
 	UpdateTaskCalls   []UpdateTaskCall
 	ListProjectsCalls []ListProjectsCall
 	GetProjectCalls   []GetProjectCall
@@ -23,6 +24,8 @@ type MockClient struct {
 	ListTasksError       error
 	GetTaskResponse      *TaskResponse
 	GetTaskError         error
+	CreateTaskResponse   *TaskResponse
+	CreateTaskError      error
 	UpdateTaskResponse   *TaskResponse
 	UpdateTaskError      error
 	ListProjectsResponse *ProjectsResponse
@@ -46,6 +49,10 @@ type GetTaskCall struct {
 	TaskID string
 }
 
+type CreateTaskCall struct {
+	Request CreateTaskRequest
+}
+
 type UpdateTaskCall struct {
 	TaskID  string
 	Updates UpdateTaskRequest
@@ -67,6 +74,9 @@ func NewMockClient() *MockClient {
 			Count: 0,
 		},
 		GetTaskResponse: &TaskResponse{
+			Task: Task{},
+		},
+		CreateTaskResponse: &TaskResponse{
 			Task: Task{},
 		},
 		UpdateTaskResponse: &TaskResponse{
@@ -117,6 +127,23 @@ func (m *MockClient) GetTask(taskID string) (*TaskResponse, error) {
 		return nil, m.GetTaskError
 	}
 	return m.GetTaskResponse, nil
+}
+
+// CreateTask mock implementation
+func (m *MockClient) CreateTask(request CreateTaskRequest) (*TaskResponse, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	// Record the call
+	m.CreateTaskCalls = append(m.CreateTaskCalls, CreateTaskCall{
+		Request: request,
+	})
+
+	// Return configured response/error
+	if m.CreateTaskError != nil {
+		return nil, m.CreateTaskError
+	}
+	return m.CreateTaskResponse, nil
 }
 
 // UpdateTask mock implementation
@@ -199,6 +226,14 @@ func (m *MockClient) SetGetTaskResponse(response *TaskResponse, err error) {
 	m.GetTaskError = err
 }
 
+// SetCreateTaskResponse configures the response for CreateTask calls
+func (m *MockClient) SetCreateTaskResponse(response *TaskResponse, err error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.CreateTaskResponse = response
+	m.CreateTaskError = err
+}
+
 // SetUpdateTaskResponse configures the response for UpdateTask calls
 func (m *MockClient) SetUpdateTaskResponse(response *TaskResponse, err error) {
 	m.mu.Lock()
@@ -244,6 +279,13 @@ func (m *MockClient) GetGetTaskCallCount() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return len(m.GetTaskCalls)
+}
+
+// GetCreateTaskCallCount returns the number of CreateTask calls made
+func (m *MockClient) GetCreateTaskCallCount() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return len(m.CreateTaskCalls)
 }
 
 // GetUpdateTaskCallCount returns the number of UpdateTask calls made

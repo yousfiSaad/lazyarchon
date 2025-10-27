@@ -47,11 +47,10 @@ func NewKeyRegistry(keybindingsConfig interface{}) *KeyRegistry {
 }
 
 // applyCustomKeybindings applies user-configured keybindings to override defaults
-// This function is a placeholder for future implementation when config package is available
+// FUTURE: This will allow users to customize their keyboard shortcuts via config.yaml
+// For now, default keybindings are used for consistency and backward compatibility
 func (r *KeyRegistry) applyCustomKeybindings(keybindingsConfig interface{}) {
-	// TODO: Implement custom keybinding overrides
-	// This will allow users to customize their keyboard shortcuts via config.yaml
-	// For now, we maintain backward compatibility by using all defaults
+	// Placeholder for future custom keybinding implementation
 }
 
 // GetContextBindings returns all key bindings for a specific context

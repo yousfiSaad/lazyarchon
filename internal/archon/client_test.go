@@ -9,7 +9,7 @@ func TestNewClient(t *testing.T) {
 	baseURL := "http://localhost:8181"
 	apiKey := "test-key"
 
-	client := NewClient(baseURL, apiKey)
+	client := NewClient(baseURL, apiKey, 30*time.Second)
 
 	if client.baseURL != baseURL {
 		t.Errorf("Expected baseURL %s, got %s", baseURL, client.baseURL)
@@ -32,7 +32,7 @@ func TestClient_ListTasks(t *testing.T) {
 	server := SetupMockServerWithData()
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-key")
+	client := NewClient(server.URL, "test-key", 30*time.Second)
 
 	tests := []struct {
 		name          string
@@ -134,7 +134,7 @@ func TestClient_ListTasks_Error(t *testing.T) {
 	// Configure server to return error
 	server.SetSimulatedError("tasks", SimulateNetworkError())
 
-	client := NewClient(server.URL, "test-key")
+	client := NewClient(server.URL, "test-key", 30*time.Second)
 
 	_, err := client.ListTasks(nil, nil, true)
 	AssertError(t, err)
@@ -145,7 +145,7 @@ func TestClient_GetTask(t *testing.T) {
 	server := SetupMockServerWithData()
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-key")
+	client := NewClient(server.URL, "test-key", 30*time.Second)
 
 	// Add a known task
 	expectedTask := NewTaskBuilder().
@@ -178,7 +178,7 @@ func TestClient_UpdateTask(t *testing.T) {
 	server := SetupMockServerWithData()
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-key")
+	client := NewClient(server.URL, "test-key", 30*time.Second)
 
 	// Add a task to update
 	originalTask := NewTaskBuilder().
@@ -275,7 +275,7 @@ func TestClient_ListProjects(t *testing.T) {
 	server := SetupMockServerWithData()
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-key")
+	client := NewClient(server.URL, "test-key", 30*time.Second)
 
 	resp, err := client.ListProjects()
 
@@ -313,7 +313,7 @@ func TestClient_ListProjects_Error(t *testing.T) {
 	// Configure server to return error
 	server.SetSimulatedError("projects", SimulateAPIError(500, "Internal server error"))
 
-	client := NewClient(server.URL, "test-key")
+	client := NewClient(server.URL, "test-key", 30*time.Second)
 
 	_, err := client.ListProjects()
 	AssertError(t, err)
@@ -324,7 +324,7 @@ func TestClient_GetProject(t *testing.T) {
 	server := SetupMockServerWithData()
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-key")
+	client := NewClient(server.URL, "test-key", 30*time.Second)
 
 	// Add a known project
 	expectedProject := NewProjectBuilder().
@@ -357,7 +357,7 @@ func TestClient_HealthCheck(t *testing.T) {
 	server := NewMockServer()
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-key")
+	client := NewClient(server.URL, "test-key", 30*time.Second)
 
 	t.Run("healthy server", func(t *testing.T) {
 		server.SetHealthStatus(200)
@@ -389,7 +389,7 @@ func TestClient_RequestAuthentication(t *testing.T) {
 	defer server.Close()
 
 	t.Run("with API key", func(t *testing.T) {
-		client := NewClient(server.URL, "test-api-key")
+		client := NewClient(server.URL, "test-api-key", 30*time.Second)
 
 		// Make a request and verify the Authorization header
 		_, _ = client.ListTasks(nil, nil, true)
@@ -409,7 +409,7 @@ func TestClient_RequestAuthentication(t *testing.T) {
 	})
 
 	t.Run("without API key", func(t *testing.T) {
-		client := NewClient(server.URL, "")
+		client := NewClient(server.URL, "", 30*time.Second)
 
 		// Reset server request history
 		server.Reset()
@@ -434,7 +434,7 @@ func TestClient_ContentType(t *testing.T) {
 	server := NewMockServer()
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-key")
+	client := NewClient(server.URL, "test-key", 30*time.Second)
 
 	// Make a request with body
 	updateReq := UpdateTaskRequest{Status: stringPtr("doing")}
@@ -460,7 +460,7 @@ func BenchmarkClient_ListTasks(b *testing.B) {
 	server := SetupMockServerWithData()
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-key")
+	client := NewClient(server.URL, "test-key", 30*time.Second)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -475,7 +475,7 @@ func BenchmarkClient_GetTask(b *testing.B) {
 	server := SetupMockServerWithData()
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-key")
+	client := NewClient(server.URL, "test-key", 30*time.Second)
 
 	// Add a task to get
 	task := DefaultTask()
@@ -494,7 +494,7 @@ func BenchmarkClient_UpdateTask(b *testing.B) {
 	server := SetupMockServerWithData()
 	defer server.Close()
 
-	client := NewClient(server.URL, "test-key")
+	client := NewClient(server.URL, "test-key", 30*time.Second)
 
 	// Add a task to update
 	task := DefaultTask()

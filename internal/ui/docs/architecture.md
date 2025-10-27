@@ -55,9 +55,9 @@ Model (root)
 │       ├── Help
 │       ├── Confirmation
 │       ├── TaskEdit
+│       ├── TaskCreate
 │       ├── Feature
-│       ├── Status
-│       └── StatusFilter
+│       └── Status
 ├── Managers (ManagerSet)
 │   ├── Task
 │   ├── Project

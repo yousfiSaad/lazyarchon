@@ -1,0 +1,47 @@
+# LazyArchon publicsync configuration
+# Configuration for syncing internal LazyArchon commits to public branch
+#
+# Usage: ../publicsync/publicsync sync --input commits.yml
+# Tool repository: https://github.com/yousfisaad/publicsync
+
+# Target branch where public commits will be created
+target_branch: "public-dev"
+
+# File and directory patterns to exclude from public commits
+exclude_patterns:
+  # Claude Code settings and development files
+  - ".claude/"
+  - "todos.md"
+  - "CLAUDE.md" # Project instructions and development guidelines
+
+  # PublicSync tool configuration files (internal workflow)
+  - ".publicsync.yml"
+  - "commits.yml"
+
+  # Internal build and development documentation
+  - "BUILD.md" # Internal build documentation
+  - "docs/" # Documentation directory (not up to date)
+  - "docs/**" # All files in docs directory and subdirectories
+
+  # Build artifacts and binaries
+  - "bin/"
+  - "dist/"
+  - "build/"
+
+  # Environment and sensitive configuration files
+  - ".env*"
+  - "config/internal*"
+  - "config/private*"
+  - "**/secrets/"
+
+  # Development files
+  - "*.private.*"
+  - "*_private.*"
+  - "*.internal.*"
+  - "*_internal.*"
+
+  # IDE and temporary files
+  - ".vscode/settings.json"
+  - "*.swp"
+  - "*.swo"
+  - "*~"

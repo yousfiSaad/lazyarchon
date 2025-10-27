@@ -167,25 +167,6 @@ func TestTaskListComponentMessages(t *testing.T) {
 		}
 	})
 
-	t.Run("TaskListFilterMsg updates filter state", func(t *testing.T) {
-		msg := TaskListFilterMsg{
-			Feature: "authentication",
-			Status:  "todo",
-		}
-
-		cmd := model.Update(msg)
-		if cmd != nil {
-			t.Error("Expected no command from filter update")
-		}
-
-		if model.filterFeature != "authentication" {
-			t.Errorf("Expected filter feature 'authentication', got %s", model.filterFeature)
-		}
-		if model.filterStatus != "todo" {
-			t.Errorf("Expected filter status 'todo', got %s", model.filterStatus)
-		}
-	})
-
 	t.Run("TaskListScrollMsg updates selection", func(t *testing.T) {
 		// Provide mock callback that returns 3 tasks
 		ctx.GetSortedTasks = func() []interface{} {

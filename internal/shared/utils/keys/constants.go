@@ -80,7 +80,8 @@ const (
 // Task Operation Keys
 // These keys control task-specific operations
 const (
-	// Task Status and Editing
+	// Task Creation and Editing
+	KeyC = "c" // Create new task
 	KeyT = "t" // Open task status change modal
 	KeyE = "e" // Open task edit modal
 	KeyD = "d" // Delete/archive task
@@ -150,6 +151,7 @@ const (
 	ActionPrevMatch      = "prev_match"
 
 	// Task Actions
+	ActionCreateTask     = "create_task"
 	ActionChangeStatus   = "change_status"
 	ActionEditTask       = "edit_task"
 	ActionDeleteTask     = "delete_task"

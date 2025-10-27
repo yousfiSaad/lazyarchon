@@ -14,6 +14,7 @@ type ArchonClient interface {
 	// Task operations
 	ListTasks(projectID *string, status *string, includeClosed bool) (*archon.TasksResponse, error)
 	GetTask(taskID string) (*archon.TaskResponse, error)
+	CreateTask(request archon.CreateTaskRequest) (*archon.TaskResponse, error)
 	UpdateTask(taskID string, updates archon.UpdateTaskRequest) (*archon.TaskResponse, error)
 	DeleteTask(taskID string) error
 
@@ -23,18 +24,6 @@ type ArchonClient interface {
 
 	// Health operations
 	HealthCheck() error
-}
-
-// RealtimeClient defines the interface for real-time WebSocket operations
-// This allows us to inject different implementations (WebSocket, mock, offline)
-type RealtimeClient interface {
-	// Connection management
-	Connect() error
-	Disconnect() error
-	IsConnected() bool
-
-	// Event channel for Bubble Tea integration
-	GetEventChannel() <-chan interface{}
 }
 
 // ConfigProvider defines the interface for configuration access

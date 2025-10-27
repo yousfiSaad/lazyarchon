@@ -13,9 +13,8 @@ All modals are located in `components/modals/*/` and follow a standard pattern.
 1. **Help Modal** (`help/`) - Keyboard shortcuts reference
 2. **Task Edit Modal** (`taskedit/`) - Edit task properties (status, priority, feature)
 3. **Status Modal** (`status/`) - Quick task status change
-4. **Status Filter Modal** (`statusfilter/`) - Filter tasks by status
-5. **Feature Modal** (`feature/`) - Filter tasks by feature tags
-6. **Confirmation Modal** (`confirmation/`) - Yes/No confirmation dialogs
+4. **Feature Modal** (`feature/`) - Filter tasks by feature tags
+5. **Confirmation Modal** (`confirmation/`) - Yes/No confirmation dialogs
 
 ## Modal Lifecycle Pattern
 
@@ -391,62 +390,7 @@ case feature.FeatureSelectionAppliedMsg:
     m.updateTaskListComponents(m.GetSortedTasks())
 ```
 
-### 5. Status Filter Modal
-
-**Purpose**: Filter tasks by status (multi-select)
-
-**Location**: `components/modals/statusfilter/`
-
-**Messages**:
-```go
-type ShowStatusFilterModalMsg struct {
-    SelectedStatuses map[string]bool
-}
-
-type HideStatusFilterModalMsg struct{}
-
-type StatusFilterAppliedMsg struct {
-    SelectedStatuses map[string]bool
-}
-```
-
-**State**:
-```go
-type Model struct {
-    base.BaseComponent
-
-    selectedStatuses map[string]bool
-    selectedIndex    int
-    width            int
-    height           int
-}
-```
-
-**Key Features**:
-- Multi-select: Toggle statuses with Space
-- Shows todo/doing/review/done options
-- Arrow keys / j/k to navigate
-- 'a' to select all
-- 'c' to clear all
-- Enter to apply
-- Esc/q to cancel
-
-**Usage**:
-```go
-// Show status filter
-showMsg := statusfilter.ShowStatusFilterModalMsg{
-    SelectedStatuses: m.statusFilters,
-}
-return func() tea.Msg { return showMsg }
-
-// Apply filter
-case statusfilter.StatusFilterAppliedMsg:
-    m.statusFilters = msg.SelectedStatuses
-    m.statusFilterActive = true
-    m.updateTaskListComponents(m.GetSortedTasks())
-```
-
-### 6. Confirmation Modal
+### 5. Confirmation Modal
 
 **Purpose**: Generic yes/no confirmation dialogs
 
@@ -1087,7 +1031,7 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) tea.Cmd {
 }
 ```
 
-**Examples**: Feature Modal, Status Filter Modal
+**Examples**: Feature Modal
 
 ### Pattern: Form with Multiple Fields
 

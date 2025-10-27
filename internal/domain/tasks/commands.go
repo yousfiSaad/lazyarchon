@@ -27,6 +27,19 @@ func LoadTasksInterface(client interfaces.ArchonClient, projectID *string) tea.C
 	}
 }
 
+// CreateTaskInterface creates a new task using interface dependency (preferred for DI)
+func CreateTaskInterface(client interfaces.ArchonClient, request archon.CreateTaskRequest) tea.Cmd {
+	return func() tea.Msg {
+		// Call API to create task
+		resp, err := client.CreateTask(request)
+		if err != nil {
+			return TaskCreateMsg{Error: err}
+		}
+
+		return TaskCreateMsg{Task: &resp.Task}
+	}
+}
+
 // UpdateTaskStatusInterface updates a task's status using interface dependency (preferred for DI)
 func UpdateTaskStatusInterface(client interfaces.ArchonClient, taskID string, newStatus string) tea.Cmd {
 	return func() tea.Msg {

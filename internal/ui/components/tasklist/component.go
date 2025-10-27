@@ -53,10 +53,6 @@ type TaskListModel struct {
 	// UI STATE - Viewport for scrolling
 	// ===================================================================
 	viewport viewport.Model // Bubble Tea viewport for scrolling
-
-	// Legacy fields (to be removed)
-	filterFeature string
-	filterStatus  string
 }
 
 // ctx returns the program context for easy access to global state
@@ -189,13 +185,6 @@ func (m *TaskListModel) handleDataMessages(msg tea.Msg) tea.Cmd {
 		m.searchQuery = msg.Query
 		m.searchActive = msg.Active
 		m.updateViewportContent()
-		return nil
-
-	case TaskListFilterMsg:
-		// Legacy message - filtering is now handled by MainModel
-		// Keep handler for backward compatibility but don't act on it
-		m.filterFeature = msg.Feature
-		m.filterStatus = msg.Status
 		return nil
 	}
 	return nil

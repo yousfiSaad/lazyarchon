@@ -5,7 +5,7 @@ BINARY_NAME=lazyarchon
 BUILD_DIR=bin
 CMD_DIR=./cmd/lazyarchon
 
-.PHONY: build run test lint lint-install lint-full lint-fix check clean deps help
+.PHONY: build run test lint lint-install lint-full lint-fix check clean deps sbom sbom-validate help
 
 # Build for current platform (development only)
 build:
@@ -66,7 +66,7 @@ check: deps lint-full test
 # Clean build artifacts
 clean:
 	@echo "Cleaning up..."
-	@rm -rf $(BUILD_DIR) dist *.out *.html
+	@rm -rf $(BUILD_DIR) dist sbom *.out *.html
 	@go clean
 	@echo "✓ Cleaned"
 
@@ -75,6 +75,22 @@ deps:
 	@echo "Tidying dependencies..."
 	@go mod tidy
 	@echo "✓ Dependencies updated"
+
+# Generate SBOM (Software Bill of Materials)
+sbom:
+	@echo "Generating SBOM with syft..."
+	@command -v syft >/dev/null 2>&1 || { echo "⚠ syft not found. Install with: brew install syft (or see https://github.com/anchore/syft)"; exit 1; }
+	@mkdir -p sbom
+	@syft scan . -o cyclonedx-json=sbom/$(BINARY_NAME).sbom.cyclonedx.json
+	@echo "✓ SBOM generated: sbom/$(BINARY_NAME).sbom.cyclonedx.json"
+
+# Validate SBOM
+sbom-validate:
+	@echo "Validating SBOM..."
+	@test -f sbom/$(BINARY_NAME).sbom.cyclonedx.json || { echo "✗ SBOM not found. Run 'make sbom' first."; exit 1; }
+	@command -v cyclonedx >/dev/null 2>&1 || { echo "⚠ cyclonedx-cli not found (optional). Install for validation: npm install -g @cyclonedx/cyclonedx-cli"; exit 0; }
+	@cyclonedx validate --input-file sbom/$(BINARY_NAME).sbom.cyclonedx.json
+	@echo "✓ SBOM is valid"
 
 # Development help
 help:
@@ -98,7 +114,12 @@ help:
 	@echo "  lint-full    - Run comprehensive linting (no fixes)"
 	@echo "  check        - Full pre-commit validation (deps + lint + test)"
 	@echo ""
+	@echo "Security & Compliance:"
+	@echo "  sbom         - Generate SBOM (Software Bill of Materials) in CycloneDX format"
+	@echo "  sbom-validate- Validate generated SBOM (requires cyclonedx-cli)"
+	@echo ""
 	@echo "Release builds are handled by GoReleaser:"
 	@echo "  git tag v1.x.x && git push origin v1.x.x"
+	@echo "  (SBOM is automatically generated and attached to releases)"
 	@echo ""
 	@echo "For more info: https://github.com/yousfisaad/lazyarchon"
