@@ -152,6 +152,13 @@ func (m *MainModel) handleGlobalKeys(key string) (tea.Cmd, bool) {
 //
 //nolint:gocyclo // Handles 15+ keys for complete project mode navigation UX
 func (m *MainModel) handleProjectModeKeys(key string) tea.Cmd {
+	// Handle 'g' to jump to first project (vim-style)
+	if key == keys.KeyG {
+		scrollMsg := projectlist.ProjectListScrollMsg{Direction: projectlist.ScrollToTop}
+		cmd := m.components.Layout.MainContent.Update(scrollMsg)
+		return cmd
+	}
+
 	switch key {
 	case "q", keys.KeyEscape:
 		// Exit project mode - these are the only keys that should exit
