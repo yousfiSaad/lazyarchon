@@ -300,6 +300,32 @@ func (m *ProjectListModel) Update(msg tea.Msg) tea.Cmd {
 			m.selectedIndex = 0
 		case ScrollToBottom:
 			m.selectedIndex = projectCount // "All Tasks" option
+		case ScrollFastUp:
+			// Fast scroll up (4 items)
+			m.selectedIndex -= 4
+			if m.selectedIndex < 0 {
+				m.selectedIndex = 0
+			}
+		case ScrollFastDown:
+			// Fast scroll down (4 items)
+			m.selectedIndex += 4
+			if m.selectedIndex > projectCount {
+				m.selectedIndex = projectCount
+			}
+		case ScrollPageUp:
+			// Half-page scroll up
+			halfPage := m.getHalfPageSize()
+			m.selectedIndex -= halfPage
+			if m.selectedIndex < 0 {
+				m.selectedIndex = 0
+			}
+		case ScrollPageDown:
+			// Half-page scroll down
+			halfPage := m.getHalfPageSize()
+			m.selectedIndex += halfPage
+			if m.selectedIndex > projectCount {
+				m.selectedIndex = projectCount
+			}
 		}
 		return func() tea.Msg { return ProjectListSelectionChangedMsg{Index: m.selectedIndex} }
 
@@ -395,4 +421,19 @@ func (m *ProjectListModel) handleYankTitle() tea.Cmd {
 			Message: fmt.Sprintf("Copied project title: %s", project.Title),
 		}
 	}
+}
+
+// =============================================================================
+// SCROLL HELPERS
+// =============================================================================
+
+// getHalfPageSize calculates half-page size for project list scrolling
+func (m *ProjectListModel) getHalfPageSize() int {
+	contentHeight := m.GetHeight()
+	// Account for borders and padding
+	halfPage := (contentHeight - 4) / 2
+	if halfPage < 1 {
+		halfPage = 1 // Minimum scroll amount
+	}
+	return halfPage
 }
