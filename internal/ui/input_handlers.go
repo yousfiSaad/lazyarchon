@@ -220,6 +220,30 @@ func (m *MainModel) handleProjectModeKeys(key string) tea.Cmd {
 	case keys.KeyYCap:
 		// Copy project title - send yank message to components
 		return func() tea.Msg { return messages.YankTitleMsg{} }
+
+	case keys.KeyJCap:
+		// Fast scroll down (4 items) - route through content component
+		scrollMsg := projectlist.ProjectListScrollMsg{Direction: projectlist.ScrollFastDown}
+		cmd := m.components.Layout.MainContent.Update(scrollMsg)
+		return cmd
+
+	case keys.KeyKCap:
+		// Fast scroll up (4 items) - route through content component
+		scrollMsg := projectlist.ProjectListScrollMsg{Direction: projectlist.ScrollFastUp}
+		cmd := m.components.Layout.MainContent.Update(scrollMsg)
+		return cmd
+
+	case keys.KeyCtrlD, keys.KeyPgDn:
+		// Half-page scroll down - route through content component
+		scrollMsg := projectlist.ProjectListScrollMsg{Direction: projectlist.ScrollPageDown}
+		cmd := m.components.Layout.MainContent.Update(scrollMsg)
+		return cmd
+
+	case keys.KeyCtrlU, keys.KeyPgUp:
+		// Half-page scroll up - route through content component
+		scrollMsg := projectlist.ProjectListScrollMsg{Direction: projectlist.ScrollPageUp}
+		cmd := m.components.Layout.MainContent.Update(scrollMsg)
+		return cmd
 	}
 
 	// All other keys are ignored in project mode
