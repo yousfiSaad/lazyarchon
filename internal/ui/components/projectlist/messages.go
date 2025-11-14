@@ -30,6 +30,10 @@ const (
 	ScrollDown
 	ScrollToTop
 	ScrollToBottom
+	ScrollFastUp   // Fast scroll up (4 items)
+	ScrollFastDown // Fast scroll down (4 items)
+	ScrollPageUp   // Half-page scroll up
+	ScrollPageDown // Half-page scroll down
 )
 
 // ProjectListScrollMsg is sent to handle scrolling operations

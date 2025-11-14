@@ -218,7 +218,10 @@ func (m *MainModel) handleJumpToLast() tea.Cmd {
 // handleFastScrollUp handles 'K' key - fast scroll up (4 lines) in active panel
 func (m *MainModel) handleFastScrollUp() tea.Cmd {
 	if m.uiState.IsProjectView() {
-		return nil // No scrolling in project mode
+		// Fast scroll up in project list using component message - route through content component
+		scrollMsg := projectlist.ProjectListScrollMsg{Direction: projectlist.ScrollFastUp}
+		cmd := m.components.Layout.MainContent.Update(scrollMsg)
+		return cmd
 	}
 
 	if m.IsLeftPanelActive() {
@@ -238,7 +241,10 @@ func (m *MainModel) handleFastScrollUp() tea.Cmd {
 // handleFastScrollDown handles 'J' key - fast scroll down (4 lines) in active panel
 func (m *MainModel) handleFastScrollDown() tea.Cmd {
 	if m.uiState.IsProjectView() {
-		return nil // No scrolling in project mode
+		// Fast scroll down in project list using component message - route through content component
+		scrollMsg := projectlist.ProjectListScrollMsg{Direction: projectlist.ScrollFastDown}
+		cmd := m.components.Layout.MainContent.Update(scrollMsg)
+		return cmd
 	}
 
 	if m.IsLeftPanelActive() {
@@ -258,7 +264,10 @@ func (m *MainModel) handleFastScrollDown() tea.Cmd {
 // handleHalfPageUp handles 'Ctrl+u' key - half-page scroll up in active panel
 func (m *MainModel) handleHalfPageUp() tea.Cmd {
 	if m.uiState.IsProjectView() {
-		return nil // No scrolling in project mode
+		// Half-page scroll up in project list using component message - route through content component
+		scrollMsg := projectlist.ProjectListScrollMsg{Direction: projectlist.ScrollPageUp}
+		cmd := m.components.Layout.MainContent.Update(scrollMsg)
+		return cmd
 	}
 
 	if m.IsLeftPanelActive() {
@@ -278,7 +287,10 @@ func (m *MainModel) handleHalfPageUp() tea.Cmd {
 // handleHalfPageDown handles 'Ctrl+d' key - half-page scroll down in active panel
 func (m *MainModel) handleHalfPageDown() tea.Cmd {
 	if m.uiState.IsProjectView() {
-		return nil // No scrolling in project mode
+		// Half-page scroll down in project list using component message - route through content component
+		scrollMsg := projectlist.ProjectListScrollMsg{Direction: projectlist.ScrollPageDown}
+		cmd := m.components.Layout.MainContent.Update(scrollMsg)
+		return cmd
 	}
 
 	if m.IsLeftPanelActive() {
