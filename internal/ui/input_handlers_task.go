@@ -27,8 +27,9 @@ func (m *MainModel) handleTaskCreateKey(key string) (tea.Cmd, bool) {
 			defaultProjectID = *m.programContext.SelectedProjectID
 		}
 
-		// Get available features
-		availableFeatures := m.GetUniqueFeatures()
+		// Get available features filtered by current project
+		// Use GetFeaturesForProjectSelection() to respect project context
+		availableFeatures := m.GetFeaturesForProjectSelection()
 
 		// Get default feature from current context if any
 		defaultFeature := ""
