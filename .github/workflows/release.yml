@@ -1,0 +1,69 @@
+# Release workflow with GoReleaser
+# Builds cross-platform binaries, creates GitHub release, and updates Homebrew tap
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+env:
+  # For Homebrew tap automation
+  HOMEBREW_TAP_REPO: yousfiSaad/homebrew-lazyarchon
+
+jobs:
+  goreleaser:
+    name: GoReleaser Build and Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      # Required for Homebrew tap automation
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run tests before release
+        run: go test ./...
+
+      - name: Install Syft for SBOM generation
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          syft version
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          # Use latest GoReleaser version
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+
+  # Optional: Notify on successful release
+  notify:
+    name: Notify Release Success
+    needs: goreleaser
+    runs-on: ubuntu-latest
+    if: success()
+
+    steps:
+      - name: Notify completion
+        run: |
+          echo "🎉 Release ${{ github.ref_name }} completed successfully!"
+          echo "📦 Binaries available on GitHub Releases"
+          echo "🍺 Homebrew formula will be updated automatically"
+          echo "📋 Release URL: https://github.com/yousfisaad/lazyarchon/releases/tag/${{ github.ref_name }}"
