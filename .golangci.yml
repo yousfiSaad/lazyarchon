@@ -1,0 +1,143 @@
+version: "2"
+run:
+  tests: true
+output:
+  formats:
+    text:
+      path: stdout
+      print-linter-name: true
+      print-issued-lines: true
+linters:
+  enable:
+    - dupl
+    - goconst
+    - gocritic
+    - gocyclo
+    - gosec
+    - interfacebloat
+    - ireturn
+    - misspell
+    - prealloc
+    - staticcheck
+    - unconvert
+    - unparam
+    - varnamelen
+  settings:
+    dupl:
+      threshold: 150
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+    gocyclo:
+      min-complexity: 15
+    gosec:
+      excludes:
+        - G104
+        - G304
+        - G703  # taint path traversal on user-supplied config/log paths (same trust model as G304)
+    interfacebloat:
+      max: 7
+    ireturn:
+      allow:
+        - anon
+        - error
+        - empty
+        - stdlib
+        - github.com/yousfisaad/lazyarchon/v2/internal/plugin\.(Plugin|TaskClient)
+    misspell:
+      locale: US
+    varnamelen:
+      min-name-length: 2
+      ignore-type-assert-ok: true
+      ignore-map-index-ok: true
+      ignore-chan-recv-ok: true
+      ignore-decls:
+        - c echo.Context
+        - t testing.T
+        - i int
+        - j int
+        - k int
+        - w io.Writer
+        - r io.Reader
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - dupl
+          - goconst
+          - gocyclo
+          - gosec
+          - varnamelen
+        path: _test\.go
+      - linters:
+          - dupl
+          - goconst
+        path: internal/ui/.*_test\.go
+      - linters:
+          - gocyclo
+        path: cmd/lazyarchon/main\.go
+      - linters:
+          - gocyclo
+        path: internal/ui/model_init\.go
+      - linters:
+          - dupl
+          - gocritic
+          - gocyclo
+          - gosec
+        path: .*mock.*\.go
+      - linters:
+          - unparam
+        path: internal/ui/components/.*\.go
+        text: parameter .* seems to be unused
+      - linters:
+          - gocyclo
+        path: internal/ui/components/coordinators/.*component\.go
+        text: cyclomatic complexity .* of func .* is high
+      - path: (.+)\.go$
+        text: exported .* should have comment or be unexported
+      - path: (.+)\.go$
+        text: package comment should be of the form
+      - path: (.+)\.go$
+        text: 'SA1029: should not use built-in type string as key for value'
+      - linters:
+          - goconst
+        path: (.+)_test\.go
+    paths:
+      - .*\.pb\.go$
+      - .*_mock\.go$
+      - internal/ui/input_test\.go$
+      - vendor
+      - bin
+      - dist
+      - build
+      - .git
+      - third_party$
+      - builtin$
+      - examples$
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  uniq-by-line: true
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - .*\.pb\.go$
+      - .*_mock\.go$
+      - internal/ui/input_test\.go$
+      - vendor
+      - bin
+      - dist
+      - build
+      - .git
+      - third_party$
+      - builtin$
+      - examples$

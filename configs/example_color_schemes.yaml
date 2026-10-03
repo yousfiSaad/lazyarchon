@@ -1,0 +1,59 @@
+# LazyArchon Configuration Example - Color Schemes
+# This file demonstrates the configurable status color schemes
+
+# Default configuration with blue color scheme (current behavior)
+ui:
+  theme:
+    name: "default"
+  display:
+    status_color_scheme: "blue"  # Options: blue, gray, warm_gray, cool_gray
+
+---
+# Professional gray color scheme for better productivity
+ui:
+  theme:
+    name: "default"
+  display:
+    status_color_scheme: "gray"
+
+---
+# Warm gray color scheme for reduced eye strain
+ui:
+  theme:
+    name: "monokai"
+  display:
+    status_color_scheme: "warm_gray"
+
+---
+# Cool gray color scheme for modern, professional look
+ui:
+  theme:
+    name: "gruvbox"
+  display:
+    status_color_scheme: "cool_gray"
+
+# Color Scheme Reference:
+#
+# Blue (vibrant, default):
+#   todo: bright blue (attention-grabbing for actionable items)
+#   doing: medium blue (active work)
+#   review: light blue (waiting for validation)
+#   done: dim blue (completed, subtle)
+#
+# Gray (neutral, productivity-focused):
+#   todo: white (high contrast for actionable items)
+#   doing: light gray (active but not overwhelming)
+#   review: medium gray (waiting state)
+#   done: dark gray (completed, de-emphasized)
+#
+# Warm Gray (easy on eyes):
+#   todo: light warm gray (gentle but attention-grabbing)
+#   doing: medium warm gray (active, comfortable)
+#   review: muted warm gray (subtle warmth)
+#   done: dark warm gray (completed, warm tone)
+#
+# Cool Gray (modern, professional):
+#   todo: light cool gray (clean, actionable)
+#   doing: medium cool gray (professional active state)
+#   review: muted cool gray (subtle, professional)
+#   done: dark cool gray (completed, understated)

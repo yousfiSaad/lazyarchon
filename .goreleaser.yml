@@ -1,0 +1,184 @@
+version: 2
+# GoReleaser configuration for LazyArchon
+# Modern 2025 configuration with homebrew_casks support
+
+# Project metadata
+project_name: lazyarchon
+
+# Environment variables check
+env:
+  - GO111MODULE=on
+  # Pure-Go SQLite driver requires no cgo anywhere, including cross-builds.
+  - CGO_ENABLED=0
+
+# Before hooks - runs before builds
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
+
+# Build configuration
+builds:
+  - id: lazyarchon
+    # Binary name
+    binary: lazyarchon
+
+    # Main package path
+    main: ./cmd/lazyarchon
+
+    # Build flags
+    flags:
+      - -trimpath
+
+    # Linker flags for version information
+    ldflags:
+      - -s -w
+      - -X main.Version={{.Version}}
+      - -X main.Commit={{.ShortCommit}}
+      - -X main.BuildTime={{.Date}}
+
+    # Target platforms and architectures
+    goos:
+      - linux
+      - darwin
+      - windows
+
+    goarch:
+      - amd64
+      - arm64
+
+    # Ignore combinations
+    ignore:
+      - goos: windows
+        goarch: arm64
+
+# Archive configuration for GitHub releases
+archives:
+  - id: lazyarchon-archive
+    # Archive name template
+    name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+
+    # Archive format by OS
+    format_overrides:
+      - goos: windows
+        formats: ['zip']
+
+    # Files to include in archive
+    files:
+      - README.md
+      - LICENSE
+      - configs/default.yaml
+
+# SBOM (Software Bill of Materials) generation
+sboms:
+  - id: archive
+    artifacts: archive
+    documents:
+      - "${artifact}.sbom.cyclonedx.json"
+
+# Checksum generation
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+
+# GitHub release configuration
+release:
+  # Repository information
+  github:
+    owner: yousfisaad
+    name: lazyarchon
+
+  # Release notes
+  header: |
+    ## LazyArchon {{ .Tag }}
+
+    A standalone terminal task manager: a TUI for humans and an MCP server for
+    Claude, backed by a local SQLite database (optional Archon/Gitea/Vikunja backends).
+
+  footer: |
+    ## Installation
+
+    ### Go Install
+    ```bash
+    go install github.com/yousfisaad/lazyarchon/v2/cmd/lazyarchon@{{ .Tag }}
+    ```
+
+    ### Homebrew
+    ```bash
+    brew install yousfisaad/lazyarchon/lazyarchon
+    ```
+
+    ### Download Binary
+    Download the appropriate binary for your platform from the assets above.
+
+    ---
+
+    **Full Changelog**: https://github.com/yousfisaad/lazyarchon/compare/{{ .PreviousTag }}...{{ .Tag }}
+
+  # Pre-release configuration
+  prerelease: auto
+
+  # Draft releases for manual review
+  draft: false
+
+# Homebrew Cask configuration (for CLI tools)
+homebrew_casks:
+  - # Repository for the tap
+    repository:
+      owner: yousfisaad
+      name: homebrew-lazyarchon
+      branch: main
+
+    # Cask metadata
+    homepage: "https://github.com/yousfisaad/lazyarchon"
+    description: "Terminal task manager: TUI + MCP server for Claude, local SQLite or HTTP backends"
+
+    # Commit configuration
+    commit_author:
+      name: yousfisaad
+      email: yousfisaad@gmail.com
+
+    commit_msg_template: "Cask update for {{ .ProjectName }} version {{ .Tag }}"
+
+# Changelog configuration
+changelog:
+  sort: asc
+  # 'git' (local git log) instead of 'github' (compare API): this branch is a
+  # single parentless commit, so there is no merge base with earlier tags.
+  use: git
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "merge conflict"
+      - Merge pull request
+      - Merge remote-tracking branch
+      - Merge branch
+  groups:
+    - title: "New Features"
+      regexp: "^.*feat[(\\w)]*:+.*$"
+      order: 0
+    - title: "Bug Fixes"
+      regexp: "^.*fix[(\\w)]*:+.*$"
+      order: 1
+    - title: "Documentation"
+      regexp: "^.*docs[(\\w)]*:+.*$"
+      order: 2
+    - title: "Other Changes"
+      order: 999
+
+# File metadata
+metadata:
+  mod_timestamp: "{{ .CommitTimestamp }}"
+
+# Snapshot configuration for local builds
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+# Git configuration
+git:
+  # Ignore tags that don't follow semantic versioning
+  ignore_tags:
+    - "nightly"
+    - "latest"
